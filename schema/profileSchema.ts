@@ -17,7 +17,7 @@ export const viewprofileSchema = z.object({
   ign: z.string().min(1),
   game_id: z.string().min(1),
   server_id: z.string().min(1),
-  roles: z.string().min(1),
+  roles: z.array(z.string()).min(1),
   state: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   avatar_url: z.string().url().optional().nullable(),

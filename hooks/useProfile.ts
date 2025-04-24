@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { fetchProfile } from "@/lib/profileData"
 import type {ViewProfileFormType } from "@/schema/profileSchema";
 
+
 export function useProfile(){
     const [profile, setProfile] = useState<ViewProfileFormType | null>(null);
     const [loading, setLoading] = useState(true);
