@@ -25,6 +25,8 @@ export async function fetchProfile() {
   }
 
   const result = viewprofileSchema.safeParse(profile);
+  console.log(result);
+  console.log(result.data);
   if (!result.success) {
     console.error("Validation failed:", result.error);
     return null;

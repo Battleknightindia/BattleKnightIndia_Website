@@ -17,6 +17,8 @@ export async function handleProfile(rawForm: unknown) {
 
   const formData = parsed.data;
 
+  const rolesArray = formData.roles.split(',').map(role => role.trim());
+
   const {
     data: { user },
     error: userError,
@@ -38,7 +40,7 @@ export async function handleProfile(rawForm: unknown) {
     ign: formData.gameName,
     game_id: formData.gameId,
     server_id: formData.serverId,
-    roles: formData.roles,
+    roles: rolesArray,
     state: formData.state,
     city: formData.city,
     avatar_url: avatarUrl,

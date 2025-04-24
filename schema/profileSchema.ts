@@ -1,4 +1,4 @@
-import { nullable, z } from "zod";
+import { z } from "zod";
 
 export const editprofileSchema = z.object({
   fullName: z.string().min(1),
