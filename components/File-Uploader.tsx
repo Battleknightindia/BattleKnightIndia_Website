@@ -137,6 +137,9 @@ export function FileUploader({
           {displayedFileName}
         </span>
       </div>
+      {/* Static error/info message for users (replace as needed) */}
+      <span className="text-xs text-red-500 block mt-2">Only image files up to 5MB are allowed.</span>
+
       {/* Use a SPAN for the clear control */}
       <span
         role="button" // Indicate that this span is interactive
