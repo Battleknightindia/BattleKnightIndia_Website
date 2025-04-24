@@ -1,9 +1,13 @@
+"use client"
+
 import type React from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { forwardRef } from "react"
 
-interface GameButtonProps extends React.ComponentProps<typeof Button> {
+import type { ButtonProps } from "@/components/ui/button"
+
+interface GameButtonProps extends Omit<ButtonProps, "variant"> {
   variant?: "default" | "outline" | "purple" | "blue"
 }
 
