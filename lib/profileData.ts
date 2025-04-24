@@ -34,7 +34,8 @@ export async function fetchProfile() {
   // Also return roles as string array split by comma
   return {
     ...result.data,
-    roles: result.data.roles ? result.data.roles.split(",") : [],
+    // Just return the roles array directly from the parsed data
+    roles: result.data.roles,
   };
 }
 

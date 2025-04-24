@@ -2,7 +2,7 @@ import "./globals.css";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { fontClass } from "@/lib/constant/fonts";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 const metadata = {
   title: 'Battle Knight India',
   description: "Battle Knight India is a gaming community that focuses on competitive gaming and esports.",

@@ -12,7 +12,7 @@ import { FileUploader } from "@/components/File-Uploader";
 // --- Import types, update Step2Props ---
 // Assuming TeamStepData in "@/types/registrationTypes" will be updated
 // to include 'referral_code: string | null;'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in Step2Props interface
+ 
 import { TeamStepData } from "@/types/registrationTypes"; // Import the type
 // --- End Import ---
 

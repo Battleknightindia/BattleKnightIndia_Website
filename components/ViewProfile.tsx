@@ -82,7 +82,7 @@ export function ProfileView({ isOpen, onClose }: ProfileViewProps) {
               <div className="grid gap-1">
                 <Label className="text-zinc-400">Roles</Label>
                 <div className="flex flex-wrap gap-2">
-                  {(Array.isArray(profile?.roles) ? profile.roles : (profile?.roles ? profile.roles.split(",") : [])).map((role: string) => {
+                  {(profile?.roles || []).map((role: string) => {
                     let color = "bg-emerald-600";
                     let display = role;
                     if (role === "hyper") { color = "bg-purple-600"; display = "Hyper/Jungler"; }
