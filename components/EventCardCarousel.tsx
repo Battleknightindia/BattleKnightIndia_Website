@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { motion, useAnimation } from "framer-motion"
+// Removed useAnimation import
+import { motion } from "framer-motion" // Removed useAnimation
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,7 +16,8 @@ export default function EventCarousel() {
   const [userInteracted, setUserInteracted] = useState(false)
   const autoScrollTimerRef = useRef<NodeJS.Timeout | null>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const controls = useAnimation()
+  // Removed unused controls variable
+  // const controls = useAnimation()
   const lastInteractionTime = useRef(Date.now())
 
   const handleCardClick = (index: number) => {
@@ -57,8 +59,12 @@ export default function EventCarousel() {
   }, [])
 
   useEffect(() => {
+    // Capture the current ref value inside the effect
+    const carouselElement = carouselRef.current;
+
     const handleWheel = (e: WheelEvent) => {
-      if (carouselRef.current && carouselRef.current.contains(e.target as Node)) {
+      // Use the captured variable
+      if (carouselElement && carouselElement.contains(e.target as Node)) {
         e.preventDefault()
 
         if (e.deltaX > 0 || e.deltaY > 0) {
@@ -74,10 +80,18 @@ export default function EventCarousel() {
     }
 
     window.addEventListener("wheel", handleWheel, { passive: false })
-    return () => window.removeEventListener("wheel", handleWheel)
-  }, [])
+    return () => {
+      // Use the captured variable in the cleanup
+      window.removeEventListener("wheel", handleWheel)
+    }
+    // Added carouselRef to dependencies to satisfy the linter,
+    // though its identity doesn't change, the rule requires it.
+  }, [carouselRef]); // Added carouselRef here
 
   useEffect(() => {
+    // Capture the current ref value inside the effect
+    const carouselElement = carouselRef.current;
+
     let startX = 0
 
     const handleTouchStart = (e: TouchEvent) => {
@@ -86,7 +100,8 @@ export default function EventCarousel() {
     }
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (carouselRef.current && carouselRef.current.contains(e.target as Node)) {
+      // Use the captured variable
+      if (carouselElement && carouselElement.contains(e.target as Node)) {
         e.preventDefault()
         const currentX = e.touches[0].clientX
         const diff = startX - currentX
@@ -108,20 +123,23 @@ export default function EventCarousel() {
       resetAutoScrollTimer()
     }
 
-    if (carouselRef.current) {
-      carouselRef.current.addEventListener("touchstart", handleTouchStart, { passive: false })
-      carouselRef.current.addEventListener("touchmove", handleTouchMove, { passive: false })
-      carouselRef.current.addEventListener("touchend", handleTouchEnd, { passive: false })
+    // Use the captured variable
+    if (carouselElement) {
+      carouselElement.addEventListener("touchstart", handleTouchStart, { passive: false })
+      carouselElement.addEventListener("touchmove", handleTouchMove, { passive: false })
+      carouselElement.addEventListener("touchend", handleTouchEnd, { passive: false })
     }
 
     return () => {
-      if (carouselRef.current) {
-        carouselRef.current.removeEventListener("touchstart", handleTouchStart)
-        carouselRef.current.removeEventListener("touchmove", handleTouchMove)
-        carouselRef.current.removeEventListener("touchend", handleTouchEnd)
+      // Use the captured variable in the cleanup
+      if (carouselElement) {
+        carouselElement.removeEventListener("touchstart", handleTouchStart)
+        carouselElement.removeEventListener("touchmove", handleTouchMove)
+        carouselElement.removeEventListener("touchend", handleTouchEnd)
       }
     }
-  }, [])
+    // Added carouselRef to dependencies to satisfy the linter
+  }, [carouselRef]); // Added carouselRef here
 
   const nextSlide = () => {
     if (!userInteracted) setUserInteracted(true)

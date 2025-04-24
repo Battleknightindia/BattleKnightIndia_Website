@@ -40,7 +40,6 @@ export function PlayerForm({
   // Determine special roles for conditional rendering based on 0-based index
   const isCaptain = playerIndex === 0;
   const isCoach = playerIndex === 6;
-  const isSubstitute = playerIndex === 5;
 
   // Helper function to handle file changes from FileUploader and pass them up
   const handleFileChange = (

@@ -53,12 +53,12 @@ export async function handleProfile(rawForm: unknown) {
       .single();
 
     if (existingProfile) {
-      const { error: updateError, data: updateData } = await supabase.from("profiles").update(profileData).eq("user_id", user.id);
+      const { error: updateError} = await supabase.from("profiles").update(profileData).eq("user_id", user.id);
       if (updateError) {
         return { success: false, error: updateError.message };
       }
     } else {
-      const { error: insertError, data: insertData } = await supabase.from("profiles").insert({ 
+      const { error: insertError} = await supabase.from("profiles").insert({ 
         user_id: user.id,
         ...profileData,
       });

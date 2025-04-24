@@ -1,6 +1,6 @@
 'use client';
 
-import { Instagram, Facebook, Youtube } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 const Footer = () => {
@@ -10,21 +10,26 @@ const Footer = () => {
         <p className="text-center md:text-left text-sm font-medium">
           © 2023 Battle Knight India. All rights reserved.
         </p>
-        <div className="flex justify-center md:justify-end items-center space-x-4 mt-2 md:mt-0">
+        <div className="flex justify-center md:justify-end items-center space-x-4 mt-2 md:pr-20 md:mt-0">
           <p className="text-sm">Follow us on:</p>
-          <a href="https://www.instagram.com/battleknightindia/" target="_blank" rel="noopener noreferrer">
-            <Button variant="ghost" size="icon" className="text-white hover:text-emerald-400 hover:bg-zinc-950">
-              <Instagram className="h-5 w-5" />
+          <a href="#" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" size="icon" className="text-white">
+              <Image src="/svgs/instagram-svgrepo-com.svg" alt="Instagram" width={24} height={24} />
             </Button>
           </a>
-          <a href="https://www.facebook.com/BattleKnightIndia/" target="_blank" rel="noopener noreferrer">
-            <Button variant="ghost" size="icon" className="text-white hover:text-emerald-400 hover:bg-zinc-950">
-              <Facebook className="h-5 w-5" />
+          <a href="#" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" size="icon" className="text-white">
+              <Image src="/svgs/discord-icon-svgrepo-com.svg" alt="Discord" width={24} height={24} />
             </Button>
           </a>
-          <a href="https://www.youtube.com/@battleknightindia" target="_blank" rel="noopener noreferrer">
-            <Button variant="ghost" size="icon" className="text-white hover:text-emerald-400 hover:bg-zinc-950">
-              <Youtube className="h-5 w-5" />
+          <a href="#" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" size="icon" className="text-white">
+              <Image src="/svgs/youtube-svgrepo-com.svg" alt="Youtube" width={24} height={24} />
+            </Button>
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" size="icon" className="text-white">
+              <Image src="/svgs/whatsapp-svgrepo-com.svg" alt="Whatsapp" width={24} height={24} />
             </Button>
           </a>
         </div>

@@ -15,12 +15,12 @@ export const ABOUT_DATA = {
   title: "About BATTLE KNIGHT",
   description: "BATTLE KNIGHT is the premier tournament platform for MOBA Legends 5v5 players. We provide a competitive environment where teams can showcase their skills, compete for prizes, and connect with the community.",
   mission: {
-    icon: "https://cdn.builder.io/api/v1/image/assets/TEMP/328bce89299845ad873e2823f7c6583a60768483?placeholderIfAbsent=true&apiKey=321d88bf5b744033877cc8a5e920a0cb",
+    icon: "/Frame 104.svg",
     title: "Our Mission",
     description: "To create the most engaging and fair competitive environment for MOBA Legend players worldwide, fostering talent and building a vibrant community."
   },
   values: {
-    icon: "https://cdn.builder.io/api/v1/image/assets/TEMP/328bce89299845ad873e2823f7c6583a60768483?placeholderIfAbsent=true&apiKey=321d88bf5b744033877cc8a5e920a0cb",
+    icon: "/Frame 104.svg",
     title: "Our Values",
     description: "Fair Play & Integrity, Community First, Innovation & Excellence in everything we do."
   }

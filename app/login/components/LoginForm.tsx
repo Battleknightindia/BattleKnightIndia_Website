@@ -177,7 +177,7 @@ export function LoginForm({
                 <OAuthButtons/>
               </div>
               <div className="text-center text-sm">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "} {/* Corrected line */}
                 <Link
                   href="/signup"
                   className="underline underline-offset-4 hover:text-emerald-500"

@@ -2,10 +2,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import ParticlesBackground from "@/components/ParticlesBackground";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { GameButton } from "@/components/ui/game-button";
-import { useEffect } from "react";
 
 
 const HeroSection = () => {

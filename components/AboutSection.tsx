@@ -3,6 +3,7 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
 import { ABOUT_DATA } from "@/lib/constant/home_page";
+import Image from "next/image"; // Import the Image component
 
 const AboutSection = () => {
   return (
@@ -23,7 +24,18 @@ const AboutSection = () => {
               {[ABOUT_DATA.mission, ABOUT_DATA.values].map((item, index) => (
                 <div key={index} className="mt-6">
                   <div className="flex gap-2 self-start font-semibold">
-                    <img src={item.icon} className="object-contain shrink-0 self-start rounded-md aspect-[1.03] w-[35px] max-md:w-[25px]" alt={item.title} />
+                    {/*
+                      Ensure the path in item.icon is correct and the image file
+                      exists in your project's public directory.
+                      e.g., if item.icon is '/icons/my-icon.svg', the file should be at public/icons/my-icon.svg
+                    */}
+                    <Image
+                      src={item.icon}
+                      className="object-contain shrink-0 self-start rounded-md aspect-[1.03] w-[35px] max-md:w-[25px]"
+                      alt={item.title}
+                      width={35} // Added intrinsic width
+                      height={35} // Added intrinsic height
+                    />
                     <h3 className="basis-auto max-md:text-base">{item.title}</h3>
                   </div>
                   <p className="mt-2.5 mr-6 ml-11 text-base text-neutral-400 max-md:mr-2.5 max-md:text-sm max-md:ml-8">
@@ -38,6 +50,8 @@ const AboutSection = () => {
             </section>
           </div>
           <div className="ml-5 w-6/12 max-md:ml-0 max-md:w-full">
+            {/* Assuming this div is intended as a placeholder or background image */}
+            {/* If it should display an image, replace this div with <Image /> */}
             <div className="flex shrink-0 mx-auto max-w-full bg-white rounded-2xl h-[788px] w-[788px] max-md:h-[300px] max-md:w-[500px]" aria-label="Battle Knight image" role="img" />
           </div>
         </div>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { GraduationCap } from "lucide-react"; // Upload and Loader2 are not needed in this component anymore
 import { FileUploader } from "@/components/File-Uploader";
 import { useState, useEffect } from "react"; // Keep useState and useEffect for preview logic
+import Image from "next/image"; // Import the Image component
 
 // Define props Step1 expects from its parent (FormContent)
 interface Step1Props {
@@ -151,10 +152,15 @@ export default function Step1({ data, onDataChange }: Step1Props) {
       {/* Image Preview (uses local state derived from parent data) */}
        {logoPreviewUrl && (
            <div className="mt-4 flex justify-center">
-               <img
+               {/* Replaced <img> with <Image /> */}
+               <Image
                    src={logoPreviewUrl}
                    alt="University Logo Preview"
+                   width={150} // Provide a reasonable intrinsic width
+                   height={150} // Provide a reasonable intrinsic height
                    className="max-h-[150px] max-w-full object-contain rounded-md border border-[#747F99]"
+                   // layout="responsive" // Optional: use if you want the image to scale with container
+                   // objectFit="contain" // Optional: specify object-fit via prop
                />
            </div>
        )}

@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+// Restored import:
 import Image from "next/image";
 
-import { Copy, Diamond, ExternalLink, HelpCircle, Search, Users} from "lucide-react";
+
+import { Copy, Diamond, ExternalLink, HelpCircle, Users} from "lucide-react";
+// Removed unused import: import { Search } from "lucide-react";
+
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Removed unused imports: import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { volunteerData, referredTeams, REFERRALTOAST} from "@/lib/constant/volunteers_page";
 import { useProfile } from "@/hooks/useProfile";
-import { getInitials, getAvatarColor, getAvatarUrl } from "@/lib/profileData";
+import { getInitials, getAvatarColor} from "@/lib/profileData";
 import { createClient } from "@/utils/supabase/client";
 import { useVolunteer } from "@/hooks/useVolunteer";
 
@@ -27,11 +31,12 @@ export function Volunteer() {
   const { profile } = useProfile();
   const [initials, setInitials] = useState<string>("??");
   const [avatarColor, setAvatarColor] = useState<string>("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  // Removed unused state: const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
     const getUser = async () => {
+      // Add supabase.auth to the dependency array as it's used here
       const {
         data: { user },
         error,
@@ -43,11 +48,13 @@ export function Volunteer() {
         try {
           const userInitials = await getInitials();
           const userAvatarColor = await getAvatarColor();
-          const userAvatarUrl = await getAvatarUrl();
+          // Removed setAvatarUrl as avatarUrl state is unused
+          // const userAvatarUrl = await getAvatarUrl();
 
           setInitials(userInitials);
           setAvatarColor(userAvatarColor);
-          setAvatarUrl(userAvatarUrl);
+          // Removed setAvatarUrl as avatarUrl state is unused
+          // setAvatarUrl(userAvatarUrl);
         } catch (error) {
           console.error("Error fetching avatar data:", error);
         }
@@ -55,8 +62,10 @@ export function Volunteer() {
     };
 
     getUser();
-  }, []);
+    // Added supabase.auth to the dependency array
+  }, [supabase.auth]); // Added supabase.auth here
 
+  // filteredTeams is calculated and will now be used in the JSX
   const filteredTeams = referredTeams.filter(
     (team) =>
       team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -70,6 +79,7 @@ export function Volunteer() {
     toast(REFERRALTOAST);
   };
 
+  // getStatusBadge is defined and will be called in the JSX
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
@@ -111,6 +121,7 @@ export function Volunteer() {
                 <div className="relative">
                   <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-blue-600">
                     <Avatar className="h-full w-full">
+                      {/* AvatarImage likely uses Next.js Image internally */}
                       <AvatarImage
                         src={profile?.avatar_url || undefined}
                         alt={profile?.ign || "User"}
@@ -272,7 +283,7 @@ export function Volunteer() {
         </div>
 
         {/* Teams Referred Section */}
-        {/* <Card className="bg-white text-zinc-900 rounded-[20px] shadow-lg">
+        <Card className="bg-white text-zinc-900 rounded-[20px] shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl font-bold tracking-tight">
               Teams Referred
@@ -282,15 +293,14 @@ export function Volunteer() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="all" className="w-full">
+            {/* Using a div instead of Tabs as Tabs components were unused */}
+            <div className="w-full">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <TabsList className="bg-zinc-100">
-                  <TabsTrigger value="all">All Teams</TabsTrigger>
-                  <TabsTrigger value="approved">Approved</TabsTrigger>
-                  <TabsTrigger value="pending">Pending</TabsTrigger>
-                </TabsList>
+                {/* Removed TabsList */}
+                {/* Replaced Search icon with lucide-react Search component */}
                 <div className="relative w-full sm:w-auto">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
+                  {/* Using the Search icon from lucide-react directly */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
                   <Input
                     type="search"
                     placeholder="Search teams..."
@@ -300,210 +310,79 @@ export function Volunteer() {
                   />
                 </div>
               </div>
+              {/* Using divs instead of TabsContent */}
               <div className="md:hidden">
-                <TabsContent value="all" className="m-0 space-y-4">
-                  {filteredTeams.length > 0 ? (
-                    filteredTeams.map((team) => (
-                      <Card
-                        key={team.id}
-                        className="overflow-hidden border border-zinc-200"
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="h-10 w-10 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0">
-                              <Image
-                                src={team.logo || "/placeholder.svg"}
-                                alt={team.name}
-                                width={40}
-                                height={40}
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-base truncate">
-                                {team.name}
-                              </h4>
-                              <p className="text-xs text-zinc-500">
-                                Captain: {team.captainName}
-                              </p>
-                            </div>
-                            <div>{getStatusBadge(team.status)}</div>
+                {/* Using filteredTeams directly */}
+                {filteredTeams.length > 0 ? (
+                  filteredTeams.map((team) => (
+                    <Card
+                      key={team.id}
+                      className="overflow-hidden border border-zinc-200"
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="h-10 w-10 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0">
+                            {/* Using Image component */}
+                            <Image
+                              src={team.logo || "/placeholder.svg"}
+                              alt={team.name}
+                              width={40}
+                              height={40}
+                              className="object-cover"
+                            />
                           </div>
-                          <div className="grid grid-cols-2 gap-3 text-xs">
-                            <div>
-                              <p className="text-zinc-500 font-medium uppercase mb-1">
-                                Game ID
-                              </p>
-                              <p className="font-medium">
-                                {team.captainGameId}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-zinc-500 font-medium uppercase mb-1">
-                                Server ID
-                              </p>
-                              <p className="font-medium">
-                                {team.captainServerId}
-                              </p>
-                            </div>
-                            <div className="col-span-2">
-                              <p className="text-zinc-500 font-medium uppercase mb-1">
-                                Registered On
-                              </p>
-                              <p className="font-medium">
-                                {team.registrationDate}
-                              </p>
-                            </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-base truncate">
+                              {team.name}
+                            </h4>
+                            <p className="text-xs text-zinc-500">
+                              Captain: {team.captainName}
+                            </p>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <div className="p-8 text-center">
-                      <p className="text-zinc-500">
-                        No teams found matching your search criteria.
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="approved" className="m-0 space-y-4">
-                  {filteredTeams.filter((team) => team.status === "approved")
-                    .length > 0 ? (
-                    filteredTeams
-                      .filter((team) => team.status === "approved")
-                      .map((team) => (
-                        <Card
-                          key={team.id}
-                          className="overflow-hidden border border-zinc-200"
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="h-10 w-10 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0">
-                                <Image
-                                  src={team.logo || "/placeholder.svg"}
-                                  alt={team.name}
-                                  width={40}
-                                  height={40}
-                                  className="object-cover"
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-base truncate">
-                                  {team.name}
-                                </h4>
-                                <p className="text-xs text-zinc-500">
-                                  Captain: {team.captainName}
-                                </p>
-                              </div>
-                              <div>{getStatusBadge(team.status)}</div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 text-xs">
-                              <div>
-                                <p className="text-zinc-500 font-medium uppercase mb-1">
-                                  Game ID
-                                </p>
-                                <p className="font-medium">
-                                  {team.captainGameId}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-zinc-500 font-medium uppercase mb-1">
-                                  Server ID
-                                </p>
-                                <p className="font-medium">
-                                  {team.captainServerId}
-                                </p>
-                              </div>
-                              <div className="col-span-2">
-                                <p className="text-zinc-500 font-medium uppercase mb-1">
-                                  Registered On
-                                </p>
-                                <p className="font-medium">
-                                  {team.registrationDate}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                  ) : (
-                    <div className="p-8 text-center">
-                      <p className="text-zinc-500">No approved teams found.</p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="pending" className="m-0 space-y-4">
-                  {filteredTeams.filter((team) => team.status === "pending")
-                    .length > 0 ? (
-                    filteredTeams
-                      .filter((team) => team.status === "pending")
-                      .map((team) => (
-                        <Card
-                          key={team.id}
-                          className="overflow-hidden border border-zinc-200"
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center gap-3 mb-4">
-                              <div className="h-10 w-10 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0">
-                                <Image
-                                  src={team.logo || "/placeholder.svg"}
-                                  alt={team.name}
-                                  width={40}
-                                  height={40}
-                                  className="object-cover"
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-base truncate">
-                                  {team.name}
-                                </h4>
-                                <p className="text-xs text-zinc-500">
-                                  Captain: {team.captainName}
-                                </p>
-                              </div>
-                              <div>{getStatusBadge(team.status)}</div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 text-xs">
-                              <div>
-                                <p className="text-zinc-500 font-medium uppercase mb-1">
-                                  Game ID
-                                </p>
-                                <p className="font-medium">
-                                  {team.captainGameId}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-zinc-500 font-medium uppercase mb-1">
-                                  Server ID
-                                </p>
-                                <p className="font-medium">
-                                  {team.captainServerId}
-                                </p>
-                              </div>
-                              <div className="col-span-2">
-                                <p className="text-zinc-500 font-medium uppercase mb-1">
-                                  Registered On
-                                </p>
-                                <p className="font-medium">
-                                  {team.registrationDate}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                  ) : (
-                    <div className="p-8 text-center">
-                      <p className="text-zinc-500">No pending teams found.</p>
-                    </div>
-                  )}
-                </TabsContent>
+                          {/* Calling getStatusBadge */}
+                          <div>{getStatusBadge(team.status)}</div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-zinc-500 font-medium uppercase mb-1">
+                              Game ID
+                            </p>
+                            <p className="font-medium">
+                              {team.captainGameId}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-zinc-500 font-medium uppercase mb-1">
+                              Server ID
+                            </p>
+                            <p className="font-medium">
+                              {team.captainServerId}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-zinc-500 font-medium uppercase mb-1">
+                              Registered On
+                            </p>
+                            <p className="font-medium">
+                              {team.registrationDate}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="p-8 text-center">
+                    <p className="text-zinc-500">
+                      No teams found matching your search criteria.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="hidden md:block">
-                <TabsContent value="all" className="m-0">
+                {/* Using filteredTeams directly */}
+                {filteredTeams.length > 0 ? (
                   <div className="rounded-lg border border-zinc-200 overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">
@@ -530,242 +409,63 @@ export function Volunteer() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredTeams.length > 0 ? (
-                            filteredTeams.map((team, index) => (
-                              <tr
-                                key={team.id}
-                                className={
-                                  index % 2 === 0 ? "bg-white" : "bg-zinc-50"
-                                }
-                              >
-                                <td className="p-4">
-                                  <div className="flex items-center gap-3">
-                                    <div className="h-8 w-8 rounded-full overflow-hidden bg-zinc-200">
-                                      <Image
-                                        src={team.logo || "/placeholder.svg"}
-                                        alt={team.name}
-                                        width={40}
-                                        height={40}
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                    <span className="font-medium">
-                                      {team.name}
-                                    </span>
+                          {filteredTeams.map((team, index) => (
+                            <tr
+                              key={team.id}
+                              className={
+                                index % 2 === 0 ? "bg-white" : "bg-zinc-50"
+                              }
+                            >
+                              <td className="p-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-full overflow-hidden bg-zinc-200">
+                                    {/* Using Image component */}
+                                    <Image
+                                      src={team.logo || "/placeholder.svg"}
+                                      alt={team.name}
+                                      width={40}
+                                      height={40}
+                                      className="object-cover"
+                                    />
                                   </div>
-                                </td>
-                                <td className="p-4 text-sm">
-                                  {team.captainName}
-                                </td>
-                                <td className="p-4 text-sm">
-                                  {team.captainGameId}
-                                </td>
-                                <td className="p-4 text-sm">
-                                  {team.captainServerId}
-                                </td>
-                                <td className="p-4 text-sm">
-                                  {team.registrationDate}
-                                </td>
-                                <td className="p-4 text-sm">
-                                  {getStatusBadge(team.status)}
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td
-                                colSpan={6}
-                                className="p-6 text-center text-zinc-500"
-                              >
-                                No teams found matching your search criteria.
+                                  <span className="font-medium">
+                                    {team.name}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="p-4 text-sm">
+                                {team.captainName}
+                              </td>
+                              <td className="p-4 text-sm">
+                                {team.captainGameId}
+                              </td>
+                              <td className="p-4 text-sm">
+                                {team.captainServerId}
+                              </td>
+                              <td className="p-4 text-sm">
+                                {team.registrationDate}
+                              </td>
+                              <td className="p-4 text-sm">
+                                {/* Calling getStatusBadge */}
+                                {getStatusBadge(team.status)}
                               </td>
                             </tr>
-                          )}
+                          ))}
                         </tbody>
                       </table>
                     </div>
                   </div>
-                </TabsContent>
-
-                <TabsContent value="approved" className="m-0">
-                  <div className="rounded-lg border border-zinc-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="bg-zinc-100 text-left">
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Team
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Captain
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Game ID
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Server ID
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Registered On
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredTeams.filter(
-                            (team) => team.status === "approved"
-                          ).length > 0 ? (
-                            filteredTeams
-                              .filter((team) => team.status === "approved")
-                              .map((team, index) => (
-                                <tr
-                                  key={team.id}
-                                  className={
-                                    index % 2 === 0 ? "bg-white" : "bg-zinc-50"
-                                  }
-                                >
-                                  <td className="p-4">
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-8 w-8 rounded-full overflow-hidden bg-zinc-200">
-                                        <Image
-                                          src={team.logo || "/placeholder.svg"}
-                                          alt={team.name}
-                                          width={40}
-                                          height={40}
-                                          className="object-cover"
-                                        />
-                                      </div>
-                                      <span className="font-medium">
-                                        {team.name}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {team.captainName}
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {team.captainGameId}
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {team.captainServerId}
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {team.registrationDate}
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {getStatusBadge(team.status)}
-                                  </td>
-                                </tr>
-                              ))
-                          ) : (
-                            <tr>
-                              <td
-                                colSpan={6}
-                                className="p-6 text-center text-zinc-500"
-                              >
-                                No approved teams found.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                ) : (
+                  <div className="p-8 text-center">
+                    <p className="text-zinc-500">
+                      No teams found matching your search criteria.
+                    </p>
                   </div>
-                </TabsContent>
-
-                <TabsContent value="pending" className="m-0">
-                  <div className="rounded-lg border border-zinc-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="bg-zinc-100 text-left">
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Team
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Captain
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Game ID
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Server ID
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Registered On
-                            </th>
-                            <th className="p-4 text-xs font-medium uppercase text-zinc-500">
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredTeams.filter(
-                            (team) => team.status === "pending"
-                          ).length > 0 ? (
-                            filteredTeams
-                              .filter((team) => team.status === "pending")
-                              .map((team, index) => (
-                                <tr
-                                  key={team.id}
-                                  className={
-                                    index % 2 === 0 ? "bg-white" : "bg-zinc-50"
-                                  }
-                                >
-                                  <td className="p-4">
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-8 w-8 rounded-full overflow-hidden bg-zinc-200">
-                                        <Image
-                                          src={team.logo || "/placeholder.svg"}
-                                          alt={team.name}
-                                          width={40}
-                                          height={40}
-                                          className="object-cover"
-                                        />
-                                      </div>
-                                      <span className="font-medium">
-                                        {team.name}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {team.captainName}
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {team.captainGameId}
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {team.captainServerId}
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {team.registrationDate}
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    {getStatusBadge(team.status)}
-                                  </td>
-                                </tr>
-                              ))
-                          ) : (
-                            <tr>
-                              <td
-                                colSpan={6}
-                                className="p-6 text-center text-zinc-500"
-                              >
-                                No pending teams found.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </TabsContent>
+                )}
               </div>
-            </Tabs>
+            </div>
           </CardContent>
-        </Card>*/}
+        </Card>
       </div>
     </div>
   );

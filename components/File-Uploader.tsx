@@ -42,7 +42,7 @@ export function FileUploader({
           setDisplayedFileName(
             segments[segments.length - 1] || "Uploaded file"
           );
-        } catch (e) {
+        } catch (error) {
           // Handle invalid URL strings gracefully
           setDisplayedFileName("Uploaded file");
         }
@@ -121,7 +121,6 @@ export function FileUploader({
   // Determine what content goes INSIDE the LABEL element
   const labelContent = displayedFileName ? (
     // Display file name, success icon, and clear control when a file is selected/uploaded
-    // Use a div to wrap these elements
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center flex-grow min-w-0">
         {" "}
@@ -196,9 +195,9 @@ export function FileUploader({
 
       {/* Display error message */}
       {error && (
-        <div className="flex items-center gap-2 text-red-500 text-sm">
-          <AlertCircle className="h-4 w-4" />
-          <span>{error}</span>
+        <div className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-red-600 text-sm animate-in fade-in-0">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span className="truncate">{error}</span>
         </div>
       )}
       {/* Display help text */}

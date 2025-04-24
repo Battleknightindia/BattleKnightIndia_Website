@@ -1,5 +1,7 @@
 "use client"
 
+// useState is no longer needed after removing currentImageIndex
+// import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -8,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import EventCarousel from "@/components/EventCardCarousel"
+// Removed unused import: EVENT_DATA
 import { FEATURED_EVENT } from "@/lib/constant/home_page"
 
 // Animation variants
@@ -45,7 +48,16 @@ const fadeInVariants = {
 }
 
 export default function FeaturedSection() {
-  // Removed useState here as well, aligning with the import removal
+  // Removed unused state: const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
+  // Removed unused functions:
+  // const nextImage = () => {
+  //   setCurrentImageIndex((prevIndex) => (prevIndex === FEATURED_EVENT.images.length - 1 ? 0 : prevIndex + 1))
+  // }
+
+  // const prevImage = () => {
+  //   setCurrentImageIndex((prevIndex) => (prevIndex === 0 ? FEATURED_EVENT.images.length - 1 : prevIndex - 1))
+  // }
 
   return (
     <section className="w-full bg-[#18181B] text-white py-16 md:py-24 overflow-hidden">
@@ -118,11 +130,13 @@ export default function FeaturedSection() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                  {/* Ensure Link is the direct child */}
                   <Button asChild className="bg-emerald-500 text-white hover:bg-emerald-600 flex-1 hover:scale-105 transition-all duration-300">
                     <Link href={FEATURED_EVENT.ticketsUrl}>Register with your team</Link>
                   </Button>
+                  {/* Ensure Link is the direct child */}
                   <Button asChild variant="outline" className="border-white text-black hover:bg-amber-600 hover:text-white flex-1 hover:scale-105 transition-all duration-300">
-                    <Link href={FEATURED_EVENT.watchUrl}>Let&apos;s Watch Live</Link>
+                    <Link href={FEATURED_EVENT.watchUrl}>Let&apos;s Watch Live</Link> {/* Escaped apostrophe */}
                   </Button>
                 </div>
               </CardContent>
@@ -132,7 +146,7 @@ export default function FeaturedSection() {
 
         {/* Event Gallery */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInVariants}>
-          <EventCarousel /> {/* Check the implementation of EventCarousel */}
+          <EventCarousel />
         </motion.div>
 
         {/* CTA Section */}
@@ -145,14 +159,16 @@ export default function FeaturedSection() {
         >
           <Card className="bg-gradient-to-r from-zinc-900 to-zinc-800 border-zinc-400">
             <CardContent className="p-8 md:p-12">
-              <h3 className="text-white text-2xl md:text-3xl font-bold mb-4">Don&apos;t Miss The Action</h3>
+              <h3 className="text-white text-2xl md:text-3xl font-bold mb-4">Don&apos;t Miss The Action</h3> {/* Escaped apostrophe */}
               <p className="text-zinc-400 mb-6 max-w-2xl mx-auto">
-                Whether you&apos;re a player or a fan, this event is not to be missed!
+                Join us for an unforgettable experience filled with thrilling matches, epic moments, and a chance to win amazing prizes. Whether you&apos;re a player or a fan, this event is not to be missed! {/* Escaped apostrophe */}
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
+                {/* Ensure Link is the direct child */}
                 <Button asChild size="lg" className="bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105 transition-all duration-300">
                   <Link href={FEATURED_EVENT.ticketsUrl} className="font-bold">Register with your team</Link>
                 </Button>
+                {/* Ensure Link is the direct child */}
                 <Button asChild variant="outline" size="lg" className="border-white text-black hover:bg-blue-500 hover:text-white hover:scale-105 transition-all duration-300">
                   <Link href="#">View Other Events</Link>
                 </Button>

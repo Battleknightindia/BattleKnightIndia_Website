@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
-import Image from "next/image";
+import Image from "next/image"; // Import the Image component
 import { FileUploader } from "@/components/File-Uploader";
 
 // --- Import types, update Step2Props ---
 // Assuming TeamStepData in "@/types/registrationTypes" will be updated
 // to include 'referral_code: string | null;'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in Step2Props interface
 import { TeamStepData } from "@/types/registrationTypes"; // Import the type
 // --- End Import ---
 
@@ -29,13 +30,13 @@ interface Step2Props {
     // Callback to notify the parent when a field changes
     // Update the union type for fields to include 'referral_code'
     onDataChange: (field: 'name' | 'referral_code' | 'logo', value: string | File | null) => void;
-    // Receive university ID from parent, if needed for display or conditional logic
-    universityId?: string | null;
+    // Removed unused prop: universityId?: string | null;
 }
 // --- End Update Step2Props ---
 
 
-export default function Step2({ data, onDataChange, universityId }: Step2Props) {
+// Removed universityId from props
+export default function Step2({ data, onDataChange }: Step2Props) {
 
     // Local state for image preview URL
     const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
@@ -139,10 +140,15 @@ export default function Step2({ data, onDataChange, universityId }: Step2Props) 
             {/* Image Preview */}
             {logoPreviewUrl && (
                 <div className="mt-4 flex justify-center">
-                    <img
+                    {/* Replaced <img> with <Image /> */}
+                    <Image
                         src={logoPreviewUrl}
                         alt="Team Logo Preview"
+                        width={150} // Provide a reasonable intrinsic width
+                        height={150} // Provide a reasonable intrinsic height
                         className="max-h-[150px] max-w-full object-contain rounded-md border border-[#747F99]"
+                        // layout="responsive" // Optional: use if you want the image to scale with container
+                        // objectFit="contain" // Optional: specify object-fit via prop
                     />
                 </div>
             )}

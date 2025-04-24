@@ -9,13 +9,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { availableRoles } from "@/lib/constant/profile"
 import { handleProfile } from "@/lib/server_actions/profile";
+import Image from "next/image"; // Import the Image component
+// Assuming you have a Profile type defined, import it here
+// import { Profile } from "@/types/profileTypes"; // Adjust the path if needed
+// For now, using a placeholder type if Profile type is not readily available
+type Profile = {
+  id?: string;
+  fullName: string;
+  gameName: string;
+  gameId: string;
+  serverId: string;
+  roles: string; // comma-separated
+  state?: string | null;
+  city?: string | null;
+  avatar_url?: string | null;
+  // Add other profile fields as needed
+};
+
 
 // Props
 interface ProfileCardProps {
   isOpen: boolean;
   onClose: () => void;
   forceCompletion?: boolean;
-  onProfileUpdate?: (profile: any) => void;
+  // Changed 'profile: any' to 'profile: Profile' (assuming a Profile type exists)
+  onProfileUpdate?: (profile: Profile) => void;
 }
 
 // Zod schema for validation
@@ -143,11 +161,18 @@ export function ProfileCard({
         setMessage("Profile updated successfully!");
         setSuccess(true);
         if (onProfileUpdate) {
-          // Only call with response.profile if it exists
+          // Only call with response.profile if it exists and matches the expected type
           if ('profile' in response && response.profile) {
-            onProfileUpdate(response.profile);
+             // Ensure the profile object passed matches the Profile type
+            onProfileUpdate(response.profile as Profile); // Type assertion might be needed depending on actual response type
           } else {
-            onProfileUpdate({ ...result.data, profileImage });
+             // Construct a Profile object from available data
+            const updatedProfile: Profile = {
+              ...result.data,
+              avatar_url: profileImage, // Use profileImage as avatar_url
+              // Add other default/placeholder fields if needed
+            };
+            onProfileUpdate(updatedProfile);
           }
         }
         if (!forceCompletion) {
@@ -210,9 +235,12 @@ export function ProfileCard({
               )}
             >
               {profileImage ? (
-                <img
+                // Replaced <img> with <Image />
+                <Image
                   src={profileImage}
                   alt="Profile"
+                  width={96} // Set intrinsic width based on container size (h-24 w-24 = 96px)
+                  height={96} // Set intrinsic height
                   className="h-full w-full rounded-full object-cover"
                 />
               ) : (

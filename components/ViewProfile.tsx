@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react"; // Keep React import if using JSX
 import { X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useProfile } from "@/hooks/useProfile";
+import Image from "next/image"; // Import Image component
 
 // Props
 interface ProfileViewProps {
@@ -12,6 +13,8 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ isOpen, onClose }: ProfileViewProps) {
+  // useEffect and useState are used within useProfile, not directly here,
+  // so they are not needed as direct imports in this component.
   const { profile, loading, error } = useProfile();
 
   if (!isOpen) return null;
@@ -51,12 +54,15 @@ export function ProfileView({ isOpen, onClose }: ProfileViewProps) {
           <>
             {/* Profile Image */}
             <div className="mb-6 flex justify-center">
-              <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-emerald-500 bg-zinc-800">
+              {/* Add relative positioning for Image fill */}
+              <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-emerald-500 bg-zinc-800 relative">
                 {profile?.avatar_url ? (
-                  <img
+                  <Image // Use Next.js Image component
                     src={profile.avatar_url}
                     alt="Profile"
-                    className="h-full w-full object-cover"
+                    fill={true} // Fill the parent container
+                    sizes="96px" // Specify size as parent is 24x24 (96px)
+                    className="object-cover"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-zinc-500 text-xs">
@@ -84,6 +90,8 @@ export function ProfileView({ isOpen, onClose }: ProfileViewProps) {
                     else if (role === "marksmen") { color = "bg-orange-500"; display = "Marksmen"; }
                     else if (role === "fighter") { color = "bg-red-600"; display = "Fighter"; }
                     else if (role === "tank") { color = "bg-cyan-500"; display = "Tank/Support"; }
+                     else if (role === "gold") { color = "bg-yellow-500"; display = "Gold Laner"; } // Added Gold Laner
+                     else if (role === "exp") { color = "bg-rose-600"; display = "EXP Laner"; } // Added EXP Laner
                     return (
                       <span key={role} className={`px-2 py-1 rounded text-white text-xs font-semibold ${color}`}>
                         {display}

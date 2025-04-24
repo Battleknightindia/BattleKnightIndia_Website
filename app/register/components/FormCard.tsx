@@ -10,7 +10,8 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { GroupStepper } from "./Progress";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+// Removed unused import: useSearchParams
+import { useRouter, usePathname } from "next/navigation"; // Removed useSearchParams
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
@@ -37,6 +38,9 @@ function FormContent() {
   const [activeStep, setActiveStep] = useState(1);
   const pathname = usePathname(); // <-- Call the hook
 
+  // Removed unused searchParams variable
+  // const searchParams = useSearchParams();
+
   // Master state holding data for all steps
   // --- Update initial state to include referral_code ---
   const [formData, setFormData] = useState<RegistrationFormData>({
@@ -53,10 +57,11 @@ function FormContent() {
 
   // Handler to update data for a specific step slice (university, team)
   // --- handleDataChange already correctly handles 'referral_code' for 'team' ---
+  // Changed 'value: any' to 'value: string | File | null' for better type safety
   const handleDataChange = (
     step: "university" | "team",
     field: keyof UniversityStepData | keyof TeamStepData, // This type union includes 'referral_code' if TeamStepData has it
-    value: any
+    value: string | File | null // Specify expected types
   ): void => {
     setFormData((prevData) => ({
       ...prevData,
@@ -70,10 +75,11 @@ function FormContent() {
   // --- End handleDataChange ---
 
   // Handler to update player data in the master state (Step3)
+  // Changed 'value: any' to 'value: string | File | null' for better type safety
   const handlePlayerDataChange = (
     playerIndex: number,
     field: keyof Player,
-    value: any
+    value: string | File | null // Specify expected types
   ): void => {
     const stateKey = (playerIndex + 1).toString();
 
@@ -383,6 +389,7 @@ function FormContent() {
           "[handleFinalSubmit] Final Registration Successful!",
           actionResult
         );
+        // Consider using a more user-friendly notification than alert()
         alert("Team registration complete!");
       } else if (actionResult && actionResult.error) {
         console.error(

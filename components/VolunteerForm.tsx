@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { handlevolunteers } from "@/lib/server_actions/volunteer"
 import { z } from "zod"
-import { useRouter } from "next/navigation"; // ✅ Correct
+import { useRouter } from "next/navigation";
 
 // Form data type
 type FormData = {
@@ -51,10 +51,12 @@ export function VolunteerForm({ open, onOpenChange }: { open: boolean; onOpenCha
 
   // Save form data to localStorage when it changes
   useEffect(() => {
-    if (formData.whatsapp || formData.email) {
-      localStorage.setItem("volunteerFormData", JSON.stringify(formData))
+    // Only save if the dialog is not open and there's data, or if the dialog is open
+    // This prevents saving empty data on load if local storage is cleared
+    if (open || (formData.whatsapp || formData.email)) {
+       localStorage.setItem("volunteerFormData", JSON.stringify(formData));
     }
-  }, [formData])
+  }, [formData, open]); // Added 'open' to dependencies
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
@@ -67,20 +69,52 @@ export function VolunteerForm({ open, onOpenChange }: { open: boolean; onOpenCha
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     console.log("[handleSubmit] FormData:", formData)
-    const result = VolunteerFormSchema.safeParse(formData);
-    
+
+    const validationResult = VolunteerFormSchema.safeParse(formData);
+
+    if (!validationResult.success) {
+      console.error("Validation failed:", validationResult.error.errors);
+       const errorElement = document.getElementById("form-error-message");
+       if (errorElement) {
+         errorElement.textContent = "Validation failed: " + validationResult.error.errors.map(e => e.message).join(", ");
+       }
+      return; // Stop submission if validation fails
+    }
+
+    // Clear any previous form errors if validation passes
+     const errorElement = document.getElementById("form-error-message");
+     if (errorElement) {
+        errorElement.textContent = "";
+     }
+
     try{
-      const result = await handlevolunteers({
+      const serverActionResult = await handlevolunteers({
         email: formData.email,
         phone: formData.whatsapp,
       })
-      if (!result.success) {
-        console.log("Volunteer registration failed:")
+
+      // Access .error instead of .message
+      if (!serverActionResult.success) {
+        console.log("Volunteer registration failed:", serverActionResult.error || "Unknown error")
+        const submissionErrorElement = document.getElementById("form-error-message");
+         if (submissionErrorElement) {
+            // Use .error here
+            submissionErrorElement.textContent = serverActionResult.error || "Volunteer registration failed.";
+         }
+      } else {
+         console.log("Volunteer registration successful!")
+         // Clear saved data on successful submission
+         localStorage.removeItem("volunteerFormData");
+         onOpenChange(false); // Close the dialog on success
+         router.push("/volunteers");
       }
-      router.push("/volunteers")
+
     } catch (error) {
       console.error("Error during volunteer registration:", error)
-      return
+       const submissionErrorElement = document.getElementById("form-error-message");
+       if (submissionErrorElement) {
+          submissionErrorElement.textContent = "An unexpected error occurred during submission.";
+       }
     }
   }
 
@@ -121,7 +155,7 @@ export function VolunteerForm({ open, onOpenChange }: { open: boolean; onOpenCha
             <div className="text-sm text-muted-foreground">
               <p className="mb-2 font-medium text-blue-600">What happens next?</p>
               <ol className="list-decimal pl-4 space-y-1">
-                <li>You'll be redirected to the volunteers dashboard</li>
+                <li>You&apos;ll be redirected to the volunteers dashboard</li> {/* Escaped apostrophe */}
                 <li>Get your unique referral code to share with teams</li>
                 <li>Teams use your code during registration</li>
                 <li>Earn diamonds in your dashboard</li>
@@ -131,9 +165,9 @@ export function VolunteerForm({ open, onOpenChange }: { open: boolean; onOpenCha
               </ol>
             </div>
           </div>
-          <DialogFooter className="mt-4">
-            <p id="error" className="text-red-500"></p>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+          <DialogFooter className="mt-4 flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0"> {/* Added flex classes for responsiveness */}
+            <p id="form-error-message" className="text-red-500 text-sm text-center sm:text-left w-full sm:w-auto"></p> {/* Added ID and styling for displaying errors */}
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"> {/* Added width classes */}
               Submit & Continue
             </Button>
           </DialogFooter>

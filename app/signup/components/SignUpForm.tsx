@@ -13,11 +13,11 @@ import { Label } from "@/components/ui/label"
 import { Mail, Lock } from "lucide-react"
 import { signUp } from "@/lib/server_actions/auth";
 import { useSearchParams } from 'next/navigation';
-import React, { useState } from 'react'; 
+import { useEffect } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { useForm } from 'react-hook-form'; 
-import { zodResolver } from '@hookform/resolvers/zod'; 
-import { z } from 'zod'; 
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 const SignUpFormSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -26,7 +26,7 @@ const SignUpFormSchema = z.object({
   'cf-turnstile-response': z.string().min(1, { message: 'Please complete the CAPTCHA verification.' })
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match.",
-  path: ["confirmPassword"], 
+  path: ["confirmPassword"],
 });
 
 type SignUpFormValues = z.infer<typeof SignUpFormSchema>;
@@ -37,17 +37,18 @@ export function SignUpForm({
 }: React.ComponentPropsWithoutRef<"div">) {
   const searchParams = useSearchParams();
   const serverMessage = searchParams.get('message');
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // Removed unused state: const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
 
   const {
-    register, 
-    handleSubmit, 
-    formState: { errors, isSubmitting }, 
-    setError, 
-    setValue, 
-    trigger, 
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+    setValue,
+    trigger,
   } = useForm<SignUpFormValues>({
-    resolver: zodResolver(SignUpFormSchema), 
+    resolver: zodResolver(SignUpFormSchema),
     defaultValues: {
       email: '',
       password: '',
@@ -56,7 +57,7 @@ export function SignUpForm({
     }
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (serverMessage) {
       setError('root.serverError', { type: 'server', message: serverMessage });
     }
@@ -77,16 +78,16 @@ export function SignUpForm({
   };
 
   const handleTurnstileSuccess = (token: string) => {
-    setTurnstileToken(token);
-    setValue('cf-turnstile-response', token); 
-    trigger('cf-turnstile-response'); 
+    // Removed setTurnstileToken(token); as turnstileToken state is removed
+    setValue('cf-turnstile-response', token);
+    trigger('cf-turnstile-response');
   };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="bg-zinc-950 text-white">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Let's create an Account</CardTitle>
+          <CardTitle className="text-2xl text-center">Let&apos;s create an Account</CardTitle> {/* Escaped apostrophe */}
           <CardDescription>
             Enter your email and password to create an account.
           </CardDescription>
@@ -156,9 +157,9 @@ export function SignUpForm({
               </div>
               <Turnstile
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
-                onSuccess={handleTurnstileSuccess} 
-                onExpire={() => setValue('cf-turnstile-response', '')} 
-                onError={() => setValue('cf-turnstile-response', '')} 
+                onSuccess={handleTurnstileSuccess}
+                onExpire={() => setValue('cf-turnstile-response', '')}
+                onError={() => setValue('cf-turnstile-response', '')}
                 options={{
                   theme: 'dark',
                 }}
@@ -204,7 +205,7 @@ export function SignUpForm({
                 </Button>
               </div>
               <div className="text-center text-sm">
-                Already have an account?{" "}
+                Already have an account?{" "} {/* Escaped apostrophe */}
                 <a href="/login" className="underline underline-offset-4 hover:text-emerald-500">
                   Login
                 </a>

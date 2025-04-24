@@ -5,7 +5,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 interface HCaptchaProps {
   onVerify: (token: string) => void;
-  onError?: (error: any) => void;
+  onError?: (error: unknown) => void;
   onExpire?: () => void;
 }
 
@@ -22,7 +22,7 @@ export function HCaptchaComponent({ onVerify, onError, onExpire }: HCaptchaProps
     onVerify(token);
   };
 
-  const handleError = (error: any) => {
+  const handleError = (error: unknown) => {
     console.error('Captcha error:', error);
     if (onError) {
       onError(error);

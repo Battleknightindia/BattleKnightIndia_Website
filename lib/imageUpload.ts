@@ -1,11 +1,12 @@
 // lib/imageUpload.ts
 "use server";
 import { Buffer } from "buffer"; // Node.js Buffer
+import { SupabaseClient } from "@supabase/supabase-js"; // Import SupabaseClient type
 
 // --- Core Image Upload Logic ---
 
 interface UploadOptions {
-  supabaseClient: any;
+  supabaseClient: SupabaseClient; // Changed any to SupabaseClient
   bucket: string;
   pathPrefix: string; // e.g., 'profiles/', 'registrations/university/uni_name/'
   uniqueIdentifier: string; // e.g., userId, team_name
@@ -19,13 +20,13 @@ interface UploadOptions {
  * Generates a unique filename using identifier + timestamp.
  */
 async function _uploadImageFile({
-  supabaseClient,
+  supabaseClient, // Type is now SupabaseClient via UploadOptions
   bucket,
   pathPrefix,
   uniqueIdentifier,
   file,
   allowedMimeTypes,
-  upsert = true, // Default to upsert like original avatar upload
+  upsert = true,
 }: UploadOptions): Promise<string | null> {
   // Validate MIME type if restrictions are provided
   let ext = file.type.split('/')[1]; // Basic extension extraction
@@ -70,7 +71,7 @@ async function _uploadImageFile({
 // --- Base64 Specific Upload ---
 
 interface Base64UploadOptions {
-  supabaseClient: any;
+  supabaseClient: SupabaseClient; // Changed any to SupabaseClient
   bucket: string;
   pathPrefix: string;
   uniqueIdentifier: string;
@@ -90,7 +91,7 @@ const defaultAllowedImageTypes: Record<string, string> = {
  * Decodes, validates, and calls the generic file uploader.
  */
 async function _uploadImageFromBase64({
-  supabaseClient,
+  supabaseClient, // Type is now SupabaseClient via Base64UploadOptions
   bucket,
   pathPrefix,
   uniqueIdentifier,
@@ -141,7 +142,7 @@ async function _uploadImageFromBase64({
  * Uses the 'avatars' bucket and 'profiles/' path prefix.
  */
 export async function uploadAvatarFromBase64(
-  supabaseClient: any,
+  supabaseClient: SupabaseClient, // Changed any to SupabaseClient
   base64: string,
   userId: string
 ): Promise<string | null> {
@@ -173,14 +174,14 @@ export async function uploadAvatarFromBase64(
  * @param type - 'logo' | 'picture' | 'student_id'
  */
 export async function uploadRegistrationFile(
-  supabaseClient: any,
+  supabaseClient: SupabaseClient, // Changed any to SupabaseClient
   file: File,
   category: 'university' | 'team' | 'players' | 'coach',
   identifier: string, // e.g., for players: `${teamName}/${role}`
   type: 'logo' | 'picture' | 'student_id'
 ): Promise<string | null> {
   if (!identifier || (category === 'players' && !/^([a-zA-Z0-9_-]+)\/(captain|player-\d+|substitute|coach)$/.test(identifier))) {
-    console.error(`Identifier for players must be in the format \x1b[33mteamName/role\x1b[0m (e.g., IITB/captain, IITB/player-2, IITB/coach) for registration file upload.`);
+    console.error(`Identifier for players must be in the format teamName/role (e.g., IITB/captain, IITB/player-2, IITB/coach) for registration file upload.`);
     return null;
   }
 
@@ -199,11 +200,8 @@ export async function uploadRegistrationFile(
   });
 }
 
-// You can add more specific exported functions here if needed
-// e.g., uploadUniversityLogo(file: File, uniName: string) { ... }
-
 // Re-export the existing updateAvatarUrl function if it should remain here
-export async function updateAvatarUrl(supabaseClient: any, avatarUrl: string): Promise<boolean> {
+export async function updateAvatarUrl(supabaseClient: SupabaseClient, avatarUrl: string): Promise<boolean> { // Changed any to SupabaseClient
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) return false;
 

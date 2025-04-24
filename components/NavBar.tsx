@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import {
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User as UserIcon, LogOut, Menu, X, Settings, Diamond } from "lucide-react";
+import { User as UserIcon, LogOut, Settings, Diamond } from "lucide-react";
 import { ProfileCard } from "./EditProfile";
 import { ProfileView } from "./ViewProfile";
 import { useProfile } from "@/hooks/useProfile";
@@ -33,12 +32,11 @@ export default function NavBar() {
   const [user, setUser] = useState<User | null>(null);
   const supabase = createClient();
   const router = useRouter();
-  const pathname = usePathname();
   const [initials, setInitials] = useState<string>("??");
   const [avatarColor, setAvatarColor] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [isFirstLogin, setIsFirstLogin] = useState(false);
+  // Removed isFirstLogin state
   const [isViewProfileOpen, setIsViewProfileOpen] = useState(false);
   const { profile, loading } = useProfile();
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
@@ -75,17 +73,23 @@ export default function NavBar() {
       setIsMenuOpen(false);
     };
 
+    // Use router.events if available in your Next.js version,
+    // otherwise window.addEventListener('popstate') is a fallback.
+    // popstate is generally fine for back/forward navigation, but not all route changes.
+    // For a more robust solution in Next.js 13+, you might use router.events (requires enabling in next.config.js)
+    // or rely on the fact that the component might remount/re-render on route changes.
+    // Sticking to popstate for now as it was in your original code.
     window.addEventListener("popstate", handleRouteChange);
     return () => {
       window.removeEventListener("popstate", handleRouteChange);
     };
-  }, []);
+  }, [supabase.auth]); // Added supabase.auth as a dependency
 
   // Only open ProfileCard on first login after profile is loaded and only once
   useEffect(() => {
     if (!loading && !hasCheckedProfile) {
       if (!profile?.ign) {
-        setIsFirstLogin(true);
+        // Removed setIsFirstLogin(true);
         setIsEditProfileOpen(true);
       }
       setHasCheckedProfile(true);
@@ -94,7 +98,7 @@ export default function NavBar() {
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
-    if (isMenuOpen) {
+    if (isMenuOpen || isEditProfileOpen || isViewProfileOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -102,19 +106,9 @@ export default function NavBar() {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isEditProfileOpen, isViewProfileOpen]); // Combined scroll effects and added isViewProfileOpen
 
-  // Also prevent scroll when profile modal is open
-  useEffect(() => {
-    if (isEditProfileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isEditProfileOpen]);
+  // Removed the separate useEffect for isEditProfileOpen scroll
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -140,24 +134,8 @@ export default function NavBar() {
     }
   };
 
-  // Check if a link is active
-  const isActive = (href: string) => {
-    return (
-      pathname === href ||
-      (pathname &&
-        pathname.length > 1 &&
-        href !== "/" &&
-        pathname.startsWith(href))
-    );
-  };
-
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/tournament", label: "Tournament" },
-    { href: "/teams", label: "My Team" },
-    { href: "/matches", label: "Match" },
-    { href: "/about", label: "About" },
-  ];
+  // Removed isActive function
+  // Removed navLinks array
 
   // Section navigation for scrolling
   const sectionNav = [
@@ -291,34 +269,34 @@ export default function NavBar() {
             </div>
           )}
 
-<button
-      className="md:hidden relative z-20 p-2 -mr-2 text-white"
-      onClick={toggleMenu}
-      aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-    >
-      <div className="flex flex-col justify-center items-center w-7 h-7 relative">
-        {/* First bar */}
-        <div 
-          className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-300 ease-in-out ${
-            isMenuOpen ? 'rotate-45' : 'translate-y-[-6px]'
-          }`}
-        />
-        
-        {/* Middle bar */}
-        <div 
-          className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-200 ease-in-out ${
-            isMenuOpen ? 'opacity-0' : 'opacity-100'
-          }`}
-        />
-        
-        {/* Last bar */}
-        <div 
-          className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-300 ease-in-out ${
-            isMenuOpen ? '-rotate-45' : 'translate-y-[6px]'
-          }`}
-        />
-      </div>
-    </button>
+          <button
+            className="md:hidden relative z-20 p-2 -mr-2 text-white"
+            onClick={toggleMenu}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          >
+            <div className="flex flex-col justify-center items-center w-7 h-7 relative">
+              {/* First bar */}
+              <div
+                className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-300 ease-in-out ${
+                  isMenuOpen ? "rotate-45" : "translate-y-[-6px]"
+                }`}
+              />
+
+              {/* Middle bar */}
+              <div
+                className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-200 ease-in-out ${
+                  isMenuOpen ? "opacity-0" : "opacity-100"
+                }`}
+              />
+
+              {/* Last bar */}
+              <div
+                className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-300 ease-in-out ${
+                  isMenuOpen ? "-rotate-45" : "translate-y-[6px]"
+                }`}
+              />
+            </div>
+          </button>
         </div>
       </header>
 
@@ -393,7 +371,7 @@ export default function NavBar() {
                 <UserIcon className="mr-2 h-4 w-4" />
                 View Profile
               </Button>
-              {isVolunteer(profile) && (
+               {isVolunteer(profile) && (
                 <Button
                   variant="outline"
                   className="w-full border-zinc-700 text-emerald-500 hover:bg-zinc-900"
@@ -434,21 +412,3 @@ export default function NavBar() {
     </>
   );
 }
-
-/*
-{navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={toggleMenu}
-                className={cn(
-                  "py-3 px-4 text-lg font-medium rounded-md transition-colors",
-                  isActive(link.href)
-                    ? "text-emerald-400 bg-zinc-900"
-                    : "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-*/

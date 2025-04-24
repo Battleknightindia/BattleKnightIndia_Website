@@ -20,7 +20,7 @@ interface GroupStepperProps {
   setActiveStep: (step: number) => void
 }
 
-export const GroupStepper = ({ activeStep, setActiveStep }: GroupStepperProps) => {
+export const GroupStepper = ({ activeStep }: GroupStepperProps) => {
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-md mx-auto">
       <nav aria-label="Progress" className="flex items-center justify-between bg-[#0F172A] px-4 py-2 rounded-md w-full">

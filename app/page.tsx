@@ -2,11 +2,11 @@
 import HeroSection from "@/components/HeroSection";
 import FeaturedSection from "@/components/FeaturedSection";
 import AboutSection from "@/components/AboutSection";
-import { OurPartnersSection } from "@/components/PartnerSection";
+// Removed unused import: import { OurPartnersSection } from "@/components/PartnerSection";
 import NorthEastCup from "@/components/NorthEastCup";
 import CosplaySection from "@/components/CosplaySection";
 import Footer from "@/components/Footer";
-import { VolunteerForm } from "@/components/VolunteerForm"; 
+import { VolunteerForm } from "@/components/VolunteerForm";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { ProfileCard } from "@/components/EditProfile";
@@ -23,12 +23,11 @@ export default function Home() {
   const [showForceProfile, setShowForceProfile] = useState(false);
   const [showForm, setShowForm] = useState(false)
 
-  const handleOpenForm = () => {
-    setShowForm(true)
-  }
-  
+  // Removed unused function: handleOpenForm
+
   useEffect(() => {
     async function checkUserProfile() {
+      // Ensure supabase.auth is included in the dependency array as it's used here
       const { data: { user } } = await supabase.auth.getUser();
       if (user && !loading && !profile) {
         setShowForceProfile(true);
@@ -37,8 +36,8 @@ export default function Home() {
       }
     }
     checkUserProfile();
-    // Also re-check if profile or loading changes
-  }, [profile, loading]);
+    // Added supabase.auth to the dependency array to satisfy the hook's requirement
+  }, [profile, loading, supabase.auth]); // Added supabase.auth here
 
   // Handler to be called when profile is updated
   function handleProfileUpdate() {
@@ -65,9 +64,6 @@ export default function Home() {
         <div id="about">
           <AboutSection />
         </div>
-        {/* <div id="partners">
-          <OurPartnersSection />
-        </div> */}
         <Footer />
       </div>
       <ProfileCard
@@ -78,7 +74,9 @@ export default function Home() {
       />
       {!isVolunteer(profile) && (
         <>
+          {/* Directly calling setShowForm(true) */}
           <DiamondFab onOpenForm={() => setShowForm(true)} />
+          {/* Directly calling setShowForm(true) */}
           <SlideInNotification onOpenForm={() => setShowForm(true)} />
         </>
       )}

@@ -15,7 +15,8 @@ interface Step3Props {
     // Receive the entire players data object slice from the parent state
     data: PlayersStepData;
     // Receive the specific handler to update player data in the parent state
-    onDataChange: (playerIndex: number, field: keyof Player, value: any) => void;
+    // Changed 'value: any' to a more specific union type
+    onDataChange: (playerIndex: number, field: keyof Player, value: string | File | null) => void;
 }
 
 
@@ -59,7 +60,7 @@ export default function Step3({ data, onDataChange }: Step3Props) { // Remove te
     }
      // The effect should re-run if searchParams change.
      // Adding router.pathname ensures it re-runs if the base path changes,
-     // though less likely for this specific use case.  
+     // though less likely for this specific use case.
   }, [searchParams, router, pathname]);
 
   // --- Handlers to update Parent State ---
@@ -68,6 +69,7 @@ export default function Step3({ data, onDataChange }: Step3Props) { // Remove te
     field: keyof Omit<Player, "id" | "role" | "picture_url" | "student_id_url" | "team_id" | "university_id" | "profile_id" | "created_at">,
     value: string
   ) => {
+     // The value here is always a string from text inputs
      onDataChange(playerIndex, field as keyof Player, value);
   };
 
@@ -82,6 +84,7 @@ export default function Step3({ data, onDataChange }: Step3Props) { // Remove te
         onDataChange(playerIndex, field, null); // Clear the file in parent state
         return;
       }
+    // The value here is a File object or null
     onDataChange(playerIndex, field, file);
   };
   // --- End Handlers ---

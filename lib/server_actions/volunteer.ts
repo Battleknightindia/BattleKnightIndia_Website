@@ -2,7 +2,6 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { SupabaseClient, User } from "@supabase/supabase-js";
-import { redirect } from "next/navigation";
 
 interface volunteerType {
     email: string;
@@ -45,7 +44,7 @@ export async function handlevolunteers(data: volunteerType) {
     console.log("Volunteer data:", volunteerData)
 
     try{
-        const { data: exists, error: existsError } = await supabase
+        const { data: exists } = await supabase
             .from("volunteers")
             .select("*")
             .eq("email", volunteerData.email)

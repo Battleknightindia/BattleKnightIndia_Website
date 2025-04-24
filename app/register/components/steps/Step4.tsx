@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import { Button } from "@/components/ui/button";
+import Image from "next/image"; // Import the Image component
 
 // Import types from registrationTypes.ts
 import {
@@ -153,9 +154,12 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                    <p className="font-medium">{getFileDisplayName(universityData?.logo) || "Not provided"}</p>
                     {getFileDisplayName(universityData?.logo) && universityData?.logo && (
                         <div className="mt-2">
-                            <img
+                            {/* Replaced <img> with <Image /> */}
+                            <Image
                                 src={typeof universityData.logo === 'string' ? universityData.logo : URL.createObjectURL(universityData.logo)}
                                 alt="University Logo Preview"
+                                width={80} // Added width
+                                height={80} // Added height
                                 className="max-h-[80px] object-contain rounded-md"
                             />
                         </div>
@@ -198,9 +202,12 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                   <p className="font-medium">{getFileDisplayName(teamData?.logo) || "Not provided"}</p>
                    {getFileDisplayName(teamData?.logo) && teamData?.logo && (
                        <div className="mt-2">
-                           <img
+                           {/* Replaced <img> with <Image /> */}
+                           <Image
                                src={typeof teamData.logo === 'string' ? teamData.logo : URL.createObjectURL(teamData.logo)}
                                alt="Team Logo Preview"
+                               width={80} // Added width
+                               height={80} // Added height
                                className="max-h-[80px] object-contain rounded-md"
                            />
                        </div>
@@ -333,9 +340,12 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                           <p className="font-medium">{getFileDisplayName(member.picture_url) || "Not provided"}</p>
                            {getFileDisplayName(member.picture_url) && member.picture_url && (
                                 <div className="mt-2">
-                                   <img
+                                   {/* Replaced <img> with <Image /> */}
+                                   <Image
                                        src={typeof member.picture_url === 'string' ? member.picture_url : URL.createObjectURL(member.picture_url)}
                                        alt={`${getPlayerRole(member.role)} Photo Preview`}
+                                       width={80} // Added width
+                                       height={80} // Added height
                                        className="max-h-[80px] object-contain rounded-md"
                                    />
                                 </div>
@@ -350,9 +360,12 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                            {getFileDisplayName(member.student_id_url) && member.student_id_url && (
                                 getFileDisplayName(member.student_id_url) !== "Not Required" && (
                                     <div className="mt-2">
-                                       <img
+                                       {/* Replaced <img> with <Image /> */}
+                                       <Image
                                            src={typeof member.student_id_url === 'string' ? member.student_id_url : URL.createObjectURL(member.student_id_url)}
                                            alt={`${getPlayerRole(member.role)} Student Proof Preview`}
+                                           width={80} // Added width
+                                           height={80} // Added height
                                            className="max-h-[80px] object-contain rounded-md"
                                        />
                                     </div>
@@ -428,7 +441,7 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
         <div className="flex items-center justify-center p-4 bg-blue-50 rounded-lg border border-blue-100 mt-6">
           <FileCheck className="h-5 w-5 text-blue-600 mr-2" />
           <p className="text-sm text-blue-700 font-medium">
-            Please click "Submit Registration" below to complete your registration
+            Please click &quot;Submit Registration&quot; below to complete your registration
           </p>
         </div>
       </div>
