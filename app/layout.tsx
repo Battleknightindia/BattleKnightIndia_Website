@@ -3,6 +3,7 @@ import "./globals.css";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { fontClass } from "@/lib/constant/fonts";
 import { Suspense } from 'react'; // Import Suspense from react
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const metadata = {
   title: 'Battle Knight India',
@@ -26,6 +27,7 @@ export default function RootLayout({
         {/* Wrap LayoutWrapper (and its children) with Suspense */}
         <Suspense fallback={<div>Loading layout...</div>}> {/* Add a fallback UI */}
           <LayoutWrapper>
+            <SpeedInsights />
             {children}
           </LayoutWrapper>
         </Suspense>

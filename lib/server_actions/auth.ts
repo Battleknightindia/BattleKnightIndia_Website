@@ -62,7 +62,7 @@ export async function loginWithEmail(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/');
+  redirect('/?loginSuccess=true');
 }
 
 export async function signOut() {

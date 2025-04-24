@@ -5,7 +5,7 @@ import { Button } from "./ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import {
@@ -40,6 +40,8 @@ export default function NavBar() {
   const [isViewProfileOpen, setIsViewProfileOpen] = useState(false);
   const { profile, loading } = useProfile();
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
+  const searchParams = useSearchParams();
+  const loginSuccessParam = searchParams.get('loginSuccess');
 
   useEffect(() => {
     const getUser = async () => {
@@ -87,14 +89,29 @@ export default function NavBar() {
 
   // Only open ProfileCard on first login after profile is loaded and only once
   useEffect(() => {
+    // This effect should run after loading finishes and only if we haven't checked profile status during this mount.
     if (!loading && !hasCheckedProfile) {
-      if (!profile?.ign) {
-        // Removed setIsFirstLogin(true);
+      console.log("Checking profile status after load. Login success param:", loginSuccessParam); // Debugging line
+
+      // Check if profile is incomplete AND the URL indicates a successful login redirect
+      if (!profile?.ign && loginSuccessParam === 'true') {
         setIsEditProfileOpen(true);
+        console.log("Profile incomplete after login, opening edit profile."); // Debugging line
+      } else if (profile?.ign) {
+          console.log("Profile complete."); // Debugging line
+      } else {
+           console.log("Profile incomplete, but not a login redirect."); // Debugging line
       }
+
+      // In all cases after the initial load/check logic runs,
+      // mark that we have performed this check for this mount.
+      // This prevents the popup from re-opening if the component re-renders later.
       setHasCheckedProfile(true);
     }
-  }, [loading, profile, hasCheckedProfile]);
+
+    // Dependencies: Re-run this effect if loading status, profile data,
+    // the hasCheckedProfile flag, or the loginSuccess query parameter changes.
+  }, [loading, profile, hasCheckedProfile, loginSuccessParam]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
