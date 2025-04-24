@@ -12,7 +12,7 @@ const Footer = () => {
         </p>
         <div className="flex justify-center md:justify-end items-center space-x-4 mt-2 md:pr-20 md:mt-0">
           <p className="text-sm">Follow us on:</p>
-          <a href="#" target="_blank" rel="noopener noreferrer">
+          {/* <a href="#" target="_blank" rel="noopener noreferrer">
             <Button variant="ghost" size="icon" className="text-white">
               <Image src="/svgs/instagram-svgrepo-com.svg" alt="Instagram" width={24} height={24} />
             </Button>
@@ -31,7 +31,7 @@ const Footer = () => {
             <Button variant="ghost" size="icon" className="text-white">
               <Image src="/svgs/whatsapp-svgrepo-com.svg" alt="Whatsapp" width={24} height={24} />
             </Button>
-          </a>
+          </a> */}
         </div>
       </div>
     </footer>
