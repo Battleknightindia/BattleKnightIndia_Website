@@ -68,9 +68,9 @@ const ReferredTeamsSection: React.FC = () => {
         const fetchedTeams = await fetchTeamsByReferralCodeAndCaptainData();
         setTeams(fetchedTeams); // Store all fetched teams
         setFilteredTeams(fetchedTeams); // Initially, filtered teams are all fetched teams
-      } catch (err: any) { // Use 'any' or a more specific error type if known
+      } catch (err: unknown) { // Use 'any' or a more specific error type if known
         console.error("Failed to fetch referred teams:", err);
-        setError(`Failed to load referred teams: ${err.message || 'Unknown error'}`);
+        setError(`Failed to load referred teams: ${(err as Error)?.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
       }

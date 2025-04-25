@@ -38,6 +38,7 @@ export default function NavBar() {
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
   const searchParams = useSearchParams();
   const loginSuccessParam = searchParams.get("loginSuccess");
+  const pathname = usePathname();
 
   useEffect(() => {
     const getUser = async () => {
@@ -329,7 +330,7 @@ export default function NavBar() {
             {/* Section scroll nav for mobile */}
             {sectionNav.map((section) => {
               if (section.id === "home") {
-                if (usePathname() !== "/") {
+                if (pathname !== "/") { // Use the variable obtained from the hook
                   return (
                     <button
                       key={section.id}
