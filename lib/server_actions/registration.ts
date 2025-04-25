@@ -181,6 +181,8 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
   const bucketName = "registrations";
 
   const universityName = formData.get("university_name") as string | null;
+  const universityState = formData.get("university_state") as string | null;
+  const universityCity = formData.get("university_city") as string | null;
   const teamName = formData.get("team_name") as string | null;
   const referralCode = formData.get("referral_code") as string | null;
 
@@ -219,8 +221,10 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
        }
     }
 
-    const universityUpdateData: { name: string; logo_url?: string | null } = {
-      name: universityName,
+    const universityUpdateData: { name: string; logo_url?: string | null; state: string; city: string } = {
+      name: universityName || "",
+      state: universityState || "",
+      city: universityCity || "",
     };
     if (universityLogoUrl !== null) { // Only include logo_url if a new file was processed
       universityUpdateData.logo_url = universityLogoUrl;
@@ -611,6 +615,8 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
      let teamId: string | null = null;
 
     const universityName = formData.get("university_name") as string | null;
+    const universityState = formData.get("university_state") as string | null;
+    const universityCity = formData.get("university_city") as string | null;
     const teamName = formData.get("team_name") as string | null;
     const referralCode = formData.get("referral_code") as string | null; // Extract referral_code
 
@@ -653,6 +659,8 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
         const universityEntry = {
             name: universityName,
             logo_url: universityLogoUrl,
+            state: universityState || "",
+            city: universityCity || "",
         };
         console.log("[registerNewTeam] Inserting University:", universityEntry);
         const { data: uniData, error: uniInsertError } = await supabase

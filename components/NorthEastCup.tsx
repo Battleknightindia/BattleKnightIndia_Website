@@ -304,23 +304,6 @@ export default function HorizontalTournamentShowcase() {
                 )}
               </div>
             )}
-
-            {TOURNAMENT_DATA[activeIndex].team && (
-              <div className="bg-gray-100 text-black p-5 rounded-lg">
-                <p className="font-semibold mb-3 text-lg">Team</p>
-                <ul className="list-none space-y-2">
-                  {TOURNAMENT_DATA[activeIndex].team.map((member, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start text-base md:text-lg"
-                    >
-                      <span className="mr-2 text-lg">•</span>
-                      <span>{member}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </motion.div>
         </motion.div>
       </div>

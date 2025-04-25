@@ -49,10 +49,15 @@ const AboutSection = () => {
               </button>
             </section>
           </div>
-          <div className="ml-5 w-6/12 max-md:ml-0 max-md:w-full">
+          <div className="flex justify-center pt-5">
             {/* Assuming this div is intended as a placeholder or background image */}
             {/* If it should display an image, replace this div with <Image /> */}
-            <div className="flex shrink-0 mx-auto max-w-full bg-white rounded-2xl h-[788px] w-[788px] max-md:h-[300px] max-md:w-[500px]" aria-label="Battle Knight image" role="img" />
+            <Image
+              src="/1.png"
+              alt="Battle Knight Logo"
+              width={250}
+              height={250}
+            />
           </div>
         </div>
       </div>

@@ -156,7 +156,7 @@ export default function CosplaySection() {
           <div className="relative z-20 m-2">
             <div className="relative aspect-[3/4] lg:aspect-[16/9] w-full overflow-hidden rounded-xl">
               <Image
-                src="/placeholder.svg?height=800&width=600"
+                src="/cosplay/cosplay2.webp"
                 alt="Featured cosplay"
                 width={600}
                 height={800}
@@ -189,11 +189,17 @@ export default function CosplaySection() {
           >
             <div className="absolute inset-0 flex">
               {cosplays.map((cosplay, index) => {
+
+
                 // Calculate relative position for infinite card display
                 const position = (index - currentIndex + cosplays.length) % cosplays.length;
                 let transformClass = 'opacity-0 invisible';
                 let zIndex = 0;
-                
+                const isSecondImage = index === 1;
+                const lowerImageClass = isSecondImage
+                      ? "object-contain"
+                      : "object-cover";
+
                 if (position === 0) {
                   transformClass = 'translate-x-0 opacity-100 visible';
                   zIndex = 10;
@@ -215,12 +221,18 @@ export default function CosplaySection() {
                     style={{ zIndex }}
                   >
                     <div className="bg-white rounded-xl p-3 shadow-xl h-full">
-                      <div className="relative h-[450px] w-full overflow-hidden rounded-lg">
+                      <div className={cn(
+  "relative h-[450px] w-full overflow-hidden rounded-lg",
+  index === 1 && "mt-8"
+)}>
                         <Image
                           src={cosplay.image || "/placeholder.svg"}
                           alt={cosplay.character}
                           fill
-                          className="object-cover transition-all duration-500"
+                          className={cn(
+                            "transition-all duration-500",
+                            lowerImageClass
+                          )}
                         />
                         <div className="absolute bottom-3 right-3 flex flex-col items-center gap-1">
                           <button

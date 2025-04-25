@@ -153,9 +153,6 @@ export default function FeaturedSection() {
                 <Button asChild size="lg" className="bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105 transition-all duration-300">
                   <Link href={FEATURED_EVENT.ticketsUrl} className="font-bold">Register with your team</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="border-white text-black hover:bg-blue-500 hover:text-white hover:scale-105 transition-all duration-300">
-                  <Link href="#">View Other Events</Link>
-                </Button>
               </div>
             </CardContent>
           </Card>

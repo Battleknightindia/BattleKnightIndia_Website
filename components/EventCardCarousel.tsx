@@ -161,7 +161,7 @@ export default function EventCarousel() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        Event Highlights
+        NCC Promotional Matches
       </motion.h3>
 
       <div

@@ -5,14 +5,10 @@ import { Button } from "./ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import {
-  getInitials,
-  getAvatarColor,
-  getAvatarUrl,
-} from "@/lib/profileData";
+import { getInitials, getAvatarColor, getAvatarUrl } from "@/lib/profileData";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +37,7 @@ export default function NavBar() {
   const { profile, loading } = useProfile();
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
   const searchParams = useSearchParams();
-  const loginSuccessParam = searchParams.get('loginSuccess');
+  const loginSuccessParam = searchParams.get("loginSuccess");
 
   useEffect(() => {
     const getUser = async () => {
@@ -91,16 +87,19 @@ export default function NavBar() {
   useEffect(() => {
     // This effect should run after loading finishes and only if we haven't checked profile status during this mount.
     if (!loading && !hasCheckedProfile) {
-      console.log("Checking profile status after load. Login success param:", loginSuccessParam); // Debugging line
+      console.log(
+        "Checking profile status after load. Login success param:",
+        loginSuccessParam
+      ); // Debugging line
 
       // Check if profile is incomplete AND the URL indicates a successful login redirect
-      if (!profile?.ign && loginSuccessParam === 'true') {
+      if (!profile?.ign && loginSuccessParam === "true") {
         setIsEditProfileOpen(true);
         console.log("Profile incomplete after login, opening edit profile."); // Debugging line
       } else if (profile?.ign) {
-          console.log("Profile complete."); // Debugging line
+        console.log("Profile complete."); // Debugging line
       } else {
-           console.log("Profile incomplete, but not a login redirect."); // Debugging line
+        console.log("Profile incomplete, but not a login redirect."); // Debugging line
       }
 
       // In all cases after the initial load/check logic runs,
@@ -328,41 +327,57 @@ export default function NavBar() {
           {/* Mobile Navigation Links */}
           <nav className="flex flex-col space-y-4 mb-8">
             {/* Section scroll nav for mobile */}
-            {sectionNav.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => scrollToSection(section.id)}
-                className={cn(
-                  "py-3 px-4 text-lg font-medium rounded-md transition-colors",
-                  "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                )}
-                style={{ transition: "all 0.2s" }}
-              >
-                {section.label}
-              </button>
-            ))}
+            {sectionNav.map((section) => {
+              if (section.id === "home") {
+                if (usePathname() !== "/") {
+                  return (
+                    <button
+                      key={section.id}
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        router.push("/");
+                      }}
+                      className={cn(
+                        "py-3 px-4 text-lg font-medium rounded-md transition-colors",
+                        "text-zinc-300 hover:text-white hover:bg-zinc-900"
+                      )}
+                      style={{ transition: "all 0.2s" }}
+                    >
+                      {section.label}
+                    </button>
+                  );
+                }
+              }
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  onClick={() => scrollToSection(section.id)}
+                  className={cn(
+                    "py-3 px-4 text-lg font-medium rounded-md transition-colors",
+                    "text-zinc-300 hover:text-white hover:bg-zinc-900"
+                  )}
+                  style={{ transition: "all 0.2s" }}
+                >
+                  {section.label}
+                </button>
+              );
+            })}
           </nav>
 
           {/* Mobile Auth Buttons */}
           {!user && (
-            <div className="flex flex-col space-y-3 mt-auto">
-              <Link href="/login" onClick={toggleMenu}>
-                <Button
-                  variant="outline"
-                  className="w-full border-zinc-700 text-white hover:bg-zinc-900 hover:text-emerald-400"
-                >
-                  Login
-                </Button>
-              </Link>
-              {/* <Link href="/signup" onClick={toggleMenu}>
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-black">
-                  Sign Up
-                </Button>
-              </Link> */}
-            </div>
+            <Link href="/login" className="pt-10">
+              <Button
+                variant="outline"
+                className="w-full p border-zinc-700 bg-emerald-500 text-white hover:bg-emerald-600"
+                onClick={toggleMenu}
+              >
+                Login
+              </Button>
+            </Link>
           )}
-
           {/* Mobile User Actions */}
           {user && (
             <div className="flex flex-col space-y-3 mt-auto">
@@ -388,7 +403,7 @@ export default function NavBar() {
                 <UserIcon className="mr-2 h-4 w-4" />
                 View Profile
               </Button>
-               {isVolunteer(profile) && (
+              {isVolunteer(profile) && (
                 <Button
                   variant="outline"
                   className="w-full border-zinc-700 text-emerald-500 hover:bg-zinc-900"
