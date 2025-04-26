@@ -10,22 +10,6 @@ export const PARTNERS = [
   "/ROG logo_red.png",
 ];
 
-// About section data
-export const ABOUT_DATA = {
-  title: "About BATTLE KNIGHT",
-  description: "BATTLE KNIGHT is the premier tournament platform for MOBA Legends 5v5 players. We provide a competitive environment where teams can showcase their skills, compete for prizes, and connect with the community.",
-  mission: {
-    icon: "/Frame 104.svg",
-    title: "Our Mission",
-    description: "To create the most engaging and fair competitive environment for MOBA Legend 5v5 players worldwide, fostering talent and building a vibrant community."
-  },
-  values: {
-    icon: "/Frame 104.svg",
-    title: "Our Values",
-    description: "Fair Play & Integrity, Community First, Innovation & Excellence in everything we do."
-  }
-};
-
 // North East Cup tournament data
 export const TOURNAMENT_DATA = [
   {

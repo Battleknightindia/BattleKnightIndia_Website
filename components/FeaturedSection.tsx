@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { Calendar, MapPin, Users } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import EventCarousel from "@/components/EventCardCarousel"
-import { FEATURED_EVENT } from "@/lib/constant/home_page"
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Calendar, MapPin, Users } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import EventCarousel from "@/components/EventCardCarousel";
+import { FEATURED_EVENT } from "@/lib/constant/home_page";
 
 // Animation variants
 const containerVariants = {
@@ -19,7 +19,7 @@ const containerVariants = {
       staggerChildren: 0.1,
     },
   },
-}
+};
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
@@ -32,7 +32,7 @@ const itemVariants = {
       damping: 15,
     },
   },
-}
+};
 
 const fadeInVariants = {
   hidden: { opacity: 0 },
@@ -42,7 +42,7 @@ const fadeInVariants = {
       duration: 0.6,
     },
   },
-}
+};
 
 export default function FeaturedSection() {
   // Removed useState here as well, aligning with the import removal
@@ -57,8 +57,12 @@ export default function FeaturedSection() {
           viewport={{ once: true }}
           variants={fadeInVariants}
         >
-          <Badge className="mb-4 bg-amber-500 text-white hover:bg-amber-600 hover:scale-105 transition-all duration-300">Featured Event</Badge>
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">Current Main Event</h2>
+          <Badge className="mb-4 bg-amber-500 text-white hover:bg-amber-600 hover:scale-105 transition-all duration-300">
+            Featured Event
+          </Badge>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
+            Current Main Event
+          </h2>
           <div className="w-24 h-1 bg-white mx-auto"></div>
         </motion.div>
 
@@ -70,16 +74,21 @@ export default function FeaturedSection() {
           variants={containerVariants}
         >
           {/* Main Event Banner */}
-          <motion.div variants={itemVariants} className="relative overflow-hidden rounded-2xl">
+          <motion.div
+            variants={itemVariants}
+            className="relative overflow-hidden md:rounded-2xl"
+          >
             <Image
               src={FEATURED_EVENT.bannerImage || "/placeholder.svg"}
               alt={FEATURED_EVENT.title}
               width={1200}
               height={600}
-              className="w-full h-[300px] md:h-[400px] object-cover"
+              className="w-full h-[300px] md:h-[400px] object-contain md:object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
-              <h3 className="text-2xl md:text-4xl font-bold mb-2">{FEATURED_EVENT.title}</h3>
+              <h3 className="text-2xl md:text-4xl font-bold mb-2">
+                {FEATURED_EVENT.title}
+              </h3>
               <div className="flex flex-wrap gap-4 text-sm">
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-1 text-emerald-500" />
@@ -102,27 +111,58 @@ export default function FeaturedSection() {
             <Card className="bg-zinc-900 border-zinc-500 h-full">
               <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex-1">
-                  <h4 className="text-xl font-bold mb-4 text-white">Event Details</h4>
-                  <p className="text-zinc-300 mb-6">{FEATURED_EVENT.description}</p>
+                  <h4 className="text-xl font-bold mb-4 text-white">
+                    Event Details
+                  </h4>
+                  <p className="text-zinc-300 mb-6">
+                    <b>"From Classrooms to Championships – Play for Your Campus!"</b>
+                    <br />
+                    The National College Cup (NCC) by BattleKnights is a
+                    student-exclusive MOBA Legends 5v5 tournament open to school
+                    students (with college admission proof), current college,
+                    and postgraduate students. A valid student ID or admit card
+                    is required to participate. Teams can have players from
+                    different institutions but must represent a single college
+                    or university. Even Mythical and Elite leaderboard teams can
+                    join, as long as all players are verified students. The
+                    tournament includes online qualifiers and state-level
+                    promotional matches, powered by Vizta. It's time to
+                    represent your campus and become a legend.
+                  </p>
 
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="bg-zinc-800 p-4 rounded-lg">
                       <p className="text-sm text-zinc-400">Teams</p>
-                      <p className="text-xl font-bold text-purple-400">{FEATURED_EVENT.teamCount}</p>
+                      <p className="text-xl font-bold text-purple-400">
+                        {FEATURED_EVENT.teamCount}
+                      </p>
                     </div>
                     <div className="bg-zinc-800 p-4 rounded-lg">
                       <p className="text-sm text-zinc-400">Prize Pool</p>
-                      <p className="text-xl font-bold text-amber-400">{FEATURED_EVENT.prizePool}</p>
+                      <p className="text-xl font-bold text-amber-400">
+                        {FEATURED_EVENT.prizePool}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                  <Button asChild className="bg-emerald-500 text-white hover:bg-emerald-600 flex-1 hover:scale-105 transition-all duration-300">
-                    <Link href={FEATURED_EVENT.ticketsUrl}>Register with your team</Link>
+                  <Button
+                    asChild
+                    className="bg-emerald-500 text-white hover:bg-emerald-600 flex-1 hover:scale-105 transition-all duration-300"
+                  >
+                    <Link href={FEATURED_EVENT.ticketsUrl}>
+                      Register with your team
+                    </Link>
                   </Button>
-                  <Button asChild variant="outline" className="border-white text-black hover:bg-amber-600 hover:text-white flex-1 hover:scale-105 transition-all duration-300">
-                    <Link href={FEATURED_EVENT.watchUrl}>Let&apos;s Watch Live</Link>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-white text-black hover:bg-amber-600 hover:text-white flex-1 hover:scale-105 transition-all duration-300"
+                  >
+                    <Link href={FEATURED_EVENT.watchUrl}>
+                      Let&apos;s Watch Live
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
@@ -131,7 +171,12 @@ export default function FeaturedSection() {
         </motion.div>
 
         {/* Event Gallery */}
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeInVariants}>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeInVariants}
+        >
           <EventCarousel /> {/* Check the implementation of EventCarousel */}
         </motion.div>
 
@@ -145,13 +190,22 @@ export default function FeaturedSection() {
         >
           <Card className="bg-gradient-to-r from-zinc-900 to-zinc-800 border-zinc-400">
             <CardContent className="p-8 md:p-12">
-              <h3 className="text-white text-2xl md:text-3xl font-bold mb-4">Don&apos;t Miss The Action</h3>
+              <h3 className="text-white text-2xl md:text-3xl font-bold mb-4">
+                Don&apos;t Miss The Action
+              </h3>
               <p className="text-zinc-400 mb-6 max-w-2xl mx-auto">
-                Whether you&apos;re a player or a fan, this event is not to be missed!
+                Whether you&apos;re a player or a fan, this event is not to be
+                missed!
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Button asChild size="lg" className="bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105 transition-all duration-300">
-                  <Link href={FEATURED_EVENT.ticketsUrl} className="font-bold">Register with your team</Link>
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105 transition-all duration-300"
+                >
+                  <Link href={FEATURED_EVENT.ticketsUrl} className="font-bold">
+                    Register with your team
+                  </Link>
                 </Button>
               </div>
             </CardContent>
@@ -159,5 +213,5 @@ export default function FeaturedSection() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

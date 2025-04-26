@@ -1,64 +1,53 @@
 "use client";
 
 import React from "react";
-import { ArrowRight } from "lucide-react";
-import { ABOUT_DATA } from "@/lib/constant/home_page";
-import Image from "next/image"; // Import the Image component
+import { ArrowRight } from "lucide-react"; // Keep if needed elsewhere, but not used in the current render
+import Image from "next/image";
 
 const AboutSection = () => {
   return (
-    <section className="flex overflow-hidden flex-col justify-center items-end px-16 py-20 bg-black shadow-2xl max-md:px-5 max-md:py-10">
-      <div className="w-full max-w-[1589px] max-md:max-w-full">
-        <div className="flex gap-5 max-md:flex-col">
-          <div className="w-6/12 max-md:w-full">
-            <section className="flex flex-col mt-24 w-full text-2xl font-medium text-white max-md:mt-10 max-md:text-base">
-              <h2 className="max-md:self-center lg:self-start text-5xl font-bold text-center border border-black border-solid max-md:text-2xl">
-                {ABOUT_DATA.title}
-              </h2>
-              <p className="mt-6 text-xl text-neutral-400 max-md:text-sm">
-                {ABOUT_DATA.description}
+    <section className="bg-black py-12 md:py-20 overflow-hidden"> {/* Adjusted padding and background */}
+      <div className="container mx-auto px-6 lg:px-16"> {/* Centered container with responsive padding */}
+        <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-20"> {/* Flex container for text and image, stacked on mobile, side-by-side on md+ */}
+
+          {/* Text Content */}
+          <div className="md:w-1/2 flex flex-col justify-center"> {/* Text column, takes half width on md+ */}
+            <h2 className="text-5xl md:text-4xl lg:text-5xl font-bold text-white mb-6 text-center md:text-left"> {/* Responsive heading size, removed border */}
+              About BattleKnights
+            </h2>
+            {/* Removed the empty paragraph */}
+            <div className="text-xl text-neutral-400 space-y-6 md:space-y-4 lg:space-y-6"> {/* Space between paragraphs */}
+              <p>
+                BattleKnights is a competitive esports organization forging the future of mobile gaming in India, with a sharp focus on MOBA Legends 5v5. Founded and led by Reinhardt and his team, BattleKnights stormed onto the scene by hosting the official LAN tournament – the North East Cup, powered by Vizta. This high-stakes event brought together some of the most skilled players and teams from across the region, placing Northeast India firmly on the esports map.
               </p>
-              <p className="mt-9 mr-9 text-xl text-neutral-400 max-md:mr-2.5 max-md:text-sm">
-                Founded by professional players and esports enthusiasts, we understand what makes a great tournament experience. Our platform is designed to make competitive play accessible to everyone, from amateurs to professionals.
+              <p>
+                Now, BattleKnights is leveling up its game.
               </p>
-              {[ABOUT_DATA.mission, ABOUT_DATA.values].map((item, index) => (
-                <div key={index} className="mt-6">
-                  <div className="flex gap-2 self-start font-semibold">
-                    {/*
-                      Ensure the path in item.icon is correct and the image file
-                      exists in your project's public directory.
-                      e.g., if item.icon is '/icons/my-icon.svg', the file should be at public/icons/my-icon.svg
-                    */}
-                    <Image
-                      src={item.icon}
-                      className="object-contain shrink-0 self-start rounded-md aspect-[1.03] w-[35px] max-md:w-[25px]"
-                      alt={item.title}
-                      width={35} // Added intrinsic width
-                      height={35} // Added intrinsic height
-                    />
-                    <h3 className="basis-auto max-md:text-base">{item.title}</h3>
-                  </div>
-                  <p className="mt-2.5 mr-6 ml-11 text-base text-neutral-400 max-md:mr-2.5 max-md:text-sm max-md:ml-8">
-                    {item.description}
-                  </p>
-                </div>
-              ))}
-              <button className="flex overflow-hidden gap-5 max-md:self-center self-start py-1 pr-6 pl-14 mt-12 text-center bg-emerald-500 rounded-md border border-emerald-900 border-solid shadow-2xl text-neutral-950 max-md:px-5 max-md:mt-10 max-md:text-sm">
-                <span className="grow">Learn More About Us</span>
-                <ArrowRight className="my-1.5 w-6 h-6 max-md:w-4 max-md:h-4" />
-              </button>
-            </section>
+              <p>
+                We are proud to announce our next major initiative: the National College Cup (NCC) — an ambitious tournament series aimed at uniting college players from all over India through rigorous online qualifiers culminating in thrilling LAN finals. Our core mission is to provide rising stars with the ultimate platform to shine, compete, and dramatically accelerate their growth in the esports arena.
+              </p>
+              <p>
+                We don’t just run events — we engineer unforgettable experiences. From widespread online qualifiers and state-level promotional matches to high-energy in-person LAN events, BattleKnights is dedicated to taking esports to the grassroots level and beyond, cultivating a vibrant and competitive ecosystem.
+              </p>
+              <p>
+                Whether you're a seasoned player ready to claim glory or a passionate fan eager to witness legends in the making, this is your battlefield. Welcome to BattleKnights – where champions are forged and legends are born.
+              </p>
+            </div>
           </div>
-          <div className="flex justify-center pt-5">
-            {/* Assuming this div is intended as a placeholder or background image */}
-            {/* If it should display an image, replace this div with <Image /> */}
+
+          {/* Image */}
+          <div className="md:w-1/2 flex justify-center items-center"> {/* Image column, takes half width on md+, centered */}
             <Image
-              src="/1.png"
-              alt="Battle Knight Logo"
-              width={250}
-              height={250}
+              src="/1.png" // Make sure this path is correct
+              alt="Battle Knights Logo"
+              width={500} // Adjusted size slightly, can be refined
+              height={300} // Adjusted size slightly, can be refined
+              layout="intrinsic" // Good default for controlling size
+              objectFit="contain"
+              className="w-full max-w-sm md:max-w-md lg:max-w-lg h-auto" // Responsive image sizing
             />
           </div>
+
         </div>
       </div>
     </section>
