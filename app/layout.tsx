@@ -9,7 +9,7 @@ const metadata = {
   title: 'Battle Knight India',
   description: "Battle Knight India is a gaming community that focuses on competitive gaming and esports.",
   icons: {
-    icon: '/favicon.ico', // You can specify the path to your favicon here
+    icon: '/logo/logo.webp', // You can specify the path to your favicon here
     // You can add other icon sizes or types if needed, e.g.:
     // apple: '/apple-touch-icon.png',
     // shortcut: '/shortcut-icon.png'

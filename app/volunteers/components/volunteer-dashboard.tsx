@@ -26,7 +26,6 @@ import { useVolunteer } from "@/hooks/useVolunteer";
 export function Volunteer() {
   const { volunteer } = useVolunteer();
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
   const { profile } = useProfile();
   const [initials, setInitials] = useState<string>("??");
   const [avatarColor, setAvatarColor] = useState<string>("");
@@ -181,7 +180,7 @@ export function Volunteer() {
                 <div className="bg-zinc-100 rounded-xl p-5 text-center">
                   <div className="flex items-center justify-center gap-2 text-2xl font-bold text-blue-600">
                     <Users className="h-5 w-5" />
-                    {volunteer?.team_count || "0"}
+                    {volunteer?.total_teams || "0"}
                   </div>
                   <p className="text-xs font-medium uppercase text-zinc-500 mt-2">
                     Teams Joined
@@ -190,7 +189,7 @@ export function Volunteer() {
                 <div className="bg-zinc-100 rounded-xl p-5 text-center">
                   <div className="flex items-center justify-center gap-2 text-2xl font-bold text-blue-600">
                     <Diamond className="h-5 w-5" />
-                    {volunteer?.reward_point || "0"}
+                    {volunteer?.reward_points || "0"}
                   </div>
                   <p className="text-xs font-medium uppercase text-zinc-500 mt-2">
                     Diamonds Earned
@@ -219,14 +218,8 @@ export function Volunteer() {
               </div>
               <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg">
                 <p className="text-sm">
-                  Each successful team registration earns 300 diamonds upon
+                  Each successful team registration earns 100 diamonds upon
                   approval.
-                </p>
-              </div>
-              <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg">
-                <p className="text-sm">
-                  Achieve a bonus of 1000 diamonds when 10+ teams register with
-                  your code.
                 </p>
               </div>
               <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg">
@@ -236,19 +229,6 @@ export function Volunteer() {
                 </p>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button
-                variant="outline"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Documentation
-              </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full">
-                <HelpCircle className="mr-2 h-4 w-4" />
-                Support Center
-              </Button>
-            </CardFooter>
           </Card>
         </div>
 

@@ -82,7 +82,7 @@ export async function fetchTeamsByReferralCodeAndCaptainData(): Promise<Referred
       .from("players")
       .select("ign, game_id, server_id")
       .eq("team_id", team.id)
-      .eq("role", "cap")
+      .eq("role", "captain")
       .maybeSingle();
 
     console.log("Result of captain query (data):", captain); // Log the captain data
@@ -117,4 +117,41 @@ export async function fetchTeamsByReferralCodeAndCaptainData(): Promise<Referred
 
   console.log("Finished fetching referred teams data. Final array:", referredTeamsData); // Log the final array
   return referredTeamsData;
+}
+
+export async function teamsCount(): Promise<{ total: string, approved: string } | null> {
+  const supabase = createClient();
+  const referralCode = (await fetchvolunteerData())?.referral_code;
+
+  if (!referralCode) {
+    console.error("No referral code found for the volunteer");
+    // Return null or a specific error indicator if referral code is missing
+    return null;
+  }
+
+  const { data: teams, error: teamsError } = await supabase
+    .from("teams")
+    .select("id, team_status")
+    .eq("referral_code", referralCode);
+
+  if (teamsError) {
+    console.error("Error fetching teams:", teamsError);
+    // Return null or a specific error indicator on fetch error
+    return null;
+  }
+
+  // Ensure teams is an array before accessing length and filtering
+  if (!Array.isArray(teams)) {
+      console.error("Teams data is not an array:", teams);
+      return null; // Return null if the data format is unexpected
+  }
+
+  const totalTeams = teams.length;
+  const approvedTeams = teams.filter(team => team.team_status === "approved").length;
+
+  // Return an object with both total and approved counts as strings
+  return {
+      total: totalTeams.toString(),
+      approved: approvedTeams.toString()
+  };
 }

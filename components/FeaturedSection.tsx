@@ -115,7 +115,7 @@ export default function FeaturedSection() {
                     Event Details
                   </h4>
                   <p className="text-zinc-300 mb-6">
-                    <b>"From Classrooms to Championships – Play for Your Campus!"</b>
+                    <b>From Classrooms to Championships – Play for Your Campus!</b>
                     <br />
                     The National College Cup (NCC) by BattleKnights is a
                     student-exclusive MOBA Legends 5v5 tournament open to school
@@ -126,7 +126,7 @@ export default function FeaturedSection() {
                     or university. Even Mythical and Elite leaderboard teams can
                     join, as long as all players are verified students. The
                     tournament includes online qualifiers and state-level
-                    promotional matches, powered by Vizta. It's time to
+                    promotional matches, powered by Vizta. It&apos;s time to
                     represent your campus and become a legend.
                   </p>
 

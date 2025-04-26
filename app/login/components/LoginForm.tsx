@@ -15,7 +15,7 @@ import { loginWithEmail } from "@/lib/server_actions/auth";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import React from "react";
-// import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -43,8 +43,8 @@ export function LoginForm({
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
-    // setValue,
-    // trigger,
+    setValue,
+    trigger,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(LoginFormSchema),
     defaultValues: {
@@ -80,10 +80,10 @@ export function LoginForm({
     }
   };
 
-  // const handleTurnstileSuccess = (token: string) => {
-  //   setValue("cf-turnstile-response", token);
-  //   trigger("cf-turnstile-response");
-  // };
+  const handleTurnstileSuccess = (token: string) => {
+    setValue("cf-turnstile-response", token);
+    trigger("cf-turnstile-response");
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -146,7 +146,7 @@ export function LoginForm({
                   </p>
                 )}
               </div>
-              {/* <Turnstile
+              <Turnstile
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
                 onSuccess={handleTurnstileSuccess}
                 onExpire={() => setValue("cf-turnstile-response", "")}
@@ -160,7 +160,7 @@ export function LoginForm({
                 <p className="text-xs text-red-500 text-center mt-1">
                   {errors["cf-turnstile-response"].message}
                 </p>
-              )} */}
+              )}
               <Button
                 type="submit"
                 className="w-full bg-emerald-500"
@@ -177,7 +177,7 @@ export function LoginForm({
                 <OAuthButtons/>
               </div>
               <div className="text-center text-sm">
-                Don&apos;t have an account?{" "} {/* Corrected line */}
+                Don&apos;t have an account?{" "}
                 <Link
                   href="/signup"
                   className="underline underline-offset-4 hover:text-emerald-500"

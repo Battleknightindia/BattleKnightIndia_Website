@@ -44,12 +44,12 @@ export async function handlevolunteers(data: volunteerType) {
     console.log("Volunteer data:", volunteerData)
 
     try{
-        const { data: exists } = await supabase
+        const { data: exists, error: existsError } = await supabase
             .from("volunteers")
             .select("*")
             .eq("email", volunteerData.email)
             .single();
-        if(exists) {
+        if(existsError || exists) {
             const { error: updateError, data: updateData } = await supabase.from("volunteers").update({ 
                 profile_id: user.id,
                 ...volunteerData,

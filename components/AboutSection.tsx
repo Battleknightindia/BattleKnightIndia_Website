@@ -26,11 +26,9 @@ const AboutSection = () => {
               <p>
                 We are proud to announce our next major initiative: the National College Cup (NCC) — an ambitious tournament series aimed at uniting college players from all over India through rigorous online qualifiers culminating in thrilling LAN finals. Our core mission is to provide rising stars with the ultimate platform to shine, compete, and dramatically accelerate their growth in the esports arena.
               </p>
+              <p>We don&apos;t just run events — we engineer unforgettable experiences. From widespread online qualifiers and state-level promotional matches to high-energy in-person LAN events, BattleKnights is dedicated to taking esports to the grassroots level and beyond, cultivating a vibrant and competitive ecosystem.</p>
               <p>
-                We don’t just run events — we engineer unforgettable experiences. From widespread online qualifiers and state-level promotional matches to high-energy in-person LAN events, BattleKnights is dedicated to taking esports to the grassroots level and beyond, cultivating a vibrant and competitive ecosystem.
-              </p>
-              <p>
-                Whether you're a seasoned player ready to claim glory or a passionate fan eager to witness legends in the making, this is your battlefield. Welcome to BattleKnights – where champions are forged and legends are born.
+                Whether you&apos;re a seasoned player ready to claim glory or a passionate fan eager to witness legends in the making, this is your battlefield. Welcome to BattleKnights – where champions are forged and legends are born.
               </p>
             </div>
           </div>
