@@ -556,7 +556,7 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
     const playersToInsert: PlayerInsert[] = [];
     // Array to hold the actual promises returned by supabase.update() calls
     // Specify return type as PostgrestSingleResponse<any> or a more specific type if possible
-    const playerUpdatePromises: Promise<PostgrestSingleResponse<any>>[] = [];
+    const playerUpdatePromises: Promise<PostgrestSingleResponse<unknown>>[] = [];
 
     playersDataForProcessing.forEach((playerData) => {
         const originalIndex = playerData.originalIndex;
@@ -586,7 +586,7 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
             console.log(`[handleRegistrationUpdate] Preparing update for player ID ${playerData.existingPlayerId} with data:`, updateData);
 
             // Wrap the supabase call in an async IIFE to ensure it returns a full Promise
-            const updatePromise = (async (): Promise<PostgrestSingleResponse<any>> => { // Specify return type
+            const updatePromise = (async (): Promise<PostgrestSingleResponse<unknown>> => { // Specify return type
                  // Await the Supabase call that returns the PromiseLike
                  return await supabase
                      .from("players")
@@ -629,7 +629,7 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
     if (playersToInsert.length > 0) {
         console.log(`[handleRegistrationUpdate] Inserting ${playersToInsert.length} new players...`);
         // Specify the expected return type for the insert
-        const { data: newPlayersData, error: playersInsertError }: PostgrestSingleResponse<any[] | null> = await supabase
+        const { data: newPlayersData, error: playersInsertError }: PostgrestSingleResponse<unknown[] | null> = await supabase
             .from("players")
             .insert(playersToInsert)
             .select("*"); // Select the inserted data if needed, or just 'id'
@@ -1108,7 +1108,7 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
         if (finalPlayersToInsertWithUrls.length > 0) {
             console.log("[registerNewTeam] Inserting Players...");
             // Specify the expected return type for the insert
-            const { data: playersData, error: playersInsertError }: PostgrestSingleResponse<any[] | null> = await supabase
+            const { data: playersData, error: playersInsertError }: PostgrestSingleResponse<unknown[] | null> = await supabase
                 .from("players")
                 .insert(finalPlayersToInsertWithUrls)
                 .select("*"); // Select the inserted data if needed, or just 'id'
