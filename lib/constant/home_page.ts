@@ -196,8 +196,57 @@ export const COSPLAY_DATA = [
   }
 ];
 
+type MediaItem = {
+  id: string
+  title: string
+  date: string
+  type: "image" | "video"
+  src: string
+  aspectRatio?: "portrait" | "landscape" | "square" // For better sizing control
+  description?: string
+}
+
+  
+  export const EVENT_DATA: MediaItem[] = [
+  {
+    id: "1",
+    title: "Champions and Runnerup of Nagaland",
+    date: "May 20",
+    type: "image",
+    src: "/nagaland_ncc/pic/nagaland1.jpg",
+    aspectRatio: "landscape",
+    description: "Champions and Runnerup of NCC Promotional Match in Nagaland",
+  },
+  {
+    id: "2",
+    title: "Champions from Nagalands",
+    date: "May 20",
+    type: "image",
+    src: "/nagaland_ncc/pic/nagaland2.jpg",
+    description:"Champions of Nagaland NCC Promotional match ",
+    aspectRatio: "portrait",
+  },
+  {
+    id: "3",
+    title: "Gathering for NCC Promotionals",
+    date: "May 20",
+    type: "image",
+    src: "/nagaland_ncc/pic/nagaland3.jpg",
+    aspectRatio: "landscape",
+    description: "Gathering of different player in nagaland for NCC Promotional match",
+  },
+  {
+    id: "4",
+    title: "Speech given by Nagaland Champions",
+    date: "May 20",
+    type: "video",
+    src: "/nagaland_ncc/nagaland.mp4",
+    aspectRatio: "landscape",
+  },
+]
+
 // Event data
-export const EVENT_DATA = [
+export const EVENT_DATA2 = [
   {
     id: 1,
     title: "Nagaland",

@@ -161,7 +161,7 @@ export default function Step2({ data, onDataChange }: Step2Props) {
                         <CardDescription className="text-[#747F98] text-[13px]">Team must join our Discord server to participate in the tournament</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <a href="" className="flex justify-center items-center bg-[#3752DB] py-2 rounded-lg">
+                        <a href="https://discord.gg/aEFSXJfv" className="flex justify-center items-center bg-[#3752DB] py-2 rounded-lg">
                             <Image src="/discord.svg" alt="Discord" width={100} height={100} />
                         </a>
                         <p className="text-[#747F98] pt-2 text-[12px]">Click here to join our Discord server</p>

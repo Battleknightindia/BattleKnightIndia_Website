@@ -33,7 +33,7 @@ const TournamentFooter = () => {
           <div className="flex justify-center gap-6">
             {/* Discord Icon (SVG) */}
             <a
-              href="YOUR_DISCORD_LINK" // <--- !!! UPDATE WITH ACTUAL LINK !!!
+              href="https://discord.gg/UW4YWvR5QR" // <--- !!! UPDATE WITH ACTUAL LINK !!!
               target="_blank"
               rel="noopener noreferrer"
               className="w-12 h-12 rounded-full bg-[#5865F2] flex items-center justify-center transition-colors hover:bg-blue-700"
@@ -51,7 +51,7 @@ const TournamentFooter = () => {
             </a>
             {/* WhatsApp Icon (SVG) */}
             <a
-              href="YOUR_WHATSAPP_LINK" // <--- !!! UPDATE WITH ACTUAL LINK !!!
+              href="https://chat.whatsapp.com/K5BXRXVVy1N7lgCQSEzXey" // <--- !!! UPDATE WITH ACTUAL LINK !!!
               target="_blank"
               rel="noopener noreferrer"
               className="w-12 h-12 rounded-full bg-[#25D366] flex items-center justify-center transition-colors hover:bg-green-600"
@@ -69,7 +69,7 @@ const TournamentFooter = () => {
             </a>
             {/* Instagram Icon (Keep from lucide-react as requested) */}
             <a
-              href="YOUR_INSTAGRAM_LINK" // <--- !!! UPDATE WITH ACTUAL LINK !!!
+              href="https://www.instagram.com/battleknightsindia?igsh=eGNuYXY5eDJucm9q" // <--- !!! UPDATE WITH ACTUAL LINK !!!
               target="_blank"
               rel="noopener noreferrer"
               className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FEDA77] via-[#F58529] to-[#DD2A7B] flex items-center justify-center transition-all hover:opacity-80"

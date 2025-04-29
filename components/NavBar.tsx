@@ -32,7 +32,6 @@ export default function NavBar() {
   const [avatarColor, setAvatarColor] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  // Removed isFirstLogin state
   const [isViewProfileOpen, setIsViewProfileOpen] = useState(false);
   const { profile, loading } = useProfile();
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
@@ -72,48 +71,32 @@ export default function NavBar() {
       setIsMenuOpen(false);
     };
 
-    // Use router.events if available in your Next.js version,
-    // otherwise window.addEventListener('popstate') is a fallback.
-    // popstate is generally fine for back/forward navigation, but not all route changes.
-    // For a more robust solution in Next.js 13+, you might use router.events (requires enabling in next.config.js)
-    // or rely on the fact that the component might remount/re-render on route changes.
-    // Sticking to popstate for now as it was in your original code.
     window.addEventListener("popstate", handleRouteChange);
     return () => {
       window.removeEventListener("popstate", handleRouteChange);
     };
-  }, [supabase.auth]); // Added supabase.auth as a dependency
+  }, [supabase.auth]);
 
-  // Only open ProfileCard on first login after profile is loaded and only once
   useEffect(() => {
-    // This effect should run after loading finishes and only if we haven't checked profile status during this mount.
     if (!loading && !hasCheckedProfile) {
       console.log(
         "Checking profile status after load. Login success param:",
         loginSuccessParam
-      ); // Debugging line
+      );
 
-      // Check if profile is incomplete AND the URL indicates a successful login redirect
       if (!profile?.ign && loginSuccessParam === "true") {
         setIsEditProfileOpen(true);
-        console.log("Profile incomplete after login, opening edit profile."); // Debugging line
+        console.log("Profile incomplete after login, opening edit profile.");
       } else if (profile?.ign) {
-        console.log("Profile complete."); // Debugging line
+        console.log("Profile complete.");
       } else {
-        console.log("Profile incomplete, but not a login redirect."); // Debugging line
+        console.log("Profile incomplete, but not a login redirect.");
       }
 
-      // In all cases after the initial load/check logic runs,
-      // mark that we have performed this check for this mount.
-      // This prevents the popup from re-opening if the component re-renders later.
       setHasCheckedProfile(true);
     }
-
-    // Dependencies: Re-run this effect if loading status, profile data,
-    // the hasCheckedProfile flag, or the loginSuccess query parameter changes.
   }, [loading, profile, hasCheckedProfile, loginSuccessParam]);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (isMenuOpen || isEditProfileOpen || isViewProfileOpen) {
       document.body.style.overflow = "hidden";
@@ -123,9 +106,7 @@ export default function NavBar() {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [isMenuOpen, isEditProfileOpen, isViewProfileOpen]); // Combined scroll effects and added isViewProfileOpen
-
-  // Removed the separate useEffect for isEditProfileOpen scroll
+  }, [isMenuOpen, isEditProfileOpen, isViewProfileOpen]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -138,23 +119,17 @@ export default function NavBar() {
 
   const openEditProfileCard = () => {
     setIsEditProfileOpen(true);
-    // If the menu is open (on mobile), close it
     if (isMenuOpen) {
       setIsMenuOpen(false);
     }
   };
   const openViewProfileCard = () => {
     setIsViewProfileOpen(true);
-    // If the menu is open (on mobile), close it
     if (isMenuOpen) {
       setIsMenuOpen(false);
     }
   };
 
-  // Removed isActive function
-  // Removed navLinks array
-
-  // Section navigation for scrolling
   const sectionNav = [
     { id: "home", label: "Home" },
     { id: "featured", label: "Featured Tournament" },
@@ -164,7 +139,17 @@ export default function NavBar() {
     { id: "partners", label: "Sponsors" },
   ];
 
-  // Smooth scroll to section by ID
+  const handleNavItemClick = (id: string) => {
+    if (pathname !== "/") {
+      router.push("/");
+      setTimeout(() => {
+        scrollToSection(id);
+      }, 1005); // Adjust timeout as needed for navigation to complete
+    } else {
+      scrollToSection(id);
+    }
+  };
+
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
@@ -196,10 +181,9 @@ export default function NavBar() {
             <button
               key={section.id}
               type="button"
-              onClick={() => scrollToSection(section.id)}
+              onClick={() => handleNavItemClick(section.id)}
               className={cn(
                 "px-3 py-2 text-sm lg:text-base font-medium rounded-md transition-colors",
-                // Active state if section is in view (optional: can add logic)
                 "text-zinc-400 hover:text-white hover:bg-zinc-900"
               )}
               style={{ transition: "all 0.2s" }}
@@ -328,43 +312,23 @@ export default function NavBar() {
           {/* Mobile Navigation Links */}
           <nav className="flex flex-col space-y-4 mb-8">
             {/* Section scroll nav for mobile */}
-            {sectionNav.map((section) => {
-              if (section.id === "home") {
-                if (pathname !== "/") { // Use the variable obtained from the hook
-                  return (
-                    <button
-                      key={section.id}
-                      type="button"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        router.push("/");
-                      }}
-                      className={cn(
-                        "py-3 px-4 text-lg font-medium rounded-md transition-colors",
-                        "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                      )}
-                      style={{ transition: "all 0.2s" }}
-                    >
-                      {section.label}
-                    </button>
-                  );
-                }
-              }
-              return (
-                <button
-                  key={section.id}
-                  type="button"
-                  onClick={() => scrollToSection(section.id)}
-                  className={cn(
-                    "py-3 px-4 text-lg font-medium rounded-md transition-colors",
-                    "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                  )}
-                  style={{ transition: "all 0.2s" }}
-                >
-                  {section.label}
-                </button>
-              );
-            })}
+            {sectionNav.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => {
+                  handleNavItemClick(section.id);
+                  setIsMenuOpen(false);
+                }}
+                className={cn(
+                  "py-3 px-4 text-lg font-medium rounded-md transition-colors",
+                  "text-zinc-300 hover:text-white hover:bg-zinc-900"
+                )}
+                style={{ transition: "all 0.2s" }}
+              >
+                {section.label}
+              </button>
+            ))}
           </nav>
 
           {/* Mobile Auth Buttons */}

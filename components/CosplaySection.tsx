@@ -147,7 +147,7 @@ export default function CosplaySection() {
           <div className="relative z-20 m-2">
             <div className="relative aspect-[3/4] md:aspect-[16/9] w-full overflow-hidden rounded-xl">
               <Image
-                src="/cosplay/cosplay2.webp"
+                src="/cosplay/cosplay1.webp"
                 alt="Featured cosplay - Best in Show"
                 width={1200} // Adjusted width for better aspect ratio
                 height={675} // Adjusted height for better aspect ratio (16/9)
