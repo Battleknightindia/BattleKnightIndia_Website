@@ -5,10 +5,8 @@ import { createClient } from "@/utils/supabase/server"; // createClient is used 
 import { type Player } from "@/types/registrationTypes"; // Ensure correct import path
 import { SupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { PostgrestSingleResponse } from '@supabase/supabase-js'; // Import for single() response type
 
 // --- Define the type for inserting into the players table matching the SCHEMA ---
-// Ensure this type accurately reflects your 'players' table schema
 type PlayerInsert = {
   team_id: string;
   university_id: string;
@@ -29,7 +27,7 @@ type PlayerInsert = {
 // --- End PlayerInsert Type ---
 
 // --- Define a type for inserting into the teams table matching your SCHEMA ---
-// Ensure this type accurately reflects your 'teams' table schema
+// ADD user_id here to match potential RLS policy
 type TeamInsertWithUser = {
   name: string;
   logo_url?: string | null;
@@ -102,7 +100,6 @@ async function checkAndUploadFile(
 
     console.log(`[checkAndUploadFile] Checking for existing file: '${fileName}' in directory '${directoryPath}'`);
 
-    // Supabase Storage list returns an array of objects with 'name' property
     const { data: listData, error: listError } = await supabase.storage
         .from(bucketName)
         .list(directoryPath, {
@@ -110,11 +107,8 @@ async function checkAndUploadFile(
             limit: 1
         });
 
-    // Check for specific Supabase Storage errors vs file not found
-    if (listError && listError.message !== 'Not found' && listError.message !== 'The resource was not found') {
+    if (listError && listError.message !== 'Not found') {
         console.error(`[checkAndUploadFile] Supabase Storage list error for directory '${directoryPath}':`, listError);
-        // Decide if this error should stop the process or just warn
-        // For now, we'll warn and proceed, assuming list errors might be transient
         console.warn(`[checkAndUploadFile] Proceeding with upload despite list error for '${destinationPath}' - might overwrite.`);
     } else if (listData && listData.length > 0 && listData[0].name === fileName) {
         console.log(`[checkAndUploadFile] Existing file found at '${destinationPath}'. Attempting to remove.`);
@@ -124,9 +118,7 @@ async function checkAndUploadFile(
 
         if (removeError) {
             console.error(`[checkAndUploadFile] Supabase Storage remove error for '${destinationPath}':`, removeError);
-            // Decide if failing to remove an old file should stop the new upload
-            // For now, we'll fail if removal fails to prevent potential issues
-            throw new Error(`Failed to remove existing file at '${destinationPath}'. Cannot proceed with upload: ${removeError.message}`);
+            throw new Error(`Failed to remove existing file at '${destinationPath}'. Cannot proceed with upload.`);
         }
         console.log(`[checkAndUploadFile] Existing file removed successfully: '${destinationPath}'`);
     } else {
@@ -138,7 +130,7 @@ async function checkAndUploadFile(
       .from(bucketName)
       .upload(destinationPath, file, {
         cacheControl: "3600",
-        upsert: false, // Ensure upsert is false if you removed the old file
+        upsert: false,
       });
 
     if (uploadError) {
@@ -168,15 +160,11 @@ async function checkAndUploadFile(
       "[checkAndUploadFile] Failed to get public URL after successful upload:",
       destinationPath
     );
-    // Decide how to handle failure to get public URL after successful upload
-    // Returning null might be acceptable if the URL can be constructed later,
-    // but throwing an error ensures the caller knows something went wrong.
-    throw new Error(`Failed to get public URL for '${destinationPath}' after upload.`);
+    return null;
 
   } catch (error: unknown) {
     console.error(`[checkAndUploadFile] Error processing file upload for path '${destinationPath}':`, error);
-    // Re-throw the caught error to be handled by the caller
-    throw error;
+    throw error; // Re-throw for caller to handle
   }
 }
 // --- End File Upload Helper ---
@@ -198,7 +186,7 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
   const teamName = formData.get("team_name") as string | null;
   const referralCode = formData.get("referral_code") as string | null;
 
-   // Sanitize names for file paths (even in update, paths might be based on current names)
+    // Sanitize names for file paths (even in update, paths might be based on current names)
   const sanitizedUniName = sanitizeFileName(universityName);
   const sanitizedTeamName = sanitizeFileName(teamName);
   const registrationBasePath = `${sanitizedUniName}/${sanitizedTeamName}`;
@@ -206,80 +194,59 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
 
   // --- 1. Update University Data ---
   console.log("[handleRegistrationUpdate] Updating University Data...");
-  // In the update path, we already have the universityId.
-  // We should only update university details if the form provides new data for them.
-  // We should NOT change the university_id of the team/players here, as that would
-  // effectively move the team to a different university entry.
-  // If the user submitted a *different* university name in the update form,
-  // the main handler should ideally prevent this or handle it as a team transfer,
-  // which is a more complex scenario not covered by a simple update.
-  // Assuming here that the update form data for university is only used to
-  // potentially update the *existing* university record linked by universityId.
-
-  const universityUpdateData: { name?: string; logo_url?: string | null; state?: string; city?: string } = {};
-
-  if (universityName !== null) {
-      universityUpdateData.name = universityName;
-  }
-  if (universityState !== null) {
-      universityUpdateData.state = universityState;
-  }
-  if (universityCity !== null) {
-      universityUpdateData.city = universityCity;
-  }
-
-  const universityLogoFile = formData.get("university_logo");
-  let universityLogoUrl: string | null = null;
-
-  if (universityLogoFile instanceof File && universityLogoFile.size > 0) {
-      const fileExt = universityLogoFile.name.split(".").pop();
-      const safeFileExt = fileExt || 'bin';
-      // Decide on the pathing strategy for updating logos of existing universities.
-      // Using the sanitized name from the form might not match the original path.
-      // A safer approach might be to fetch the existing university name or use a fixed structure.
-      // For simplicity, using the submitted sanitized name for pathing, but be aware
-      // this might lead to multiple logo files for the same university if the name is
-      // entered differently over time or if the original upload used a different path.
-      const uniLogoDestinationPath = `${sanitizedUniName}/university_logo.${safeFileExt}`;
-      try {
-          universityLogoUrl = await checkAndUploadFile(
-            supabase,
-            bucketName,
-            universityLogoFile,
-            uniLogoDestinationPath
-          );
-          console.log(`[handleRegistrationUpdate] University logo update/upload result: ${universityLogoUrl}`);
-          if (universityLogoUrl !== null) {
-              universityUpdateData.logo_url = universityLogoUrl;
-          }
-      } catch (uploadError: unknown) {
-          console.error("[handleRegistrationUpdate] University logo update/upload failed:", uploadError);
-           // Re-throw to be caught by the main try/catch
-          throw uploadError;
-      }
-  }
-
-  // Only perform update if there's data to update
-  if (Object.keys(universityUpdateData).length > 0) {
-      console.log("[handleRegistrationUpdate] Updating University:", universityUpdateData, "for ID:", universityId);
-      const { error: uniUpdateError } = await supabase
-        .from("universities")
-        .update(universityUpdateData)
-        .eq("id", universityId); // Update based on the existing ID
-
-      if (uniUpdateError) {
-        console.error("[handleRegistrationUpdate] Supabase update error (universities):", uniUpdateError);
-         // Re-throw to be caught by the main try/catch
-        throw new Error(`Database error updating university: ${uniUpdateError.message}`);
-      }
-      console.log("[handleRegistrationUpdate] University Updated.");
+  if (!universityName) {
+      console.warn("[handleRegistrationUpdate] University Name missing in update form data. Skipping university update.");
+      // Decide how to handle missing name during update - skip update or error?
+      // For now, skip university update if name is missing.
   } else {
-      console.log("[handleRegistrationUpdate] No university data provided in form for update. Skipping university update.");
+    const universityLogoFile = formData.get("university_logo");
+    let universityLogoUrl: string | null = null;
+
+    if (universityLogoFile instanceof File && universityLogoFile.size > 0) {
+        const fileExt = universityLogoFile.name.split(".").pop();
+        const safeFileExt = fileExt || 'bin';
+        const uniLogoDestinationPath = `${registrationBasePath}/university_logo.${safeFileExt}`;
+        try {
+            universityLogoUrl = await checkAndUploadFile(
+              supabase,
+              bucketName,
+              universityLogoFile,
+              uniLogoDestinationPath
+            );
+            console.log(`[handleRegistrationUpdate] University logo update/upload result: ${universityLogoUrl}`);
+        } catch (uploadError: unknown) {
+            console.error("[handleRegistrationUpdate] University logo update/upload failed:", uploadError);
+             // Re-throw to be caught by the main try/catch
+            throw uploadError;
+        }
+    }
+
+    const universityUpdateData: { name: string; logo_url?: string | null; state: string; city: string } = {
+      name: universityName || "",
+      state: universityState || "",
+      city: universityCity || "",
+    };
+    if (universityLogoUrl !== null) { // Only include logo_url if a new file was processed
+      universityUpdateData.logo_url = universityLogoUrl;
+    }
+
+    console.log("[handleRegistrationUpdate] Updating University:", universityUpdateData, "for ID:", universityId);
+    const { error: uniUpdateError } = await supabase
+      .from("universities")
+      .update(universityUpdateData)
+      .eq("id", universityId); // Update based on the existing ID
+
+    if (uniUpdateError) {
+      console.error("[handleRegistrationUpdate] Supabase update error (universities):", uniUpdateError);
+       // Re-throw to be caught by the main try/catch
+      throw new Error(`Database error updating university: ${uniUpdateError.message}`);
+    }
+    console.log("[handleRegistrationUpdate] University Updated.");
   }
 
 
   // --- 2. Update Team Data ---
-   console.log("[handleRegistrationUpdate] Updating Team Data...");
+    console.log("[handleRegistrationUpdate] Updating Team Data...");
   if (!teamName) {
       console.warn("[handleRegistrationUpdate] Team Name missing in update form data. Skipping team update.");
       // Decide how to handle missing name during update - skip update or error?
@@ -289,10 +256,10 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
       let teamLogoUrl: string | null = null;
 
       if (teamLogoFile instanceof File && teamLogoFile.size > 0) {
-         const fileExt = teamLogoFile.name.split(".").pop();
-         const safeFileExt = fileExt || 'bin';
-         const teamLogoDestinationPath = `${registrationBasePath}/team_logo.${safeFileExt}`;
-         try {
+          const fileExt = teamLogoFile.name.split(".").pop();
+          const safeFileExt = fileExt || 'bin';
+          const teamLogoDestinationPath = `${registrationBasePath}/team_logo.${safeFileExt}`;
+          try {
               teamLogoUrl = await checkAndUploadFile(
                 supabase,
                 bucketName,
@@ -300,17 +267,17 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
                 teamLogoDestinationPath
               );
                console.log(`[handleRegistrationUpdate] Team logo update/upload result: ${teamLogoUrl}`);
-         } catch (uploadError: unknown) {
-              console.error("[handleRegistrationUpdate] Team logo update/upload failed:", uploadError);
+          } catch (uploadError: unknown) {
+               console.error("[handleRegistrationUpdate] Team logo update/upload failed:", uploadError);
                // Re-throw to be caught by the main try/catch
-              throw uploadError;
-         }
+               throw uploadError;
+          }
       }
 
-      const teamUpdateData: { name?: string; logo_url?: string | null; referral_code?: string | null } = {};
-      if (teamName !== null) {
-          teamUpdateData.name = teamName;
-      }
+      const teamUpdateData: { name: string; logo_url?: string | null; referral_code?: string | null } = {
+          name: teamName,
+          // user_id is likely set on insert and shouldn't change here based on RLS common practices
+      };
        if (teamLogoUrl !== null) { // Only include logo_url if a new file was processed
             teamUpdateData.logo_url = teamLogoUrl;
        }
@@ -318,32 +285,28 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
             teamUpdateData.referral_code = referralCode;
        }
 
-       if (Object.keys(teamUpdateData).length > 0) {
-            console.log("[handleRegistrationUpdate] Updating Team:", teamUpdateData, "for ID:", teamId);
-            const { error: teamUpdateError } = await supabase
-                .from("teams")
-                .update(teamUpdateData)
-                .eq("id", teamId) // Update based on the existing ID
-                .eq("user_id", authenticatedUserId); // <-- Used authenticatedUserId here
 
-            if (teamUpdateError) {
-                console.error("[handleRegistrationUpdate] Supabase update error (teams):", teamUpdateError);
-                 // Re-throw to be caught by the main try/catch
-                throw new Error(`Database error updating team: ${teamUpdateError.message}`);
-            }
-             console.log("[handleRegistrationUpdate] Team Updated.");
-       } else {
-           console.log("[handleRegistrationUpdate] No team data provided in form for update. Skipping team update.");
-       }
+      console.log("[handleRegistrationUpdate] Updating Team:", teamUpdateData, "for ID:", teamId);
+      const { error: teamUpdateError } = await supabase
+          .from("teams")
+          .update(teamUpdateData)
+          .eq("id", teamId) // Update based on the existing ID
+          .eq("user_id", authenticatedUserId); // <-- Used authenticatedUserId here
+
+      if (teamUpdateError) {
+          console.error("[handleRegistrationUpdate] Supabase update error (teams):", teamUpdateError);
+           // Re-throw to be caught by the main try/catch
+          throw new Error(`Database error updating team: ${teamUpdateError.message}`);
+      }
+       console.log("[handleRegistrationUpdate] Team Updated.");
   }
 
 
   // --- 3. Process Players Data, Update or Insert ---
   console.log("[handleRegistrationUpdate] Processing Players Data for Update/Insert...");
 
-   // Fetch existing players for this team to match against form data
-   // Specify the expected return type for better type safety
-   const { data: existingPlayers, error: fetchPlayersError }: PostgrestSingleResponse<{ id: string; game_id: string }[] | null> = await supabase
+    // Fetch existing players for this team to match against form data
+    const { data: existingPlayers, error: fetchPlayersError } = await supabase
         .from("players")
         .select("id, game_id") // Select necessary fields for matching
         .eq("team_id", teamId);
@@ -353,9 +316,7 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
         throw new Error(`Database error fetching existing players: ${fetchPlayersError.message}`);
     }
 
-    // Ensure existingPlayers is treated as an array, even if null
-    const existingPlayersArray = existingPlayers || [];
-    const existingPlayersMap = new Map(existingPlayersArray.map(p => [p.game_id, p.id])); // Map game_id to player ID
+    const existingPlayersMap = new Map(existingPlayers?.map(p => [p.game_id, p.id])); // Map game_id to player ID
 
     const playersDataForProcessing: ({
       originalIndex: number;
@@ -363,15 +324,15 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
     } & PlayerInsert)[] = [];
     const filesToUpload: {
       file: File;
-      role: Player["role"]; // Use the imported Player type
+      role: Player["role"];
       index: number;
       field: "picture" | "student_id";
     }[] = [];
 
     // First Pass: Extract data, validate required fields, and collect files
     for (let i = 0; i < 7; i++) {
-        // Explicitly cast the role to the expected union type
-        const role = formData.get(`player_${i}_role`) as Player["role"] | null;
+        const role =
+            (formData.get(`player_${i}_role`) as Player["role"] | null) || "player";
         const name = formData.get(`player_${i}_name`) as string | null;
         const ign = formData.get(`player_${i}_ign`) as string | null;
         const game_id = formData.get(`player_${i}_game_id`) as string | null;
@@ -390,15 +351,15 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
         const isRequiredRole = i >= 0 && i <= 4;
         const isOptionalRoleWithData =
           (i === 5 || i === 6) &&
-          (name !== null || // Check for null explicitly
-            ign !== null ||
-            game_id !== null ||
-            server_id !== null ||
-            email !== null ||
-            mobile !== null ||
-            city !== null ||
-            state !== null ||
-            device !== null ||
+          (name ||
+            ign ||
+            game_id ||
+            server_id ||
+            email ||
+            mobile ||
+            city ||
+            state ||
+            device ||
             pictureFile instanceof File ||
             studentIdFile instanceof File);
         const isIncluded = isRequiredRole || isOptionalRoleWithData;
@@ -406,27 +367,22 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
 
         if (isIncluded) {
             // --- Backend validation for required fields (same as insert) ---
-            // Ensure required fields are not null or empty strings after trimming
-            if (!name || name.trim() === "") throw new Error(`Validation failed: Name missing for ${displayName}.`);
-            if (!ign || ign.trim() === "") throw new Error(`Validation failed: IGN missing for ${displayName}.`);
-            if (!game_id || game_id.trim() === "") throw new Error(`Validation failed: Game ID missing for ${displayName}.`);
-            if (!server_id || server_id.trim() === "") throw new Error(`Validation failed: Server ID missing for ${displayName}.`);
-            // Role is handled by the union type check implicitly if form provides it,
-            // but an explicit check ensures it's not null if required.
-            if (!role) throw new Error(`Validation failed: Role missing for ${displayName}.`);
+            if (!name) throw new Error(`Validation failed: Name missing for ${displayName}.`);
+            if (!ign) throw new Error(`Validation failed: IGN missing for ${displayName}.`);
+            if (!game_id) throw new Error(`Validation failed: Game ID missing for ${displayName}.`);
+            if (!server_id) throw new Error(`Validation failed: Server ID missing for ${displayName}.`);
+            if (!role) throw new Error(`Validation failed: Role missing for ${displayName}.`); // Should not happen if form is built correctly
 
 
-            if (i === 0 && (!email || email.trim() === "" || !mobile || mobile.trim() === "")) {
+            if (i === 0 && (!email || !mobile)) {
                 throw new Error(`Validation failed: Captain's Email and Mobile are required.`);
             }
-             if (i === 6 && isOptionalRoleWithData && (!email || email.trim() === "" || !mobile || mobile.trim() === "")) {
+             if (i === 6 && isOptionalRoleWithData && (!email || !mobile)) {
                 throw new Error(`Validation failed: Coach's Email and Mobile are required if data is provided.`);
             }
 
              // --- Check if this player already exists in the fetched data ---
-             // Ensure game_id is not null before using it as a map key
-             const existingPlayerId = game_id ? existingPlayersMap.get(game_id) : undefined;
-
+             const existingPlayerId = existingPlayersMap.get(game_id);
              if (existingPlayerId) {
                  console.log(`[handleRegistrationUpdate] Matched form player ${displayName} (Game ID: ${game_id}) with existing player ID: ${existingPlayerId}`);
              } else {
@@ -446,15 +402,14 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
             }
 
             // Store player data for update/insert
-            // Ensure non-nullable fields are handled correctly (e.g., using || "")
             playersDataForProcessing.push({
                 originalIndex: i,
                 existingPlayerId: existingPlayerId, // Store the found ID
-                name: name || "", // Ensure name is string
-                ign: ign || "", // Ensure ign is string
-                game_id: game_id || "", // Ensure game_id is string
-                server_id: server_id || "", // Ensure server_id is string
-                role: role || "player", // Ensure role is string, provide default if necessary
+                name: name,
+                ign: ign,
+                game_id: game_id,
+                server_id: server_id,
+                role: role,
 
                 email: email,
                 mobile: mobile,
@@ -530,8 +485,6 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
       console.log(
         "[handleRegistrationUpdate] Waiting for all player file promises to resolve..."
       );
-      // Use Promise.allSettled if you want to continue even if some uploads fail
-      // For now, Promise.all will throw on the first rejection
       await Promise.all(uploadPromises);
       console.log(
         "[handleRegistrationUpdate] All player files processed successfully."
@@ -555,8 +508,7 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
 
     const playersToInsert: PlayerInsert[] = [];
     // Array to hold the actual promises returned by supabase.update() calls
-    // Specify return type as PostgrestSingleResponse<any> or a more specific type if possible
-    const playerUpdatePromises: Promise<PostgrestSingleResponse<any>>[] = [];
+    const playerUpdatePromises: Promise<unknown>[] = []; // Keeping any here for Promise.all flexibility with mixed results
 
     playersDataForProcessing.forEach((playerData) => {
         const originalIndex = playerData.originalIndex;
@@ -585,8 +537,8 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
 
             console.log(`[handleRegistrationUpdate] Preparing update for player ID ${playerData.existingPlayerId} with data:`, updateData);
 
-            // Wrap the supabase call in an async IIFE to ensure it returns a full Promise
-            const updatePromise = (async (): Promise<PostgrestSingleResponse<any>> => { // Specify return type
+            // FIX: Wrap the supabase call in an async IIFE to ensure it returns a full Promise
+            const updatePromise = (async () => {
                  // Await the Supabase call that returns the PromiseLike
                  return await supabase
                      .from("players")
@@ -614,7 +566,6 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
     try {
         console.log(`[handleRegistrationUpdate] Executing ${playerUpdatePromises.length} player update promises...`);
         // Promise.all now receives an array of actual Promises
-        // Await the results, but we don't necessarily need the data for updates here
         await Promise.all(playerUpdatePromises);
         console.log("[handleRegistrationUpdate] All player updates completed.");
     } catch (updateError: unknown) {
@@ -628,11 +579,9 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
     // Perform inserts for new players if any
     if (playersToInsert.length > 0) {
         console.log(`[handleRegistrationUpdate] Inserting ${playersToInsert.length} new players...`);
-        // Specify the expected return type for the insert
-        const { data: newPlayersData, error: playersInsertError }: PostgrestSingleResponse<any[] | null> = await supabase
+        const { data: newPlayersData, error: playersInsertError } = await supabase
             .from("players")
-            .insert(playersToInsert)
-            .select("*"); // Select the inserted data if needed, or just 'id'
+            .insert(playersToInsert);
 
         if (playersInsertError) {
             console.error("[handleRegistrationUpdate] Supabase insert error (new players):", playersInsertError);
@@ -680,21 +629,19 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
         // --- 1. Process University Data: Check if exists, then insert or get ID ---
         console.log("[registerNewTeam] Processing University Data...");
 
-        if (!universityName || universityName.trim() === "") {
+        if (!universityName) {
             throw new Error("Final validation failed: University Name is missing.");
         }
 
         // --- Check if University already exists ---
         console.log(`[registerNewTeam] Checking for existing university named: "${universityName}"`);
-        // Specify the expected return type for the single() query
-        const { data: existingUni, error: fetchUniError }: PostgrestSingleResponse<{ id: string } | null> = await supabase
+        const { data: existingUni, error: fetchUniError } = await supabase
             .from("universities")
             .select("id")
             .eq("name", universityName) // Assuming 'name' is the column for university name
             .single(); // Use .single() if you expect at most one match
 
-        // Check for specific Supabase errors vs "No rows found" (PGRST116)
-        if (fetchUniError && fetchUniError.code !== 'PGRST116') {
+        if (fetchUniError && fetchUniError.code !== 'PGRST116') { // PGRST116 is "No rows found" [cite: 287]
              console.error("[registerNewTeam] Supabase fetch error (existing university):", fetchUniError);
              throw new Error(`Database error checking for existing university: ${fetchUniError.message}`);
         }
@@ -721,7 +668,7 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
             if (universityLogoFile instanceof File && universityLogoFile.size > 0) {
                 const fileExt = universityLogoFile.name.split(".").pop();
                 const safeFileExt = fileExt || 'bin';
-                const uniLogoDestinationPath = `${sanitizedUniName}/university_logo.${safeFileExt}`;
+                const uniLogoDestinationPath = `${registrationBasePath}/university_logo.${safeFileExt}`;
                 try {
                     console.log(`[registerNewTeam] Attempting university logo upload for NEW uni: ${universityLogoFile.name}`);
                     // Use the checkAndUploadFile helper
@@ -741,62 +688,52 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
             const universityEntry = {
                 name: universityName,
                 logo_url: universityLogoUrl,
-                state: universityState || "",
-                city: universityCity || "",
+                state: universityState || "", [cite: 170]
+                city: universityCity || "", [cite: 171]
             };
             console.log("[registerNewTeam] Inserting new University:", universityEntry);
-            // Specify the expected return type for the insert with select
-            const { data: uniData, error: uniInsertError }: PostgrestSingleResponse<{ id: string }[] | null> = await supabase
+            const { data: uniData, error: uniInsertError } = await supabase
                 .from("universities")
                 .insert(universityEntry)
-                .select("id"); // Select the ID of the newly inserted row
+                .select("id"); // Select the ID of the newly inserted row [cite: 172]
 
             if (uniInsertError) {
-                console.error("[registerNewTeam] Supabase insert error (new universities):", uniInsertError);
-                throw new Error(`Database error inserting new university: ${uniInsertError.message}`);
+                console.error("[registerNewTeam] Supabase insert error (new universities):", uniInsertError); [cite: 174]
+                throw new Error(`Database error inserting new university: ${uniInsertError.message}`); [cite: 175]
             }
-            // Check if data is not null/undefined and has at least one element with an id
-            if (!uniData || uniData.length === 0 || !uniData[0]?.id) {
-                console.error("[registerNewTeam] New University insert successful but returned no ID.");
-                throw new Error("New University saved but could not retrieve ID.");
+            if (!uniData || uniData.length === 0 || !uniData[0].id) {
+                console.error("[registerNewTeam] New University insert successful but returned no ID."); [cite: 176]
+                throw new Error("New University saved but could not retrieve ID."); [cite: 177]
             }
-            universityId = uniData[0].id; // Get the ID of the newly inserted university
-            console.log("[registerNewTeam] New University Inserted. ID:", universityId);
+            universityId = uniData[0].id; // Get the ID of the newly inserted university [cite: 177]
+            console.log("[registerNewTeam] New University Inserted. ID:", universityId); [cite: 178]
         }
 
         // --- Now that we have the correct universityId (either existing or new), proceed with Team insertion ---
-        console.log("[registerNewTeam] Processing Team Data...");
-        if (!teamName || teamName.trim() === "") {
-             throw new Error("Final validation failed: Team Name is missing.");
+        console.log("[registerNewTeam] Processing Team Data..."); [cite: 179]
+        if (!teamName) {
+             throw new Error("Final validation failed: Team Name is missing."); [cite: 180]
         }
-        const teamLogoFile = formData.get("team_logo");
+        const teamLogoFile = formData.get("team_logo"); [cite: 181]
         let teamLogoUrl: string | null = null;
         if (teamLogoFile instanceof File && teamLogoFile.size > 0) {
-            const fileExt = teamLogoFile.name.split(".").pop();
-            const safeFileExt = fileExt || 'bin';
-            const teamLogoDestinationPath = `${registrationBasePath}/team_logo.${safeFileExt}`;
+            const fileExt = teamLogoFile.name.split(".").pop(); [cite: 182]
+            const safeFileExt = fileExt || 'bin'; [cite: 182]
+            const teamLogoDestinationPath = `${registrationBasePath}/team_logo.${safeFileExt}`; [cite: 183]
             try {
-                console.log(`[registerNewTeam] Attempting team logo upload for: ${teamLogoFile.name}`);
-                 // Use the checkAndUploadFile helper
+                console.log(`[registerNewTeam] Attempting team logo upload for: ${teamLogoFile.name}`); [cite: 184]
+                // Use the checkAndUploadFile helper
                 teamLogoUrl = await checkAndUploadFile(
                     supabase,
                     bucketName,
                     teamLogoFile,
                     teamLogoDestinationPath
-                );
-                console.log(`[registerNewTeam] Team logo upload result: ${teamLogoUrl}`);
+                ); [cite: 185]
+                console.log(`[registerNewTeam] Team logo upload result: ${teamLogoUrl}`); [cite: 186]
             } catch (uploadError: unknown) {
-                console.error("[registerNewTeam] Team logo upload failed:", uploadError);
-                 // Re-throw the error
-                throw uploadError;
+                console.error("[registerNewTeam] Team logo upload failed:", uploadError); [cite: 187]
+                throw uploadError; // Re-throw the error [cite: 188]
             }
-        }
-
-        // Ensure universityId is not null before using it in teamEntry
-        if (universityId === null) {
-             // This case should ideally not be reached if the university processing above is correct,
-             // but adding a check for robustness.
-             throw new Error("Internal error: University ID was not determined.");
         }
 
         const teamEntry: TeamInsertWithUser = {
@@ -807,117 +744,94 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
             referral_code: referralCode,
         };
 
-        console.log("[registerNewTeam] Inserting Team:", teamEntry);
-        // Specify the expected return type for the insert with select
-        const { data: teamData, error: teamInsertError }: PostgrestSingleResponse<{ id: string }[] | null> = await supabase
+        console.log("[registerNewTeam] Inserting Team:", teamEntry); [cite: 189]
+        const { data: teamData, error: teamInsertError } = await supabase
             .from("teams")
             .insert(teamEntry)
-            .select("id");
+            .select("id"); [cite: 190]
 
         if (teamInsertError) {
-            console.error("[registerNewTeam] Supabase insert error (teams):", teamInsertError);
-             // Re-throw the error
-            throw new Error(`Database error inserting team: ${teamInsertError.message}`);
+            console.error("[registerNewTeam] Supabase insert error (teams):", teamInsertError); [cite: 191]
+            throw new Error(`Database error inserting team: ${teamInsertError.message}`); [cite: 192]
         }
-        // Check if data is not null/undefined and has at least one element with an id
-        if (!teamData || teamData.length === 0 || !teamData[0]?.id) {
-            console.error("[registerNewTeam] Team insert successful but returned no ID.");
-             // Re-throw the error
-            throw new Error("Team saved but could not retrieve ID.");
+        if (!teamData || teamData.length === 0 || !teamData[0].id) {
+            console.error("[registerNewTeam] Team insert successful but returned no ID."); [cite: 193]
+            throw new Error("Team saved but could not retrieve ID."); [cite: 194]
         }
-        teamId = teamData[0].id;
-        console.log("[registerNewTeam] Team Inserted. ID:", teamId);
+        teamId = teamData[0].id; [cite: 194]
+        console.log("[registerNewTeam] Team Inserted. ID:", teamId); [cite: 195]
 
         // --- 3. Process Players Data, Validate Required Fields, Check Game IDs, Upload Files, and Prepare for Insert ---
         console.log(
             "[registerNewTeam] Processing Players Data, Validating, Checking Game IDs, and Collecting Files..."
-        );
-
-        // Ensure teamId is not null before proceeding with player processing
-        if (teamId === null) {
-             // This case should ideally not be reached
-             throw new Error("Internal error: Team ID was not determined.");
-        }
-
+        ); [cite: 196]
         const playersDataForProcessing: ({
             originalIndex: number;
-        } & PlayerInsert)[] = [];
+        } & PlayerInsert)[] = []; [cite: 197]
         const filesToUpload: {
             file: File;
-            role: Player["role"]; // Use the imported Player type
+            role: Player["role"];
             index: number;
-            field: "picture" | "student_id";
+            field: "picture" | "student_id"; [cite: 198]
         }[] = [];
 
-        const gameIdsToCheck: string[] = [];
-
+        const gameIdsToCheck: string[] = []; [cite: 199]
         // First Pass: Extract player data
         for (let i = 0; i < 7; i++) {
-            // Explicitly cast the role to the expected union type
-            const role = formData.get(`player_${i}_role`) as Player["role"] | null;
-            const name = formData.get(`player_${i}_name`) as string | null;
-            const ign = formData.get(`player_${i}_ign`) as string | null;
-            const game_id = formData.get(`player_${i}_game_id`) as string | null;
-            const server_id = formData.get(`player_${i}_server_id`) as string | null;
-            const email = formData.get(`player_${i}_email`) as string | null;
-            const mobile = formData.get(`player_${i}_mobile`) as string | null;
-            const city = formData.get(`player_${i}_city`) as string | null;
-            const state = formData.get(`player_${i}_state`) as string | null;
-            const device = formData.get(`player_${i}_device`) as string | null;
+            const role =
+                (formData.get(`player_${i}_role`) as Player["role"] | null) || "player"; [cite: 200]
+            const name = formData.get(`player_${i}_name`) as string | null; [cite: 200]
+            const ign = formData.get(`player_${i}_ign`) as string | null; [cite: 201]
+            const game_id = formData.get(`player_${i}_game_id`) as string | null; [cite: 201]
+            const server_id = formData.get(`player_${i}_server_id`) as string | null; [cite: 202]
+            const email = formData.get(`player_${i}_email`) as string | null; [cite: 202]
+            const mobile = formData.get(`player_${i}_mobile`) as string | null; [cite: 203]
+            const city = formData.get(`player_${i}_city`) as string | null; [cite: 203]
+            const state = formData.get(`player_${i}_state`) as string | null; [cite: 204]
+            const device = formData.get(`player_${i}_device`) as string | null; [cite: 204]
 
             const pictureFile = formData.get(`player_${i}_picture`);
             const studentIdFile = formData.get(`player_${i}_student_id`);
 
-            const displayName = getPlayerRoleDisplayName(i);
-
-            const isRequiredRole = i >= 0 && i <= 4;
+            const displayName = getPlayerRoleDisplayName(i); [cite: 205]
+            const isRequiredRole = i >= 0 && i <= 4; [cite: 206]
             const isOptionalRoleWithData =
                 (i === 5 || i === 6) &&
-                (name !== null || // Check for null explicitly
-                    ign !== null ||
-                    game_id !== null ||
-                    server_id !== null ||
-                    email !== null ||
-                    mobile !== null ||
-                    city !== null ||
-                    state !== null ||
-                    device !== null ||
+                (name ||
+                    ign ||
+                    game_id ||
+                    server_id || [cite: 207]
+                    email ||
+                    mobile ||
+                    city ||
+                    state ||
+                    device || [cite: 208]
                     pictureFile instanceof File ||
-                    studentIdFile instanceof File);
-            const isIncluded = isRequiredRole || isOptionalRoleWithData;
+                    studentIdFile instanceof File); [cite: 209]
+            const isIncluded = isRequiredRole || isOptionalRoleWithData; [cite: 209]
 
             if (isIncluded) {
                 // --- Backend validation for required fields ---
-                 // Ensure required fields are not null or empty strings after trimming
-                 if (!name || name.trim() === "") throw new Error(`Validation failed: Name missing for ${displayName}.`);
-                 if (!ign || ign.trim() === "") throw new Error(`Validation failed: IGN missing for ${displayName}.`);
-                 if (!game_id || game_id.trim() === "") throw new Error(`Validation failed: Game ID missing for ${displayName}.`);
-                 if (!server_id || server_id.trim() === "") throw new Error(`Validation failed: Server ID missing for ${displayName}.`);
-                 // Role is handled by the union type check implicitly if form provides it,
-                 // but an explicit check ensures it's not null if required.
-                 if (!role) throw new Error(`Validation failed: Role missing for ${displayName}.`);
-
-
-                if (i === 0 && (!email || email.trim() === "" || !mobile || mobile.trim() === "")) {
-                    throw new Error(`Validation failed: Captain's Email and Mobile are required.`);
+                 if (!name) throw new Error(`Validation failed: Name missing for ${displayName}.`); [cite: 210]
+                if (!ign) throw new Error(`Validation failed: IGN missing for ${displayName}.`); [cite: 211]
+                if (!game_id) throw new Error(`Validation failed: Game ID missing for ${displayName}.`); [cite: 212]
+                if (!server_id) throw new Error(`Validation failed: Server ID missing for ${displayName}.`); [cite: 213]
+                if (!role) throw new Error(`Validation failed: Role missing for ${displayName}.`); [cite: 214]
+                if (i === 0 && (!email || !mobile)) {
+                    throw new Error(`Validation failed: Captain's Email and Mobile are required.`); [cite: 215]
                 }
-                if (i === 6 && isOptionalRoleWithData && (!email || email.trim() === "" || !mobile || mobile.trim() === "")) {
-                    throw new Error(`Validation failed: Coach's Email and Mobile are required if data is provided.`);
+                if (i === 6 && isOptionalRoleWithData && (!email || !mobile)) {
+                    throw new Error(`Validation failed: Coach's Email and Mobile are required if data is provided.`); [cite: 216]
                 }
 
                 // --- Collect game_id for profile existence check ---
-                // Ensure game_id is not null before pushing
-                if (game_id) {
-                   gameIdsToCheck.push(game_id);
-                }
-
-
+                gameIdsToCheck.push(game_id); [cite: 217]
                 // Collect files
                 if (pictureFile instanceof File) {
                     filesToUpload.push({
                         file: pictureFile,
                         role,
-                        index: i,
+                        index: i, [cite: 218]
                         field: "picture",
                     });
                 }
@@ -925,64 +839,51 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
                     filesToUpload.push({
                         file: studentIdFile,
                         role,
-                        index: i,
+                        index: i, [cite: 220]
                         field: "student_id",
                     });
                 }
 
                 // Store player data
-                 // Ensure non-nullable fields are handled correctly (e.g., using || "")
                 playersDataForProcessing.push({
                     originalIndex: i,
-                    name: name || "", // Ensure name is string
-                    ign: ign || "", // Ensure ign is string
-                    game_id: game_id || "", // Ensure game_id is string
-                    server_id: server_id || "", // Ensure server_id is string
-                    role: role || "player", // Ensure role is string, provide default if necessary
+                    name: name,
+                    ign: ign,
+                    game_id: game_id, [cite: 222]
+                    server_id: server_id,
+                    role: role,
 
                     email: email,
-                    mobile: mobile,
+                    mobile: mobile, [cite: 223]
                     city: city,
                     state: state,
                     device: device,
                     picture_url: null, // Placeholder
                     student_id_url: null, // Placeholder
-                } as { originalIndex: number } & PlayerInsert);
+                } as { originalIndex: number } & PlayerInsert); [cite: 224]
             }
         }
 
         // --- Second Pass: Validate profile existence for collected game_ids ---
-        // Only perform this check if there are game IDs collected
-        if (gameIdsToCheck.length > 0) {
-            console.log(`[registerNewTeam] Checking profile existence for Game IDs: ${gameIdsToCheck.join(', ')}`);
-            // Specify the expected return type for the select with in filter
-            const { data: profileCheckData, error: profileCheckError }: PostgrestSingleResponse<{ game_id: string }[] | null> = await supabase
-                .from("profiles")
-                .select("game_id")
-                .in("game_id", gameIdsToCheck);
-
-            if (profileCheckError) {
-                console.error("[registerNewTeam] Supabase profile check error:", profileCheckError);
-                 // Re-throw the error
-                throw new Error(`Database error checking profiles: ${profileCheckError.message}`);
-            }
-
-            // Ensure profileCheckData is treated as an array, even if null
-            const foundGameIds = new Set(profileCheckData?.map((p) => p.game_id) || []);
-            const missingGameIds = gameIdsToCheck.filter((id) => !foundGameIds.has(id));
-
-            if (missingGameIds.length > 0) {
-                 // Re-throw the error
-                throw new Error(
-                    `Some players have not created their profiles yet. Missing Game IDs: ${missingGameIds.join(', ')}.`
-                );
-            }
-             console.log("[registerNewTeam] All required player profiles found.");
-        } else {
-             console.log("[registerNewTeam] No game IDs collected for profile existence check.");
+        console.log(`[registerNewTeam] Checking profile existence for Game IDs: ${gameIdsToCheck.join(', ')}`); [cite: 226]
+        const { data: profileCheckData, error: profileCheckError } = await supabase
+            .from("profiles")
+            .select("game_id")
+            .in("game_id", gameIdsToCheck); [cite: 227]
+        if (profileCheckError) {
+            console.error("[registerNewTeam] Supabase profile check error:", profileCheckError); [cite: 228]
+            throw new Error("Database error checking profiles."); [cite: 229]
         }
 
+        const foundGameIds = new Set(profileCheckData?.map((p) => p.game_id)); [cite: 230]
+        const missingGameIds = gameIdsToCheck.filter((id) => !foundGameIds.has(id)); [cite: 230]
 
+        if (missingGameIds.length > 0) {
+             throw new Error(
+                `Some players have not created their profiles yet. Missing Game IDs: ${missingGameIds.join(', ')}.` [cite: 231]
+            );
+        }
+         console.log("[registerNewTeam] All required player profiles found."); [cite: 232]
         // Check if at least the required players (Captain + 4 Players = 5) are included
         if (
             playersDataForProcessing.filter(
@@ -990,315 +891,291 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
             ).length < 5
         ) {
             console.error(
-                `[registerNewTeam] Not enough required players data collected after validation: ${playersDataForProcessing.length} entries.`
+                `[registerNewTeam] Not enough required players data collected after validation: ${playersDataForProcessing.length} entries.` [cite: 233]
             );
-             // Re-throw the error
             throw new Error(
-                "You must provide complete details for the Captain and 4 Players."
+                "You must provide complete details for the Captain and 4 Players." [cite: 235]
             );
         }
 
         // --- Perform Player File Uploads ---
         console.log(
             `[registerNewTeam] Starting player file uploads. Files to upload count: ${filesToUpload.length}`
-        );
+        ); [cite: 236]
         const uploadedUrlsMap: Record<string, string> = {};
 
         const uploadPromises = filesToUpload.map(async ({ file, index, field }) => {
-            const fileExt = file.name.split(".").pop();
-            const safeExt = fileExt || 'bin';
-            const playerFileNameSegment = getPlayerFileNameSegment(index);
+            const fileExt = file.name.split(".").pop(); [cite: 236]
+            const safeExt = fileExt || 'bin'; [cite: 236]
+            const playerFileNameSegment = getPlayerFileNameSegment(index); [cite: 236]
             const playerFileDestinationPath = `${registrationBasePath}/players/${playerFileNameSegment}/${
                 field === "picture"
-                    ? playerFileNameSegment + "_pic"
-                    : playerFileNameSegment + "_id"
+                    ? playerFileNameSegment + "_pic" [cite: 237]
+                    : playerFileNameSegment + "_id" [cite: 237]
             }.${safeExt}`;
 
             console.log(
                 `[registerNewTeam] Creating upload promise for: ${file.name} at destination path ${playerFileDestinationPath}`
-            );
+            ); [cite: 238]
 
              // Use the checkAndUploadFile helper
             try {
                 const url = await checkAndUploadFile(
                   supabase,
                   bucketName,
-                  file,
+                  file, [cite: 239]
                   playerFileDestinationPath
-                );
+                ); [cite: 239]
                 if (url) {
                   console.log(
                     `[registerNewTeam] Upload promise resolved for ${file.name}. URL: ${url}`
-                  );
-                  uploadedUrlsMap[`${index}_${field}`] = url;
+                  ); [cite: 240]
+                  uploadedUrlsMap[`${index}_${field}`] = url; [cite: 241]
                 } else {
                     console.warn(
                       `[registerNewTeam] Upload promise resolved with null URL for ${file.name}.`
-                    );
+                    ); [cite: 242]
                 }
-                return url; // Return the URL or null
+                return url; // Return the URL or null [cite: 243]
             } catch (individualUploadError: unknown) {
-                 console.error(`[registerNewTeam] Individual player file upload failed for ${file.name}:`, individualUploadError);
-                 throw new Error(`Upload failed for ${file.name}: ${individualUploadError instanceof Error ? individualUploadError.message : "Unknown upload error"}`);
+                 console.error(`[registerNewTeam] Individual player file upload failed for ${file.name}:`, individualUploadError); [cite: 244]
+                 throw new Error(`Upload failed for ${file.name}: ${individualUploadError instanceof Error ? individualUploadError.message : "Unknown upload error"}`); [cite: 245]
             }
         });
 
         try {
             console.log(
                 "[registerNewTeam] Waiting for all upload promises to resolve..."
-            );
-            // Use Promise.allSettled if you want to continue even if some uploads fail
-            // For now, Promise.all will throw on the first rejection
-            await Promise.all(uploadPromises);
+            ); [cite: 246]
+            await Promise.all(uploadPromises); [cite: 246]
             console.log(
                 "[registerNewTeam] All player files uploaded successfully."
-            );
+            ); [cite: 247]
             console.log(
                 "[registerNewTeam] Uploaded URLs Map:",
                 uploadedUrlsMap
-            );
+            ); [cite: 248]
         } catch (uploadError: unknown) {
             console.error(
                 "[registerNewTeam] One or more player file uploads FAILED:",
                 uploadError
-            );
-            const errorMessage = uploadError instanceof Error ? uploadError.message : "Unknown file upload error.";
-            throw new Error(`Failed to upload one or more player files: ${errorMessage}`);
+            ); [cite: 249]
+            const errorMessage = uploadError instanceof Error ? uploadError.message : "Unknown file upload error."; [cite: 250]
+            throw new Error(`Failed to upload one or more player files: ${errorMessage}`); [cite: 251]
         }
 
         // --- Build finalPlayersToInsert with URLs ---
-        const finalPlayersToInsertWithUrls: PlayerInsert[] = [];
+        const finalPlayersToInsertWithUrls: PlayerInsert[] = []; [cite: 252]
         playersDataForProcessing.forEach((playerData) => {
             const originalIndex = playerData.originalIndex;
 
-            const pictureUrl = uploadedUrlsMap[`${originalIndex}_picture`] || null;
+            const pictureUrl = uploadedUrlsMap[`${originalIndex}_picture`] || null; [cite: 252]
             const studentIdUrl =
-                uploadedUrlsMap[`${originalIndex}_student_id`] || null;
-
-            // Ensure teamId and universityId are not null before using them
-            if (teamId === null || universityId === null) {
-                 // This should not happen if checks above are correct, but for safety
-                 console.error("[registerNewTeam] Internal error: teamId or universityId is null during player data preparation.");
-                 throw new Error("Internal error preparing player data.");
-            }
+                uploadedUrlsMap[`${originalIndex}_student_id`] || null; [cite: 253]
 
             finalPlayersToInsertWithUrls.push({
-                team_id: teamId, // Use the determined team ID
-                university_id: universityId, // Use the determined university ID
+                team_id: teamId as string, [cite: 253]
+                university_id: universityId as string, [cite: 253]
 
-                name: playerData.name,
-                ign: playerData.ign,
-                game_id: playerData.game_id,
-                server_id: playerData.server_id,
-                role: playerData.role,
+                name: playerData.name, [cite: 253]
+                ign: playerData.ign, [cite: 254]
+                game_id: playerData.game_id, [cite: 254]
+                server_id: playerData.server_id, [cite: 254]
+                role: playerData.role as string, [cite: 254]
 
-                email: playerData.email,
-                mobile: playerData.mobile,
-                city: playerData.city,
-                state: playerData.state,
-                device: playerData.device,
-                picture_url: pictureUrl,
-                student_id_url: studentIdUrl,
+                email: playerData.email, [cite: 254]
+                mobile: playerData.mobile, [cite: 255]
+                city: playerData.city, [cite: 255]
+                state: playerData.state, [cite: 255]
+                device: playerData.device, [cite: 255]
+                picture_url: pictureUrl, [cite: 255]
+                student_id_url: studentIdUrl, [cite: 256]
             });
         });
         console.log(
             `[registerNewTeam] Prepared ${finalPlayersToInsertWithUrls.length} players for insertion.`
-        );
+        ); [cite: 257]
         // --- Insert Players Data ---
         if (finalPlayersToInsertWithUrls.length > 0) {
-            console.log("[registerNewTeam] Inserting Players...");
-            // Specify the expected return type for the insert
-            const { data: playersData, error: playersInsertError }: PostgrestSingleResponse<any[] | null> = await supabase
+            console.log("[registerNewTeam] Inserting Players..."); [cite: 258]
+            const { data: playersData, error: playersInsertError } = await supabase
                 .from("players")
-                .insert(finalPlayersToInsertWithUrls)
-                .select("*"); // Select the inserted data if needed, or just 'id'
-
+                .insert(finalPlayersToInsertWithUrls); [cite: 259]
             if (playersInsertError) {
-                console.error("[registerNewTeam] Supabase insert error (players):", playersInsertError);
-                throw new Error(`Database error inserting players: ${playersInsertError.message}`);
+                console.error("[registerNewTeam] Supabase insert error (players):", playersInsertError); [cite: 260]
+                throw new Error(`Database error inserting players: ${playersInsertError.message}`); [cite: 261]
             }
-            console.log("[registerNewTeam] Players Inserted.", playersData);
+            console.log("[registerNewTeam] Players Inserted.", playersData); [cite: 262]
         } else {
-            console.log("[registerNewTeam] No players to insert.");
+            console.log("[registerNewTeam] No players to insert."); [cite: 263]
         }
 
         // --- Final Success ---
-        console.log("[registerNewTeam] New Registration Successful! Redirecting...");
-        redirect("/register/success");
+        console.log("[registerNewTeam] New Registration Successful! Redirecting..."); [cite: 264]
+        redirect("/register/success"); [cite: 264]
 
     } catch (error: unknown) {
-        console.error("[registerNewTeam] Caught error:", error);
-         // Check if the error is the special redirect error thrown by Next.js
+        console.error("[registerNewTeam] Caught error:", error); [cite: 265]
          if (
             error &&
             typeof error === "object" &&
             "digest" in error &&
-            typeof (error as { digest: string }).digest === "string" && // Corrected type guard
-            (error as { digest: string }).digest.startsWith("NEXT_REDIRECT") // Corrected type guard
+            typeof (error as { digest: string }).digest === "string" && // Corrected type guard [cite: 266]
+            (error as { digest: string }).digest.startsWith("NEXT_REDIRECT") // Corrected type guard [cite: 266]
           ) {
-            console.log("[registerNewTeam] Identified NEXT_REDIRECT error. Re-throwing.");
-            throw error; // Re-throw the redirect error
+            console.log("[registerNewTeam] Identified NEXT_REDIRECT error. Re-throwing."); [cite: 267]
+            throw error; // Re-throw the redirect error [cite: 267]
           }
 
         // If it's not a redirect error, handle it as a registration failure
         console.error(
           "[registerNewTeam] Handling as a registration failure."
-        );
+        ); [cite: 268]
         const errorMessage =
           error instanceof Error
-            ? error.message
-            : (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' ? error.message : "An unexpected server error occurred.");
+            ? error.message [cite: 269]
+            : (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' ? error.message : "An unexpected server error occurred."); [cite: 270]
 
-        throw new Error(`New registration failed: ${errorMessage}`);
+        throw new Error(`New registration failed: ${errorMessage}`); [cite: 271]
     }
 }
 // --- End Handle New Registration Insert Logic ---
 
 // --- Main Server Action to Handle Final Registration (Includes Check) ---
 export async function handleFinalRegistration(formData: FormData) {
-  // createClient is used here
-  const supabase = await createClient();
+  // createClient is used here [cite: 273]
+  const supabase = await createClient(); [cite: 273]
   // --- Fetch Authenticated User ---
-  console.log("[handleFinalRegistration] Checking authentication...");
+  console.log("[handleFinalRegistration] Checking authentication..."); [cite: 274]
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser(); [cite: 275]
   if (!user || userError) {
-    console.error("[handleFinalRegistration] User is not authenticated.");
-    // Consider throwing a specific authentication error or redirecting to login
-    // For now, returning an error object as per original code structure
+    console.error("[handleFinalRegistration] User is not authenticated."); [cite: 276]
     return {
       success: false,
-      error: "You must be logged in to register a team.",
+      error: "You must be logged in to register a team.", [cite: 277]
     };
   }
-  const authenticatedUserId = user.id;
+  const authenticatedUserId = user.id; [cite: 278]
   console.log(
     `[handleFinalRegistration] Authenticated user ID: ${authenticatedUserId}`
-  );
+  ); [cite: 278]
   // --- End Fetch User ---
 
-  const universityName = formData.get("university_name") as string | null;
-  const teamName = formData.get("team_name") as string | null;
+  const universityName = formData.get("university_name") as string | null; [cite: 279]
+  const teamName = formData.get("team_name") as string | null; [cite: 279]
   // referralCode is extracted but not used in this specific function, only passed to handlers
-  // const referralCode = formData.get("referral_code") as string | null;
+  // const referralCode = formData.get("referral_code") as string | null; [cite: 280]
 
 
-   if (!universityName || universityName.trim() === "") {
-        console.error("[handleFinalRegistration] University Name missing in form data.");
-        return { success: false, error: "University Name is required." };
+   if (!universityName) {
+        console.error("[handleFinalRegistration] University Name missing in form data."); [cite: 281]
+        return { success: false, error: "University Name is required." }; [cite: 282]
    }
-   if (!teamName || teamName.trim() === "") {
-        console.error("[handleFinalRegistration] Team Name missing in form data.");
-        return { success: false, error: "Team Name is required." };
+   if (!teamName) {
+        console.error("[handleFinalRegistration] Team Name missing in form data."); [cite: 283]
+        return { success: false, error: "Team Name is required." }; [cite: 284]
    }
 
 
   // --- Check if Registration Already Exists ---
-  console.log(`[handleFinalRegistration] Checking for existing registration: University='${universityName}', Team='${teamName}'`);
+  console.log(`[handleFinalRegistration] Checking for existing registration: University='${universityName}', Team='${teamName}'`); [cite: 285]
   try {
        // Find the university first
-       // Specify the expected return type for the single() query
-      const { data: existingUni, error: fetchUniError }: PostgrestSingleResponse<{ id: string } | null> = await supabase
+      const { data: existingUni, error: fetchUniError } = await supabase
           .from("universities")
-          .select("id")
-          .eq("name", universityName)
-          .single(); // Use single() if university names are unique
+          .select("id") [cite: 286]
+          .eq("name", universityName) [cite: 286]
+          .single(); [cite: 286] // Use single() if university names are unique
 
-      // Check for specific Supabase errors vs "No rows found" (PGRST116)
-      if (fetchUniError && fetchUniError.code !== 'PGRST116') {
-           console.error("[handleFinalRegistration] Supabase fetch error (universities):", fetchUniError);
-           throw new Error(`Database error checking for existing university: ${fetchUniError.message}`);
+      if (fetchUniError && fetchUniError.code !== 'PGRST116') { // PGRST116 means no rows found [cite: 287]
+           console.error("[handleFinalRegistration] Supabase fetch error (universities):", fetchUniError); [cite: 287]
+           throw new Error(`Database error checking for existing university: ${fetchUniError.message}`); [cite: 287]
       }
 
-      const existingUniversityId: string | null = existingUni?.id || null;
-      let existingTeamId: string | null = null;
-
+      const existingUniversityId: string | null = existingUni?.id || null; [cite: 288]
+      let existingTeamId: string | null = null; [cite: 289]
       if (existingUniversityId) {
-          console.log(`[handleFinalRegistration] Found existing university ID: ${existingUniversityId}`);
+          console.log(`[handleFinalRegistration] Found existing university ID: ${existingUniversityId}`); [cite: 290]
           // If university found, check for the team within that university
-          // Specify the expected return type for the single() query
-           const { data: existingTeam, error: fetchTeamError }: PostgrestSingleResponse<{ id: string } | null> = await supabase
+           const { data: existingTeam, error: fetchTeamError } = await supabase
                .from("teams")
-               .select("id")
-               .eq("name", teamName)
-               .eq("university_id", existingUniversityId)
-               .eq("user_id", authenticatedUserId) // Check ownership
-               .single(); // Use single() if team names are unique within a university per user
+               .select("id") [cite: 291]
+               .eq("name", teamName) [cite: 291]
+               .eq("university_id", existingUniversityId) [cite: 291]
+               .eq("user_id", authenticatedUserId) // Check ownership [cite: 292]
+               .single(); [cite: 292] // Use single() if team names are unique within a university per user
 
-           // Check for specific Supabase errors vs "No rows found" (PGRST116)
-           if (fetchTeamError && fetchTeamError.code !== 'PGRST116') {
-                console.error("[handleFinalRegistration] Supabase fetch error (teams):", fetchTeamError);
-                 throw new Error(`Database error checking for existing team: ${fetchTeamError.message}`);
+           if (fetchTeamError && fetchTeamError.code !== 'PGRST116') { // PGRST116 means no rows found [cite: 293]
+                console.error("[handleFinalRegistration] Supabase fetch error (teams):", fetchTeamError); [cite: 293]
+                throw new Error(`Database error checking for existing team: ${fetchTeamError.message}`); [cite: 293]
            }
 
            if (existingTeam) {
-               existingTeamId = existingTeam.id;
-               console.log(`[handleFinalRegistration] Found existing team ID: ${existingTeamId} under university ID ${existingUniversityId}.`);
+               existingTeamId = existingTeam.id; [cite: 294]
+               console.log(`[handleFinalRegistration] Found existing team ID: ${existingTeamId} under university ID ${existingUniversityId}.`); [cite: 295]
            } else {
-                console.log(`[handleFinalRegistration] No existing team found with name '${teamName}' under university ID ${existingUniversityId} for this user.`);
+                console.log(`[handleFinalRegistration] No existing team found with name '${teamName}' under university ID ${existingUniversityId} for this user.`); [cite: 296]
            }
       } else {
-          console.log(`[handleFinalRegistration] No existing university found with name '${universityName}'.`);
+          console.log(`[handleFinalRegistration] No existing university found with name '${universityName}'.`); [cite: 297]
       }
 
       // --- Decide whether to Update or Insert ---
       if (existingUniversityId && existingTeamId) {
-          console.log("[handleFinalRegistration] Existing registration found. Calling update handler.");
-           // If both university and team exist, proceed with update logic
-           // handleRegistrationUpdate is used here
+          console.log("[handleFinalRegistration] Existing registration found. Calling update handler."); [cite: 298]
+           // handleRegistrationUpdate is used here [cite: 298]
           await handleRegistrationUpdate(
               supabase,
               formData,
               existingUniversityId,
               existingTeamId,
-              authenticatedUserId // Pass authenticated user ID to update handler
+              authenticatedUserId // Pass authenticated user ID to update handler [cite: 299]
           );
-           // handleRegistrationUpdate will handle its own redirects/returns
-          // The following return should technically not be reached if redirect() is called,
-          // but it's good practice to have a return at the end of a server action pathway.
-          return { success: true, message: "Registration updated successfully." };
+          // handleRegistrationUpdate will handle its own redirects/returns
+           // The following return should technically not be reached if redirect() is called,
+           // but it's good practice to have a return at the end of a server action pathway.
+          return { success: true, message: "Registration updated successfully." }; [cite: 301]
       } else {
-          console.log("[handleFinalRegistration] No existing registration found. Proceeding with insert.");
-          // If no existing registration found, proceed with insert logic
-           // registerNewTeam is used here
+          console.log("[handleFinalRegistration] No existing registration found. Proceeding with insert."); [cite: 302]
+           // registerNewTeam is used here [cite: 302]
           await registerNewTeam(
               supabase,
               formData,
-              authenticatedUserId // Pass authenticated user ID to insert handler
+              authenticatedUserId // Pass authenticated user ID to insert handler [cite: 303]
           );
-          // registerNewTeam will handle its own redirects/returns
+           // registerNewTeam will handle its own redirects/returns
            // The following return should technically not be reached if redirect() is called,
            // but it's good practice to have a return at the end of a server action pathway.
-           return { success: true, message: "New registration created successfully." };
+           return { success: true, message: "New registration created successfully." }; [cite: 304]
       }
 
   } catch (error: unknown) {
-    console.error("[handleFinalRegistration] Caught error during existence check or subsequent handling:", error);
-
+    console.error("[handleFinalRegistration] Caught error during existence check or subsequent handling:", error); [cite: 306]
     // Check if the error is the special redirect error thrown by Next.js
     if (
       error &&
       typeof error === "object" &&
       "digest" in error &&
-      typeof (error as { digest: string }).digest === "string" && // Corrected type guard
-      (error as { digest: string }).digest.startsWith("NEXT_REDIRECT") // Corrected type guard
+      typeof (error as { digest: string }).digest === "string" && // Corrected type guard [cite: 307]
+      (error as { digest: string }).digest.startsWith("NEXT_REDIRECT") // Corrected type guard [cite: 307]
     ) {
-      console.log("[handleFinalRegistration] Identified NEXT_REDIRECT error. Re-throwing.");
-      throw error; // Re-throw the redirect error
+      console.log("[handleFinalRegistration] Identified NEXT_REDIRECT error. Re-throwing."); [cite: 307]
+      throw error; // Re-throw the redirect error [cite: 307]
     }
 
     // If it's not a redirect error, handle it as a registration failure
     console.error(
       "[handleFinalRegistration] Handling as a registration failure."
-    );
+    ); [cite: 308]
     const errorMessage =
       error instanceof Error
-        ? error.message
-        : (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' ? error.message : "An unexpected server error occurred.");
+        ? error.message [cite: 309]
+        : (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string' ? error.message : "An unexpected server error occurred."); [cite: 310]
 
-    return { success: false, error: `Registration process failed: ${errorMessage}` };
+    return { success: false, error: `Registration process failed: ${errorMessage}` }; [cite: 310]
   }
 }
 // --- End Main Server Action ---

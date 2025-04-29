@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const excludedPaths = [
     '/login',
+    '/register',
     '/signup',
     '/auth/callback',
     '/complete-profile', 
