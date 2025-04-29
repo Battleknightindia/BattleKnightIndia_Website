@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { EVENT_DATA } from "@/lib/constant/home_page"
+import { EVENT_DATA, MediaItem } from "@/lib/constant/home_page"
 import { Card } from "@/components/ui/card" // Assuming Card component is imported from shadcn/ui
 
 export default function EventCarousel() {

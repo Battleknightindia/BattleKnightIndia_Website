@@ -196,7 +196,7 @@ export const COSPLAY_DATA = [
   }
 ];
 
-type MediaItem = {
+export type MediaItem = {
   id: string
   title: string
   date: string
@@ -244,46 +244,6 @@ type MediaItem = {
     aspectRatio: "landscape",
   },
 ]
-
-// Event data
-export const EVENT_DATA2 = [
-  {
-    id: 1,
-    title: "Nagaland",
-    image: "/placeholder.svg?height=600&width=800",
-    date: "June 15, 2025",
-    description: "Championship match between the top two teams",
-  },
-  {
-    id: 2,
-    title: "Assam",
-    image: "/placeholder.svg?height=600&width=800",
-    date: "June 12, 2025",
-    description: "Four teams battle for a spot in the finals",
-  },
-  {
-    id: 3,
-    title: "Manipur",
-    image: "/placeholder.svg?height=600&width=800",
-    date: "June 10, 2025",
-    description: "Eight teams compete in elimination matches",
-  },
-  {
-    id: 4,
-    title: "West Bengal",
-    image: "/placeholder.svg?height=600&width=800",
-    date: "June 5-8, 2025",
-    description: "Initial round-robin tournament phase",
-  },
-  {
-    id: 5,
-    title: "Odhissa",
-    image: "/placeholder.svg?height=600&width=800",
-    date: "June 5-8, 2025",
-    description: "Initial round-robin tournament phase",
-  },
-
-];
 
 // Featured event data
 export const FEATURED_EVENT = {
