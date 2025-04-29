@@ -12,11 +12,11 @@ const AboutSection = () => {
 
           {/* Text Content */}
           <div className="md:w-1/2 flex flex-col justify-center"> {/* Text column, takes half width on md+ */}
-            <h2 className="text-5xl md:text-4xl lg:text-5xl font-bold mb-6 text-center md:text-left"> {/* Responsive heading size, removed border */}
+            <h2 className="text-3xl md:text-5xl lg:text-5xl font-bold mb-6 text-center md:text-left"> {/* Responsive heading size, removed border */}
               About <span className="text-emerald-500">BATTLEKNIGHTS</span>
             </h2>
             {/* Removed the empty paragraph */}
-            <div className="text-xl text-neutral-400 space-y-6 md:space-y-4 lg:space-y-6"> {/* Space between paragraphs */}
+            <div className="text-sm text-neutral-400 space-y-6 md:space-y-4 lg:space-y-6"> {/* Space between paragraphs */}
               <p>
                 BattleKnights is a competitive esports organization forging the future of mobile gaming in India, with a sharp focus on MOBA Legends 5v5. Founded and led by Reinhardt and his team, BattleKnights stormed onto the scene by hosting the official LAN tournament – the North East Cup, powered by Vizta. This high-stakes event brought together some of the most skilled players and teams from across the region, placing Northeast India firmly on the esports map.
               </p>
