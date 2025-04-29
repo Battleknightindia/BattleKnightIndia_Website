@@ -12,8 +12,8 @@ const AboutSection = () => {
 
           {/* Text Content */}
           <div className="md:w-1/2 flex flex-col justify-center"> {/* Text column, takes half width on md+ */}
-            <h2 className="text-5xl md:text-4xl lg:text-5xl font-bold text-white mb-6 text-center md:text-left"> {/* Responsive heading size, removed border */}
-              About BattleKnights
+            <h2 className="text-5xl md:text-4xl lg:text-5xl font-bold mb-6 text-center md:text-left"> {/* Responsive heading size, removed border */}
+              About <span className="text-emerald-500">BATTLEKNIGHTS</span>
             </h2>
             {/* Removed the empty paragraph */}
             <div className="text-xl text-neutral-400 space-y-6 md:space-y-4 lg:space-y-6"> {/* Space between paragraphs */}
