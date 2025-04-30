@@ -147,11 +147,7 @@ export function LoginForm({
                 )}
               </div>
               
-              {errors["cf-turnstile-response"] && (
-                <p className="text-xs text-red-500 text-center mt-1">
-                  {errors["cf-turnstile-response"].message}
-                </p>
-              )}
+              
               <Button
                 type="submit"
                 className="w-full bg-emerald-500"
