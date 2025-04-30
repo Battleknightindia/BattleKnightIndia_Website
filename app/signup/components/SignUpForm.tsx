@@ -14,7 +14,7 @@ import { Mail, Lock } from "lucide-react"
 import { signUp } from "@/lib/server_actions/auth";
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { Turnstile } from '@marsidev/react-turnstile';
+//import { Turnstile } from '@marsidev/react-turnstile';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,7 +23,7 @@ const SignUpFormSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters long.' }),
   confirmPassword: z.string(),
-  'cf-turnstile-response': z.string().min(1, { message: 'Please complete the CAPTCHA verification.' })
+  //'cf-turnstile-response': z.string().min(1, { message: 'Please complete the CAPTCHA verification.' })
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match.",
   path: ["confirmPassword"],
@@ -53,7 +53,7 @@ export function SignUpForm({
       email: '',
       password: '',
       confirmPassword: '',
-      'cf-turnstile-response': '',
+      //'cf-turnstile-response': '',
     }
   });
 
@@ -67,7 +67,7 @@ export function SignUpForm({
     const formData = new FormData();
     formData.append('email', data.email);
     formData.append('password', data.password);
-    formData.append('cf-turnstile-response', data['cf-turnstile-response']);
+    //formData.append('cf-turnstile-response', data['cf-turnstile-response']);
 
     try {
       await signUp(formData);
@@ -77,11 +77,12 @@ export function SignUpForm({
     }
   };
 
-  const handleTurnstileSuccess = (token: string) => {
+  /*const handleTurnstileSuccess = (token: string) => {
     // Removed setTurnstileToken(token); as turnstileToken state is removed
     setValue('cf-turnstile-response', token);
     trigger('cf-turnstile-response');
   };
+  */
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -155,16 +156,6 @@ export function SignUpForm({
                 </div>
                 {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>}
               </div>
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''}
-                onSuccess={handleTurnstileSuccess}
-                onExpire={() => setValue('cf-turnstile-response', '')}
-                onError={() => setValue('cf-turnstile-response', '')}
-                options={{
-                  theme: 'dark',
-                }}
-                className="mx-auto"
-              />
               {errors['cf-turnstile-response'] && <p className="text-xs text-red-500 text-center mt-1">{errors['cf-turnstile-response'].message}</p>}
 
               <Button type="submit" className="w-full bg-emerald-500" disabled={isSubmitting}>

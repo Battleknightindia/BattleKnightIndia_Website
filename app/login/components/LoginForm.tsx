@@ -15,7 +15,7 @@ import { loginWithEmail } from "@/lib/server_actions/auth";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import React from "react";
-import { Turnstile } from "@marsidev/react-turnstile";
+//import { Turnstile } from "@marsidev/react-turnstile";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,9 +24,9 @@ import { OAuthButtons } from "./Oauth";
 const LoginFormSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
-  "cf-turnstile-response": z
-    .string()
-    .min(1, { message: "Please complete the CAPTCHA verification." }),
+  //"cf-turnstile-response": z
+    //.string()
+    //.min(1, { message: "Please complete the CAPTCHA verification." }),
 });
 
 type LoginFormValues = z.infer<typeof LoginFormSchema>;
@@ -50,7 +50,7 @@ export function LoginForm({
     defaultValues: {
       email: "",
       password: "",
-      "cf-turnstile-response": "",
+      //"cf-turnstile-response": "",
     },
   });
 
@@ -67,7 +67,7 @@ export function LoginForm({
     const formData = new FormData();
     formData.append("email", data.email);
     formData.append("password", data.password);
-    formData.append("cf-turnstile-response", data["cf-turnstile-response"]);
+    //formData.append("cf-turnstile-response", data["cf-turnstile-response"]);
 
     try {
       await loginWithEmail(formData);
@@ -80,10 +80,10 @@ export function LoginForm({
     }
   };
 
-  const handleTurnstileSuccess = (token: string) => {
-    setValue("cf-turnstile-response", token);
-    trigger("cf-turnstile-response");
-  };
+  //const handleTurnstileSuccess = (token: string) => {
+    //setValue("cf-turnstile-response", token);
+    //trigger("cf-turnstile-response");
+  //};
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -146,16 +146,7 @@ export function LoginForm({
                   </p>
                 )}
               </div>
-              <Turnstile
-                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-                onSuccess={handleTurnstileSuccess}
-                onExpire={() => setValue("cf-turnstile-response", "")}
-                onError={() => setValue("cf-turnstile-response", "")}
-                options={{
-                  theme: "dark",
-                }}
-                className="mx-auto"
-              />
+              
               {errors["cf-turnstile-response"] && (
                 <p className="text-xs text-red-500 text-center mt-1">
                   {errors["cf-turnstile-response"].message}

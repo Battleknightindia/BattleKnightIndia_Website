@@ -7,7 +7,7 @@ import { Provider } from '@supabase/supabase-js'
 import { getURL } from '@/utils/helpers'
 
 // Helper function to verify the Turnstile token
-async function verifyTurnstileToken(token: string | null): Promise<boolean> {
+/*async function verifyTurnstileToken(token: string | null): Promise<boolean> {
   const secretKey = process.env.TURNSTILE_SECRET_KEY;
 
   if (!token || !secretKey) {
@@ -35,17 +35,17 @@ async function verifyTurnstileToken(token: string | null): Promise<boolean> {
     console.error('Error verifying Turnstile token:', error);
     return false;
   }
-}
+}*/
 
 export async function loginWithEmail(formData: FormData) {
   // --- Turnstile Verification Start ---
-  const token = formData.get('cf-turnstile-response') as string | null;
-  const isTokenValid = await verifyTurnstileToken(token);
+  //const token = formData.get('cf-turnstile-response') as string | null;
+  //const isTokenValid = await verifyTurnstileToken(token);
 
-  if (!isTokenValid) {
+  /*if (!isTokenValid) {
     console.warn('Turnstile verification failed for login.');
     return redirect('/login?message=CAPTCHA%20verification%20failed.%20Please%20try%20again.');
-  }
+  }*/
   // --- Turnstile Verification End ---
 
   const supabase = await createClient()
@@ -73,14 +73,14 @@ export async function signOut() {
 
 export async function signUp(formData: FormData) {
   // --- Turnstile Verification Start ---
-  const token = formData.get('cf-turnstile-response') as string | null;
-  const isTokenValid = await verifyTurnstileToken(token);
+  //const token = formData.get('cf-turnstile-response') as string | null;
+  //const isTokenValid = await verifyTurnstileToken(token);
 
-  if (!isTokenValid) {
+  /*if (!isTokenValid) {
     console.warn('Turnstile verification failed for sign up.');
     // Redirect back to signup, preserving other potential query params if needed, but keeping it simple here
     return redirect('/signup?message=CAPTCHA%20verification%20failed.%20Please%20try%20again.'); 
-  }
+  }*/
   // --- Turnstile Verification End ---
 
   const supabase = await createClient()
