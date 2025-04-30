@@ -6,12 +6,13 @@ export const editprofileSchema = z.object({
   gameId: z.string().min(1),
   serverId: z.string().min(1),
   roles: z.string().min(1),
-  state: z.string().optional(),
-  city: z.string().optional(),
+  state: z.string().optional(), // Note: .optional().nullable() might be better here too if empty string/null is possible
+  city: z.string().optional(),   // Note: .optional().nullable() might be better here too if empty string/null is possible
 
-  profileImage: z.string().optional(),
+  profileImage: z.string().optional().nullable(), // <-- Changed this line
 });
 
+// Keep the rest of the schemas and types as they are
 export const viewprofileSchema = z.object({
   fullName: z.string().min(1),
   ign: z.string().min(1),
