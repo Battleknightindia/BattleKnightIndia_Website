@@ -21,9 +21,10 @@ const SignUpPage = () => {
           </div>
         </a>
         {/* Wrap the component that might throw an error with ErrorBoundary */}
-        <ErrorBoundary>
-          <SignUpForm />
-        </ErrorBoundary>
+        <SignUpForm />
+        {/*<ErrorBoundary>
+          
+        </ErrorBoundary>*/}
       </div>
     </div>
   )

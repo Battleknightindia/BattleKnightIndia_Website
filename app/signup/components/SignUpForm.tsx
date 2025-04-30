@@ -94,7 +94,7 @@ export function SignUpForm({
         // redirect('/login?message=Signup%20successful.%20Please%20login.');
       }
 
-    } catch (error: any) { // Catch potential network errors or unhandled exceptions
+    } catch (error: unknown) { // Catch potential network errors or unhandled exceptions
       console.error("Sign up error:", error);
       // Display a generic error message for unexpected errors
       setError('root.serverError', { type: 'server', message: error.message || 'An unexpected error occurred during sign up.' });
