@@ -95,7 +95,7 @@ export async function signUp(formData: FormData): Promise<{ success: boolean; me
   // or a confirmation page. If you want to handle success client-side,
   // return success: true and manage the redirect in the client component.
   // For this example, let's assume we still redirect to login on success.
-  redirect('/login?message=Signup%20successful.%20Please%20login.');
+  redirect('/login?message=Signup%20successful.%20Please%20check%20your%20email%20for%20comfirmation%20link%20from%20Supabase.');
 
   // If you prefer to handle success fully client-side without immediate redirect:
   // return { success: true }; // And handle the redirect in SignUpForm.tsx
