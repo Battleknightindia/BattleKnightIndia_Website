@@ -70,7 +70,7 @@ export function SignUpForm({
   //   }
   // }, [serverMessage, setError]);
 
-  const onSubmit = async (data: SignUpFormValues) => {
+    const onSubmit = async (data: SignUpFormValues) => {
     // Clear previous server errors
     setError('root.serverError', { type: 'server', message: '' });
 
@@ -94,10 +94,11 @@ export function SignUpForm({
         // redirect('/login?message=Signup%20successful.%20Please%20login.');
       }
 
-    } catch (error: unknown) { // Catch potential network errors or unhandled exceptions
+    } catch (error) { // error is inferred as 'unknown'
       console.error("Sign up error:", error);
-      // Display a generic error message for unexpected errors
-      setError('root.serverError', { type: 'server', message: error.message || 'An unexpected error occurred during sign up.' });
+      // Safely access message or provide a fallback
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during sign up.';
+      setError('root.serverError', { type: 'server', message: errorMessage });
     }
   };
 
