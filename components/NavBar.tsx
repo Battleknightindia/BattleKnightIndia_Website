@@ -383,7 +383,7 @@ export default function NavBar() {
               )}
               <Button
                 variant="outline"
-                className="w-full border-zinc-700 text-red-500 hover:bg-zinc-900"
+                className="w-full border-zinc-700 text-red-500 hover:bg-zinc-900 relative z-50"
                 onClick={() => {
                   handleLogout();
                   toggleMenu();
