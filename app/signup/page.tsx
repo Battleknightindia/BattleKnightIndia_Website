@@ -1,7 +1,9 @@
+// app/signup/page.tsx (assuming this is the path)
 'use client';
-import { SignUpForm } from "./components/SignUpForm"
-import Image from "next/image"
 
+import { SignUpForm } from "./components/SignUpForm"; // Assuming SignUpForm is in a sub-directory
+import Image from "next/image";
+import ErrorBoundary from "@/components/ErrorBoundary"; // Import the ErrorBoundary
 
 const SignUpPage = () => {
   return (
@@ -18,10 +20,13 @@ const SignUpPage = () => {
             />
           </div>
         </a>
-        <SignUpForm />
+        {/* Wrap the component that might throw an error with ErrorBoundary */}
+        <ErrorBoundary>
+          <SignUpForm />
+        </ErrorBoundary>
       </div>
     </div>
   )
 }
 
-export default SignUpPage
+export default SignUpPage;
