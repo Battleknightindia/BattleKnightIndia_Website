@@ -38,16 +38,7 @@ import { getURL } from '@/utils/helpers'
 }*/
 
 export async function loginWithEmail(formData: FormData) {
-  // --- Turnstile Verification Start ---
-  //const token = formData.get('cf-turnstile-response') as string | null;
-  //const isTokenValid = await verifyTurnstileToken(token);
-
-  /*if (!isTokenValid) {
-    console.warn('Turnstile verification failed for login.');
-    return redirect('/login?message=CAPTCHA%20verification%20failed.%20Please%20try%20again.');
-  }*/
-  // --- Turnstile Verification End ---
-
+  // ... (loginWithEmail function remains the same)
   const supabase = await createClient()
 
   const data = {
@@ -71,38 +62,47 @@ export async function signOut() {
   redirect('/')
 }
 
-export async function signUp(formData: FormData) {
+// MODIFIED signUp function
+export async function signUp(formData: FormData): Promise<{ success: boolean; message?: string }> { // Added return type
   // --- Turnstile Verification Start ---
   //const token = formData.get('cf-turnstile-response') as string | null;
   //const isTokenValid = await verifyTurnstileToken(token);
 
   /*if (!isTokenValid) {
     console.warn('Turnstile verification failed for sign up.');
-    // Redirect back to signup, preserving other potential query params if needed, but keeping it simple here
-    return redirect('/signup?message=CAPTCHA%20verification%20failed.%20Please%20try%20again.'); 
+    // Instead of redirecting, return an error object
+    return { success: false, message: 'CAPTCHA verification failed. Please try again.' };
   }*/
   // --- Turnstile Verification End ---
 
-  const supabase = await createClient()
-  
+  const supabase = await createClient();
+
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
-  }
-  
-  const { error } = await supabase.auth.signUp(data)
+  };
+
+  const { error } = await supabase.auth.signUp(data);
 
   if (error) {
-    console.error('Signup error:', error.message)
-    redirect(`/login?message=${encodeURIComponent(error.message)}`)
+    console.error('Signup error:', error.message);
+    // Return error object instead of redirecting
+    return { success: false, message: error.message };
   }
 
-  revalidatePath('/', 'layout')
-  // Redirect to a confirmation page or login after successful signup
-  redirect('/login?message=Signup%20successful.%20Please%20login.') // Changed redirect on success
+  revalidatePath('/', 'layout');
+  // On success, you might still want to redirect, for example, to a login page
+  // or a confirmation page. If you want to handle success client-side,
+  // return success: true and manage the redirect in the client component.
+  // For this example, let's assume we still redirect to login on success.
+  redirect('/login?message=Signup%20successful.%20Please%20login.');
+
+  // If you prefer to handle success fully client-side without immediate redirect:
+  // return { success: true }; // And handle the redirect in SignUpForm.tsx
 }
 
 export async function signInWithOauth(provider: Provider) {
+  // ... (signInWithOauth function remains the same)
   if(!provider){
     return redirect('/login?message=Invalid%20provider')
   }

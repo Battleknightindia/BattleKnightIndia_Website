@@ -11,16 +11,19 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Mail, Lock } from "lucide-react"
+// Updated import - make sure this path is correct for your project
 import { signUp } from "@/lib/server_actions/auth";
-import { useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation'; // Keep useSearchParams if you still use it for other messages, otherwise remove it
+import { useEffect } from 'react'; // Keep useEffect if you still use it for other messages, otherwise remove it
 //import { Turnstile } from '@marsidev/react-turnstile';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { redirect } from 'next/navigation'; // Import redirect if you handle success client-side
 
 const SignUpFormSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
+  // Client-side validation for min length
   password: z.string().min(6, { message: 'Password must be at least 6 characters long.' }),
   confirmPassword: z.string(),
   //'cf-turnstile-response': z.string().min(1, { message: 'Please complete the CAPTCHA verification.' })
@@ -35,8 +38,10 @@ export function SignUpForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const searchParams = useSearchParams();
-  const serverMessage = searchParams.get('message');
+  // --- REMOVED serverMessage handling from URL ---
+  // const searchParams = useSearchParams();
+  // const serverMessage = searchParams.get('message');
+
   // Removed unused state: const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
 
@@ -45,8 +50,9 @@ export function SignUpForm({
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
-    setValue,
-    trigger,
+    // Removed setValue, trigger as they relate to commented out Turnstile
+    // setValue,
+    // trigger,
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpFormSchema),
     defaultValues: {
@@ -57,23 +63,41 @@ export function SignUpForm({
     }
   });
 
-  useEffect(() => {
-    if (serverMessage) {
-      setError('root.serverError', { type: 'server', message: serverMessage });
-    }
-  }, [serverMessage, setError]);
+  // --- REMOVED useEffect that reads URL message ---
+  // useEffect(() => {
+  //   if (serverMessage) {
+  //     setError('root.serverError', { type: 'server', message: serverMessage });
+  //   }
+  // }, [serverMessage, setError]);
 
   const onSubmit = async (data: SignUpFormValues) => {
+    // Clear previous server errors
+    setError('root.serverError', { type: 'server', message: '' });
+
     const formData = new FormData();
     formData.append('email', data.email);
     formData.append('password', data.password);
     //formData.append('cf-turnstile-response', data['cf-turnstile-response']);
 
     try {
-      await signUp(formData);
-    } catch (error) {
+      // Call the server action
+      const result = await signUp(formData);
+
+      // Handle the result returned by the server action
+      if (!result.success) {
+        // If sign up failed, display the error message from the server action
+        setError('root.serverError', { type: 'server', message: result.message || 'An unknown error occurred during sign up.' });
+      } else {
+        // If sign up was successful, the server action redirects,
+        // OR if you changed the server action to return { success: true },
+        // you would handle the redirect here:
+        // redirect('/login?message=Signup%20successful.%20Please%20login.');
+      }
+
+    } catch (error: any) { // Catch potential network errors or unhandled exceptions
       console.error("Sign up error:", error);
-      setError('root.serverError', { type: 'server', message: 'An unexpected error occurred during sign up.' });
+      // Display a generic error message for unexpected errors
+      setError('root.serverError', { type: 'server', message: error.message || 'An unexpected error occurred during sign up.' });
     }
   };
 
@@ -94,7 +118,8 @@ export function SignUpForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {errors.root?.serverError && (
+          {/* Display server-side errors */}
+          {errors.root?.serverError && errors.root.serverError.message && ( // Check if message exists
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-sm">
               {errors.root.serverError.message}
             </div>
@@ -116,6 +141,7 @@ export function SignUpForm({
                     hover:bg-zinc-900"
                   />
                 </div>
+                {/* Display client-side Zod errors for email */}
                 {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
               </div>
               <div className="grid gap-2">
@@ -135,6 +161,7 @@ export function SignUpForm({
                     hover:bg-zinc-900"
                   />
                 </div>
+                {/* Display client-side Zod errors for password */}
                 {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
               </div>
               <div className="grid gap-2">
@@ -154,6 +181,7 @@ export function SignUpForm({
                     hover:bg-zinc-900"
                   />
                 </div>
+                {/* Display client-side Zod errors for confirmPassword */}
                 {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>}
               </div>
 
