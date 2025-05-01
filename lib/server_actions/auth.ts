@@ -38,18 +38,26 @@ import { getURL } from '@/utils/helpers'
 }*/
 
 export async function loginWithEmail(formData: FormData) {
-  // ... (loginWithEmail function remains the same)
   const supabase = await createClient()
 
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
+
+  if (!email || !password) {
+    return redirect('/login?message=Please enter both your email and password to log in.')
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    redirect('/login?message=Could not authenticate user verify yourself using the link given in your email')
+    if (error.message.includes('Invalid credentials')) {
+      return redirect('/login?message=Hmm, that email and password combination doesn\'t seem right. Please double-check and try again.')
+    } else if (error.message.includes('User not confirmed')) {
+      return redirect('/login?message=Almost there! Please verify your account by clicking the link we sent to your email address.')
+    } else {
+      console.error('Login error:', error.message);
+      return redirect('/login?message=Oops! Something went wrong during login. Please try again in a moment.')
+    }
   }
 
   revalidatePath('/', 'layout')
@@ -77,34 +85,36 @@ export async function signUp(formData: FormData): Promise<{ success: boolean; me
 
   const supabase = await createClient();
 
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  };
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
 
-  const { error } = await supabase.auth.signUp(data);
+  if (!email || !password) {
+    return { success: false, message: 'Please provide both an email address and a password to sign up.' };
+  }
+
+  const { error } = await supabase.auth.signUp({ email, password });
 
   if (error) {
     console.error('Signup error:', error.message);
-    // Return error object instead of redirecting
-    return { success: false, message: error.message };
+    if (error.message.includes('User already registered')) {
+      return { success: false, message: 'That email address is already taken. Do you already have an account? If so, please log in.' };
+    } else if (error.message.includes('Password should be at least')) {
+      const match = error.message.match(/Password should be at least (\d+) characters/);
+      const length = match ? parseInt(match[1]) : 6; // Default to 6 if regex fails
+      return { success: false, message: `Your password needs to be at least ${length} characters long. Please try a stronger password.` };
+    } else if (error.message.includes('Invalid email format')) {
+      return { success: false, message: 'Please enter a valid email address so we can keep in touch!' };
+    }
+    return { success: false, message: `We couldn't complete your signup right now. ${error.message}` };
   }
 
   revalidatePath('/', 'layout');
-  // On success, you might still want to redirect, for example, to a login page
-  // or a confirmation page. If you want to handle success client-side,
-  // return success: true and manage the redirect in the client component.
-  // For this example, let's assume we still redirect to login on success.
-  redirect('/login?message=Signup%20successful.%20Please%20check%20your%20email%20for%20comfirmation%20link%20from%20Supabase.');
-
-  // If you prefer to handle success fully client-side without immediate redirect:
-  // return { success: true }; // And handle the redirect in SignUpForm.tsx
+  redirect('/login?message=Success! Your account has been created. Please check your email inbox for a confirmation link from Supabase to activate your account.');
 }
 
 export async function signInWithOauth(provider: Provider) {
-  // ... (signInWithOauth function remains the same)
   if(!provider){
-    return redirect('/login?message=Invalid%20provider')
+    return redirect('/login?message=Oops, that\'s not a valid way to sign in. Please select a valid provider.')
   }
   const supabase = await createClient();
   const redirectUrl = getURL('/auth/callback')
@@ -116,7 +126,7 @@ export async function signInWithOauth(provider: Provider) {
   })
   if (error) {
     console.error('Sign in error:', error.message)
-    redirect('/login?message=Could%20not%20authenticate%20user')
+    return redirect(`/login?message=Sorry, we couldn't sign you in with ${provider} right now. Please try again.`)
   }
 
   return redirect(data.url)
