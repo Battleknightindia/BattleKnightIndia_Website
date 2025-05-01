@@ -389,7 +389,27 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
           </AccordionItem>
 
         </Accordion>
-
+        
+        <Button
+  type="button"
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open('/pdf/rulebook.pdf', '_blank');
+    // Immediately trigger the print dialog for the newly opened tab
+    window.addEventListener('load', () => {
+      window.print();
+    });
+  }}
+  className="w-full bg-blue-500 text-white font-bold"
+  disabled={isSubmitting}
+>
+  <FileCheck className="h-4 w-4 mr-2" />
+Download Rulebook
+  </Button>
+        
+        {/* --- End Rulebook Download Section --- */}
+        
         {/* --- Terms and Conditions Checkbox (Restored) --- */}
         <div className="pt-10 border-t">
           <div className="flex items-start space-x-2 mb-4">
@@ -416,30 +436,7 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
         </div>
         {/* --- End Terms and Conditions Checkbox --- */}
 
-        {/* --- Rulebook Download Section (Restored) --- */}
-        <div className="mt-6 p-4 bg-[#1B253B] rounded-lg border border-[#2D3748]">
-          <div className="flex items-center gap-3 mb-3">
-            <FileCheck className="h-5 w-5 text-teal-400" />
-            <h3 className="text-white font-medium">Tournament Rulebook</h3>
-          </div>
-          <p className="text-sm text-gray-400 mb-4">
-            Please download and review the tournament rulebook before submitting your registration.
-          </p>
-          <Button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              window.open('/rulebook.pdf', '_blank');
-            }}
-            className="w-full bg-blue-500 text-white font-bold"
-            disabled={isSubmitting}
-          >
-            <FileCheck className="h-4 w-4 mr-2" />
-            Download Rulebook
-          </Button>
-        </div>
-        {/* --- End Rulebook Download Section --- */}
+        
 
         {/* Final Instruction Message */}
         <div className="flex items-center justify-center p-4 bg-blue-50 rounded-lg border border-blue-100 mt-6">

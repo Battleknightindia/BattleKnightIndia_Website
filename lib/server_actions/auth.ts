@@ -49,7 +49,7 @@ export async function loginWithEmail(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
-    redirect('/login?message=Could not authenticate user')
+    redirect('/login?message=Could not authenticate user verify yourself using the link given in your email')
   }
 
   revalidatePath('/', 'layout')
