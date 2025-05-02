@@ -124,10 +124,13 @@ function FormContent() {
         if (!formData.university.name)
           validationError = "University Name is required.";
         if (!formData.university.city) validationError = "City is required.";
+        if (!formData.university.logo) validationError = "Logo is required.";
         if (!formData.university.state) validationError = "State is required.";
         break;
       case 2:
         if (!formData.team.name) validationError = "Team Name is required.";
+        if (!formData.team.logo)
+          validationError = "Team Logo is required."
         // Referral code is optional, no validation needed here
         break;
       case 3:
@@ -168,10 +171,23 @@ function FormContent() {
               validationError = `IGN is required for ${displayName}.`;
               break;
             }
+            
+            if (!player.student_id_url){
+              validationError = `ID
+              is required for ${displayName}.`;
+              break;
+            }
+            
+            if (!player.picture_url){
+              validationError = `Picture is required for ${displayName}.`;
+              break;
+            }
+            
             if (!player.game_id) {
               validationError = `Game ID is required for ${displayName}.`;
               break;
             }
+            
             if (!player.server_id) {
               validationError = `Server ID is required for ${displayName}.`;
               break;
