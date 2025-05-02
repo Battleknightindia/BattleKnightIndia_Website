@@ -3,9 +3,8 @@
 
 import { createClient } from "@/utils/supabase/server"; // createClient is used in handleFinalRegistration
 import { type Player } from "@/types/registrationTypes"; // Ensure correct import path
-import { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, PostgrestSingleResponse } from '@supabase/supabase-js';
 import { redirect } from "next/navigation";
-import { PostgrestSingleResponse } from '@supabase/supabase-js'; // Import for single() response type
 
 // --- Define the type for inserting into the players table matching the SCHEMA ---
 // Ensure this type accurately reflects your 'players' table schema
@@ -16,7 +15,7 @@ type PlayerInsert = {
   server_id: string;
   ign: string;
   name: string;
-  role: string; // Based on schema TEXT
+  role: 'captain' | 'player' | 'substitute' | 'coach'; // Updated to match Player interface
 
   email?: string | null;
   mobile?: string | null;
@@ -355,7 +354,7 @@ async function handleRegistrationUpdate( // handleRegistrationUpdate is used in 
 
     // Ensure existingPlayers is treated as an array, even if null
     const existingPlayersArray = existingPlayers || [];
-    const existingPlayersMap = new Map(existingPlayersArray.map(p => [p.game_id, p.id])); // Map game_id to player ID
+    const existingPlayersMap = new Map(existingPlayersArray.map((p: { game_id: string; id: string }) => [p.game_id, p.id])); // Map game_id to player ID
 
     const playersDataForProcessing: ({
       originalIndex: number;
@@ -849,8 +848,6 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
             field: "picture" | "student_id";
         }[] = [];
 
-        const gameIdsToCheck: string[] = [];
-
         // First Pass: Extract player data
         for (let i = 0; i < 7; i++) {
             // Explicitly cast the role to the expected union type
@@ -905,13 +902,6 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
                     throw new Error(`Validation failed: Coach's Email and Mobile are required if data is provided.`);
                 }
 
-                // --- Collect game_id for profile existence check ---
-                // Ensure game_id is not null before pushing
-                if (game_id) {
-                   gameIdsToCheck.push(game_id);
-                }
-
-
                 // Collect files
                 if (pictureFile instanceof File) {
                     filesToUpload.push({
@@ -931,7 +921,6 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
                 }
 
                 // Store player data
-                 // Ensure non-nullable fields are handled correctly (e.g., using || "")
                 playersDataForProcessing.push({
                     originalIndex: i,
                     name: name || "", // Ensure name is string
@@ -950,38 +939,6 @@ async function registerNewTeam( // registerNewTeam is used in handleFinalRegistr
                 } as { originalIndex: number } & PlayerInsert);
             }
         }
-
-        // --- Second Pass: Validate profile existence for collected game_ids ---
-        // Only perform this check if there are game IDs collected
-        if (gameIdsToCheck.length > 0) {
-            console.log(`[registerNewTeam] Checking profile existence for Game IDs: ${gameIdsToCheck.join(', ')}`);
-            // Specify the expected return type for the select with in filter
-            const { data: profileCheckData, error: profileCheckError }: PostgrestSingleResponse<{ game_id: string }[] | null> = await supabase
-                .from("profiles")
-                .select("game_id")
-                .in("game_id", gameIdsToCheck);
-
-            if (profileCheckError) {
-                console.error("[registerNewTeam] Supabase profile check error:", profileCheckError);
-                 // Re-throw the error
-                throw new Error(`Database error checking profiles: ${profileCheckError.message}`);
-            }
-
-            // Ensure profileCheckData is treated as an array, even if null
-            const foundGameIds = new Set(profileCheckData?.map((p) => p.game_id) || []);
-            const missingGameIds = gameIdsToCheck.filter((id) => !foundGameIds.has(id));
-
-            if (missingGameIds.length > 0) {
-                 // Re-throw the error
-                throw new Error(
-                    `Some players have not created their profiles yet. Missing Game IDs: ${missingGameIds.join(', ')}.`
-                );
-            }
-             console.log("[registerNewTeam] All required player profiles found.");
-        } else {
-             console.log("[registerNewTeam] No game IDs collected for profile existence check.");
-        }
-
 
         // Check if at least the required players (Captain + 4 Players = 5) are included
         if (
