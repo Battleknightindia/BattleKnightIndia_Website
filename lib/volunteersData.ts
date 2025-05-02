@@ -2,7 +2,6 @@
 
 import { createClient } from "@/utils/supabase/client";
 import { volunteersSchema } from "@/schema/volunteerSchema";
-import { teamSchema, captainSchema } from "@/schema/volunteerSchema";
 
 export async function fetchvolunteerData() {
   const supabase = createClient();
@@ -19,7 +18,7 @@ export async function fetchvolunteerData() {
   const { data: volunteer, error: unable } = await supabase
     .from("volunteers")
     .select("*")
-    .eq("profile_id", user.id)
+    .eq("email", user.email)
     .single();
   if (unable || !volunteer) {
     console.error("Volunteer Data fetch failed:", unable);
@@ -27,12 +26,12 @@ export async function fetchvolunteerData() {
   }
 
   const result = volunteersSchema.safeParse(volunteer);
-    if (!result.success) {
-      console.error("Validation failed:", result.error);
-      return null;
-    }
+  if (!result.success) {
+    console.error("Validation failed:", result.error);
+    return null;
+  }
 
-    return result.data ;
+  return result.data;
 }
 
 interface ReferredTeam {

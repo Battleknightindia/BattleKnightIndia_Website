@@ -4,10 +4,11 @@ export const volunteersSchema = z.object({
     email: z.string().min(1),
     phone: z.string().min(1),
     referral_code: z.string().min(1),
-    reward_point: z.string().optional().nullable(),
-    team_count: z.string().optional().nullable(),
-    
-  })
+    profile_id: z.string().min(1),
+    reward_points: z.string().optional().nullable(),
+    total_teams: z.string().optional().nullable(),
+    approved_teams: z.string().optional().nullable(),
+})
 
 export const teamSchema = z.object({
   name: z.string().min(1),

@@ -36,9 +36,13 @@ export async function handlevolunteers(data: volunteerType) {
     }
     console.log("User data:", user)
     const volunteerData = {
-        email: data.email,
+        email: user.email,
         phone: data.phone,
-        referral_code: referralCode
+        referral_code: referralCode,
+        profile_id: user.id,
+        reward_points: "0",
+        total_teams: "0",
+        approved_teams: "0"
     }
 
     console.log("Volunteer data:", volunteerData)
@@ -49,9 +53,9 @@ export async function handlevolunteers(data: volunteerType) {
             .select("*")
             .eq("email", volunteerData.email)
             .single();
-        if(existsError || exists) {
+        
+        if (!existsError && exists) {
             const { error: updateError, data: updateData } = await supabase.from("volunteers").update({ 
-                profile_id: user.id,
                 ...volunteerData,
             }).eq("email", volunteerData.email);
             if(updateError){
@@ -60,8 +64,8 @@ export async function handlevolunteers(data: volunteerType) {
             return { success: true, data: updateData };
         }
 
+        // No existing record found or error occurred during check, proceed with insert
         const { error: insertError, data: insertData } = await supabase.from("volunteers").insert({ 
-            profile_id: user.id,
             ...volunteerData,
         });
         if(insertError){
