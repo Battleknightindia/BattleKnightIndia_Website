@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -10,58 +10,44 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { GroupStepper } from "./Progress";
-// Removed unused import: useSearchParams
-import { useRouter, usePathname } from "next/navigation"; // Removed useSearchParams
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-// Import Step Components (ensure they are refactored to accept data/onDataChange)
+// Import Step Components
 import Step1 from "./steps/Step1";
 import Step2 from "./steps/Step2";
 import Step3 from "./steps/Step3";
-import Step4 from "./steps/Step4"; // Step4 will display all data
+import Step4 from "./steps/Step4";
 
-import { registerTeam } from "@/lib/server_actions/registration"; // Updated import
-
-// Import Player type and RegistrationFormData
-// Ensure TeamStepData includes referral_code: string | null;
+import { registerTeam } from "@/lib/server_actions/registration";
 import {
   Player,
   UniversityStepData,
   TeamStepData,
   RegistrationFormData,
 } from "@/types/registrationTypes";
-import { Button } from "@/components/ui/button";
 
 function FormContent() {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(1);
-  const pathname = usePathname(); // <-- Call the hook
+  const pathname = usePathname();
 
-  // Removed unused searchParams variable
-  // const searchParams = useSearchParams();
-
-  // Master state holding data for all steps
-  // --- Update initial state to include referral_code ---
   const [formData, setFormData] = useState<RegistrationFormData>({
-    university: { name: "", city: "", state: "", logo: null }, // No ID initialized here as it's received only on final submit
-    team: { name: "", logo: null, referral_code: "" }, // Initialize referral_code field
-    players: {}, // Initialize players state
+    university: { name: "", city: "", state: "", logo: null },
+    team: { name: "", logo: null, referral_code: "" },
+    players: {},
     termsAccepted: false,
   });
-  // --- End Update initial state ---
 
-  // State for managing the FINAL submission loading/errors
-  const [isSubmittingFinal, setIsSubmittingFinal] = useState(false); // Renamed state
-  const [finalSubmitError, setFinalSubmitError] = useState<string | null>(null); // Renamed state
+  const [isSubmittingFinal, setIsSubmittingFinal] = useState(false);
+  const [finalSubmitError, setFinalSubmitError] = useState<string | null>(null);
 
-  // Handler to update data for a specific step slice (university, team)
-  // --- handleDataChange already correctly handles 'referral_code' for 'team' ---
-  // Changed 'value: any' to 'value: string | File | null' for better type safety
   const handleDataChange = (
     step: "university" | "team",
-    field: keyof UniversityStepData | keyof TeamStepData, // This type union includes 'referral_code' if TeamStepData has it
-    value: string | File | null // Specify expected types
+    field: keyof UniversityStepData | keyof TeamStepData,
+    value: string | File | null
   ): void => {
     setFormData((prevData) => ({
       ...prevData,
@@ -70,16 +56,13 @@ function FormContent() {
         [field as keyof RegistrationFormData[typeof step]]: value,
       } as RegistrationFormData[typeof step],
     }));
-    setFinalSubmitError(null); // Clear error when data changes
+    setFinalSubmitError(null);
   };
-  // --- End handleDataChange ---
 
-  // Handler to update player data in the master state (Step3)
-  // Changed 'value: any' to 'value: string | File | null' for better type safety
   const handlePlayerDataChange = (
     playerIndex: number,
     field: keyof Player,
-    value: string | File | null // Specify expected types
+    value: string | File | null
   ): void => {
     const stateKey = (playerIndex + 1).toString();
 
@@ -98,10 +81,9 @@ function FormContent() {
         } as Player,
       },
     }));
-    setFinalSubmitError(null); // Clear error when data changes
+    setFinalSubmitError(null);
   };
 
-  // Handler specifically for termsAccepted (used in Step4)
   const handleTermsChange = (accepted: boolean): void => {
     setFormData((prevData) => ({
       ...prevData,
@@ -110,10 +92,6 @@ function FormContent() {
     setFinalSubmitError(null);
   };
 
-  // --- Handler for "Next Step" Button (Frontend Navigation Only) ---
-  // This function ONLY performs frontend validation and moves to the next step.
-  // It does NOT call any Server Actions for steps 1-3.
-  // Handler for "Next Step" Button (Update Step 3 Validation)
   const handleNextStep = (): void => {
     setFinalSubmitError(null);
 
@@ -129,43 +107,53 @@ function FormContent() {
         break;
       case 2:
         if (!formData.team.name) validationError = "Team Name is required.";
-        if (!formData.team.logo)
-          validationError = "Team Logo is required."
-        // Referral code is optional, no validation needed here
+        if (!formData.team.logo) validationError = "Team Logo is required.";
         break;
       case 3:
-        // Define all required fields that every player must have
         const requiredFields = [
-          'name', 'ign', 'game_id', 'server_id', 'email', 
-          'mobile', 'city', 'state', 'device', 'picture_url', 'student_id_url'
+          "name",
+          "ign",
+          "game_id",
+          "server_id",
+          "email",
+          "mobile",
+          "city",
+          "state",
+          "device",
+          "picture_url",
+          "student_id_url",
         ];
 
-        // Validate first 5 players (mandatory)
         for (let i = 0; i < 5; i++) {
           const player = formData.players[(i + 1).toString()];
           const displayName = `Player ${i + 1}`;
 
           for (const field of requiredFields) {
             if (!player || !player[field as keyof Player]) {
-              validationError = `${field.replace('_', ' ').replace('url', '').toUpperCase()} is required for ${displayName}.`;
+              validationError = `${field
+                .replace("_", " ")
+                .replace("url", "")
+                .toUpperCase()} is required for ${displayName}.`;
               break;
             }
           }
           if (validationError) break;
         }
 
-        // If no errors from mandatory players, check substitute (player 6)
         if (!validationError) {
           const substitute = formData.players["6"];
           if (substitute) {
-            const hasAnySubstituteData = Object.values(substitute).some(value => 
-              value !== null && value !== undefined && value !== ""
+            const hasAnySubstituteData = Object.values(substitute).some(
+              (value) => value !== null && value !== undefined && value !== ""
             );
 
             if (hasAnySubstituteData) {
               for (const field of requiredFields) {
                 if (!substitute[field as keyof Player]) {
-                  validationError = `${field.replace('_', ' ').replace('url', '').toUpperCase()} is required for Substitute.`;
+                  validationError = `${field
+                    .replace("_", " ")
+                    .replace("url", "")
+                    .toUpperCase()} is required for Substitute.`;
                   break;
                 }
               }
@@ -173,18 +161,20 @@ function FormContent() {
           }
         }
 
-        // If no errors from substitute, check coach (player 7)
         if (!validationError) {
           const coach = formData.players["7"];
           if (coach) {
-            const hasAnyCoachData = Object.values(coach).some(value => 
-              value !== null && value !== undefined && value !== ""
+            const hasAnyCoachData = Object.values(coach).some(
+              (value) => value !== null && value !== undefined && value !== ""
             );
 
             if (hasAnyCoachData) {
               for (const field of requiredFields) {
                 if (!coach[field as keyof Player]) {
-                  validationError = `${field.replace('_', ' ').replace('url', '').toUpperCase()} is required for Coach.`;
+                  validationError = `${field
+                    .replace("_", " ")
+                    .replace("url", "")
+                    .toUpperCase()} is required for Coach.`;
                   break;
                 }
               }
@@ -212,38 +202,77 @@ function FormContent() {
     }
   };
 
-  // --- Handler for the Final "Submit Registration" Button (Step 4) ---
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFinalSubmitError(null);
 
-    // Validate terms acceptance
     if (!formData.termsAccepted) {
       setFinalSubmitError("You must accept the terms and conditions.");
       return;
     }
 
-    // Validate substitute and coach data completeness
     const substitute = formData.players["6"];
     const coach = formData.players["7"];
 
-    // Check if substitute has any data filled
-    if (substitute && Object.values(substitute).some(value => value !== null && value !== undefined && value !== "")) {
-      const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'email', 'mobile', 'city', 'state', 'device', 'picture_url', 'student_id_url'];
+    if (
+      substitute &&
+      Object.values(substitute).some(
+        (value) => value !== null && value !== undefined && value !== ""
+      )
+    ) {
+      const requiredFields = [
+        "name",
+        "ign",
+        "game_id",
+        "server_id",
+        "email",
+        "mobile",
+        "city",
+        "state",
+        "device",
+        "picture_url",
+        "student_id_url",
+      ];
       for (const field of requiredFields) {
         if (!substitute[field as keyof Player]) {
-          setFinalSubmitError(`All fields are required for Substitute if adding their details. Missing: ${field.replace('_', ' ')}`);
+          setFinalSubmitError(
+            `All fields are required for Substitute if adding their details. Missing: ${field.replace(
+              "_",
+              " "
+            )}`
+          );
           return;
         }
       }
     }
 
-    // Check if coach has any data filled
-    if (coach && Object.values(coach).some(value => value !== null && value !== undefined && value !== "")) {
-      const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'email', 'mobile', 'city', 'state', 'device', 'picture_url', 'student_id_url'];
+    if (
+      coach &&
+      Object.values(coach).some(
+        (value) => value !== null && value !== undefined && value !== ""
+      )
+    ) {
+      const requiredFields = [
+        "name",
+        "ign",
+        "game_id",
+        "server_id",
+        "email",
+        "mobile",
+        "city",
+        "state",
+        "device",
+        "picture_url",
+        "student_id_url",
+      ];
       for (const field of requiredFields) {
         if (!coach[field as keyof Player]) {
-          setFinalSubmitError(`All fields are required for Coach if adding their details. Missing: ${field.replace('_', ' ')}`);
+          setFinalSubmitError(
+            `All fields are required for Coach if adding their details. Missing: ${field.replace(
+              "_",
+              " "
+            )}`
+          );
           return;
         }
       }
@@ -252,7 +281,6 @@ function FormContent() {
     setIsSubmittingFinal(true);
     const finalFormData = new FormData();
 
-    // Append University Data
     finalFormData.append("university_name", formData.university.name);
     finalFormData.append("university_city", formData.university.city);
     finalFormData.append("university_state", formData.university.state);
@@ -260,16 +288,14 @@ function FormContent() {
       finalFormData.append("university_logo", formData.university.logo);
     }
 
-    // Append Team Data
     finalFormData.append("team_name", formData.team.name);
     if (formData.team.logo instanceof File) {
       finalFormData.append("team_logo", formData.team.logo);
     }
     if (formData.team.referral_code) {
-      finalFormData.append('referral_code', formData.team.referral_code);
+      finalFormData.append("referral_code", formData.team.referral_code);
     }
 
-    // Append Players Data
     for (let i = 0; i < 7; i++) {
       const player = formData.players[(i + 1).toString()];
       if (player) {
@@ -308,34 +334,30 @@ function FormContent() {
         setFinalSubmitError(result.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during registration.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred during registration.";
       setFinalSubmitError(errorMessage);
     } finally {
       setIsSubmittingFinal(false);
     }
   };
 
-  // Refined handleEdit function
   const handleEdit = (section: string, index?: number | null): void => {
     setFinalSubmitError(null);
 
     switch (section) {
       case "university":
         setActiveStep(1);
-        // --- Use 'pathname' instead of 'router.pathname' ---
-        router.push(pathname); // <-- Use the variable from usePathname
-        // --- End use 'pathname' ---
+        router.push(pathname);
         break;
       case "team":
         setActiveStep(2);
-        // --- Use 'pathname' ---
-        router.push(pathname); // <-- Use the variable
-        // --- End use 'pathname' ---
+        router.push(pathname);
         break;
       case "players":
         setActiveStep(3);
-        // If you need to scroll to a specific player, you might manage
-        // a state here and pass it to Step3
         break;
       case "player":
         if (index !== undefined && index !== null && index >= 1 && index <= 7) {
@@ -343,15 +365,11 @@ function FormContent() {
           const params = new URLSearchParams();
           params.set("section", "player");
           params.set("index", index.toString());
-          // --- Use 'pathname' ---
-          router.push(`${pathname}?${params.toString()}`); // <-- Use the variable
-          // --- End use 'pathname' ---
+          router.push(`${pathname}?${params.toString()}`);
         } else {
           console.error("Invalid player index provided for edit:", index);
           setActiveStep(3);
-          // --- Use 'pathname' ---
-          router.push(pathname); // <-- Use the variable
-          // --- End use 'pathname' ---
+          router.push(pathname);
         }
         break;
       default:
@@ -360,7 +378,6 @@ function FormContent() {
     }
   };
 
-  // Render the correct step component, passing data and handlers
   const renderStepComponent = () => {
     switch (activeStep) {
       case 1:
@@ -379,29 +396,27 @@ function FormContent() {
       case 2:
         return (
           <Step2
-            data={formData.team} // Pass the team data slice
+            data={formData.team}
             onDataChange={(field, value) =>
               handleDataChange("team", field as keyof TeamStepData, value)
-            } // Pass the handler
+            }
           />
         );
       case 3:
         return (
           <Step3
-            data={formData.players} // <-- Pass the players data slice from master state
-            onDataChange={handlePlayerDataChange} // <-- Pass the handler to update player data
+            data={formData.players}
+            onDataChange={handlePlayerDataChange}
           />
         );
       case 4:
-        // Step4 receives all accumulated data for review
         return (
           <Step4
-            data={formData} // Pass all data for review
-            // Pass the termsAccepted state and its setter
+            data={formData}
             termsAccepted={formData.termsAccepted}
             onTermsChange={handleTermsChange}
             onEdit={handleEdit}
-            isSubmitting={isSubmittingFinal} // Pass final submit loading state
+            isSubmitting={isSubmittingFinal}
           />
         );
       default:
@@ -409,7 +424,6 @@ function FormContent() {
     }
   };
 
-  // Animation variants for the steps container
   const stepVariants = {
     hidden: { opacity: 0, x: 50, transition: { duration: 0.3 } },
     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
@@ -417,7 +431,6 @@ function FormContent() {
   };
 
   return (
-    // The main <form> element wraps the entire step content and has onSubmit for the final button
     <form onSubmit={handleFinalSubmit}>
       <Card className="w-[375px] bg-[#111828] border-none rounded-none rounded-t-lg text-white">
         <CardHeader className="flex items-center">
@@ -432,7 +445,6 @@ function FormContent() {
             Complete all sections to register your team for the tournament
           </CardDescription>
           <div className="w-[375px] py-0.5 border-2 border-[#363636] rounded-md">
-            {/* Stepper */}
             <GroupStepper
               activeStep={activeStep}
               setActiveStep={setActiveStep}
@@ -441,40 +453,43 @@ function FormContent() {
         </CardHeader>
 
         <CardContent className="flex flex-col gap-6 overflow-hidden">
-          {/* Step Content with Animation */}
           <AnimatePresence mode="wait">
-          {/* Display Parent-level Error */}
+            <motion.div
+              key={activeStep}
+              variants={stepVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              {renderStepComponent()}
+            </motion.div>
+          </AnimatePresence>
+
           {finalSubmitError && (
             <div className="text-red-500 text-sm text-center mt-2">
               {finalSubmitError}
             </div>
           )}
 
-          {/* Navigation Buttons */}
           <div className="flex justify-between mt-6">
             <Button
-              type="button" // Previous button is always type="button"
+              type="button"
               onClick={() => setActiveStep((prev) => Math.max(1, prev - 1))}
               className="bg-transparent font-bold text-white"
-              disabled={activeStep === 1 || isSubmittingFinal} // Disable on first step or while final submitting
+              disabled={activeStep === 1 || isSubmittingFinal}
             >
               Previous
             </Button>
 
-            {/* Next Step or Submit Registration Button */}
             <Button
-              type={activeStep === 4 ? "submit" : "button"} // Final step is type="submit", others are "button"
-              // Call handleNextStep directly for steps 1-3 (frontend validation & navigation)
-              // Step 4 button relies on form's onSubmit which calls handleFinalSubmit
+              type={activeStep === 4 ? "submit" : "button"}
               onClick={activeStep === 4 ? undefined : handleNextStep}
               className="bg-[#FFAE00] font-bold text-white"
-              // Disable if on final step and terms not accepted, or if final submission is in progress
               disabled={
                 (activeStep === 4 && !formData.termsAccepted) ||
                 isSubmittingFinal
               }
             >
-              {/* Button text changes based on active step and final submission state */}
               {isSubmittingFinal ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" /> Submitting
@@ -496,8 +511,3 @@ function FormContent() {
 export default function FormCard() {
   return <FormContent />;
 }
-
-// --- TODO: Refactor Step3 and Step4 if not already done ---
-// Step3.tsx needs to accept 'data' (formData.players), 'onDataChange' (handlePlayerDataChange),
-// but doesn't strictly need teamId/universityId *props* for editing.
-// Step4 needs to accept 'data' (all formData), 'termsAccepted', 'onTermsChange', and 'onEdit'.
