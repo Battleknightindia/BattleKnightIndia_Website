@@ -56,3 +56,30 @@ export interface RegistrationFormData {
     // Add other steps/data interfaces here if needed
     termsAccepted: boolean; // State for terms and conditions acceptance (Step 4)
 }
+
+export type PlayerData = {
+  index: number;
+  name: string;
+  ign: string;
+  gameId: string;
+  serverId: string;
+  role: "captain" | "player" | "substitute" | "coach";
+  email: string | null;
+  mobile: string | null;
+  city: string | null;
+  state: string | null;
+  device: string | null;
+  picture: File | null;
+  studentId: File | null;
+};
+
+export type RegistrationData = {
+  universityName: string;
+  universityState: string;
+  universityCity: string;
+  universityLogo: File | null;
+  teamName: string;
+  teamLogo: File | null;
+  referralCode: string;
+  players: PlayerData[];
+};

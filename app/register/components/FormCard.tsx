@@ -21,7 +21,7 @@ import Step2 from "./steps/Step2";
 import Step3 from "./steps/Step3";
 import Step4 from "./steps/Step4"; // Step4 will display all data
 
-import { handleFinalRegistration } from "@/lib/server_actions/registration"; // We will create this action
+import { registerTeam } from "@/lib/server_actions/registration"; // Updated import
 
 // Import Player type and RegistrationFormData
 // Ensure TeamStepData includes referral_code: string | null;
@@ -302,7 +302,6 @@ function FormContent() {
   };
 
   // --- Handler for the Final "Submit Registration" Button (Step 4) ---
-  // This is triggered by the form's onSubmit event when the Step 4 button (type="submit") is clicked.
   const handleFinalSubmit = async (e: React.FormEvent) => {
     console.log("[handleFinalSubmit] Function started.");
     console.log("[handleFinalSubmit] Event received:", e);
@@ -341,110 +340,57 @@ function FormContent() {
     if (formData.team.logo instanceof File) {
       finalFormData.append("team_logo", formData.team.logo);
     }
-    // --- Append referral_code to FormData ---
-    if (formData.team.referral_code) { // Only append if referral_code has a value
-       finalFormData.append('referral_code', formData.team.referral_code);
+    if (formData.team.referral_code) {
+      finalFormData.append('referral_code', formData.team.referral_code);
     }
-    // --- End Append referral_code ---
-
 
     // Append Players Data
     for (let i = 0; i < 7; i++) {
       const player = formData.players[(i + 1).toString()];
       if (player) {
-        finalFormData.append(`player_${i}_role`, player.role);
-        finalFormData.append(`player_${i}_name`, player.name);
-        finalFormData.append(`player_${i}_ign`, player.ign);
+        finalFormData.append(`player${i}_role`, player.role);
+        finalFormData.append(`player${i}_name`, player.name);
+        finalFormData.append(`player${i}_ign`, player.ign);
         if (player.game_id)
-          finalFormData.append(`player_${i}_game_id`, player.game_id);
+          finalFormData.append(`player${i}_game_id`, player.game_id);
         if (player.server_id)
-          finalFormData.append(`player_${i}_server_id`, player.server_id);
+          finalFormData.append(`player${i}_server_id`, player.server_id);
         if (player.email)
-          finalFormData.append(`player_${i}_email`, player.email);
+          finalFormData.append(`player${i}_email`, player.email);
         if (player.mobile)
-          finalFormData.append(`player_${i}_mobile`, player.mobile);
-        if (player.city) finalFormData.append(`player_${i}_city`, player.city);
+          finalFormData.append(`player${i}_mobile`, player.mobile);
+        if (player.city) finalFormData.append(`player${i}_city`, player.city);
         if (player.state)
-          finalFormData.append(`player_${i}_state`, player.state);
+          finalFormData.append(`player${i}_state`, player.state);
         if (player.device)
-          finalFormData.append(`player_${i}_device`, player.device);
-
+          finalFormData.append(`player${i}_device`, player.device);
         if (player.picture_url instanceof File) {
-          finalFormData.append(`player_${i}_picture`, player.picture_url);
+          finalFormData.append(`player${i}_picture`, player.picture_url);
         }
         if (player.student_id_url instanceof File) {
-          finalFormData.append(`player_${i}_student_id`, player.student_id_url);
+          finalFormData.append(`player${i}_student_id`, player.student_id_url);
         }
       }
     }
 
-    console.log("[handleFinalSubmit] FormData prepared. Contents:");
-    for (const [key, value] of finalFormData.entries()) {
-      console.log(
-        `[handleFinalSubmit]   ${key}: ${
-          value instanceof File
-            ? `File (${value.name}, ${value.size} bytes)`
-            : value
-        }`
-      );
-    }
-    console.log("[handleFinalSubmit] FormData logging complete.");
-
-    // 2. Call the Final Server Action
     try {
-      console.log("[handleFinalSubmit] Attempting to call Server Action...");
-      const actionResult = await handleFinalRegistration(finalFormData);
-      console.log(
-        "[handleFinalSubmit] Server Action call completed. Result:",
-        actionResult
-      );
+      console.log("[handleFinalSubmit] Attempting to call registerTeam...");
+      const result = await registerTeam(finalFormData);
+      console.log("[handleFinalSubmit] Registration complete. Result:", result);
 
-      // 3. Handle the Final Result (This part might be skipped if redirect happens in action)
-      if (actionResult && actionResult.success) {
-        console.log(
-          "[handleFinalSubmit] Final Registration Successful!",
-          actionResult
-        );
-        // Consider using a more user-friendly notification than alert()
-        alert("Team registration complete!");
-      } else if (actionResult && actionResult.error) {
-        console.error(
-          "[handleFinalSubmit] Final Registration Failed:",
-          actionResult.error
-        );
-        setFinalSubmitError(
-          actionResult.error || "An unknown error occurred during registration."
-        );
+      if (result.success) {
+        alert(result.message);
+        router.push("/register/success");
       } else {
-        console.error(
-          "[handleFinalSubmit] Server Action returned an unexpected result:",
-          actionResult
-        );
-        setFinalSubmitError("An unexpected response received from the server.");
+        setFinalSubmitError(result.message);
       }
     } catch (error) {
-      console.error(
-        "[handleFinalSubmit] Caught error calling server action:",
-        error
-      );
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "An unexpected client-side error occurred.";
-      if (errorMessage.includes("NEXT_REDIRECT")) {
-        console.log(
-          "[handleFinalSubmit] Caught redirect error client-side. Navigation handled by Next.js."
-        );
-      } else {
-        setFinalSubmitError(
-          `An error occurred during registration: ${errorMessage}`
-        );
-      }
+      console.error("[handleFinalSubmit] Error during registration:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during registration.";
+      setFinalSubmitError(errorMessage);
     } finally {
-      console.log("[handleFinalSubmit] Finally block executed.");
       setIsSubmittingFinal(false);
     }
-    console.log("[handleFinalSubmit] Function finished.");
   };
 
   // Refined handleEdit function
