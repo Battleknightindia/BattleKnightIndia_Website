@@ -29,9 +29,11 @@ import {
   RegistrationFormData,
 } from "@/types/registrationTypes";
 
-function FormContent() {
+interface FormContentProps {}
+
+function FormContent({}: FormContentProps) {
   const router = useRouter();
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeStep, setActiveStep] = useState<number>(1);
   const pathname = usePathname();
 
   const [formData, setFormData] = useState<RegistrationFormData>({
@@ -41,7 +43,7 @@ function FormContent() {
     termsAccepted: false,
   });
 
-  const [isSubmittingFinal, setIsSubmittingFinal] = useState(false);
+  const [isSubmittingFinal, setIsSubmittingFinal] = useState<boolean>(false);
   const [finalSubmitError, setFinalSubmitError] = useState<string | null>(null);
 
   const handleDataChange = (
@@ -49,11 +51,11 @@ function FormContent() {
     field: keyof UniversityStepData | keyof TeamStepData,
     value: string | File | null
   ): void => {
-    setFormData((prevData) => ({
+    setFormData((prevData: RegistrationFormData) => ({
       ...prevData,
       [step]: {
         ...prevData[step],
-        [field as keyof RegistrationFormData[typeof step]]: value,
+        [field]: value,
       } as RegistrationFormData[typeof step],
     }));
     setFinalSubmitError(null);
@@ -71,13 +73,13 @@ function FormContent() {
     else if (playerIndex === 5) role = "substitute";
     else if (playerIndex === 6) role = "coach";
 
-    setFormData((prevData) => ({
+    setFormData((prevData: RegistrationFormData) => ({
       ...prevData,
       players: {
         ...prevData.players,
         [stateKey]: {
           ...(prevData.players[stateKey] || { role: role }),
-          [field as keyof Player]: value,
+          [field]: value,
         } as Player,
       },
     }));
@@ -85,7 +87,7 @@ function FormContent() {
   };
 
   const handleTermsChange = (accepted: boolean): void => {
-    setFormData((prevData) => ({
+    setFormData((prevData: RegistrationFormData) => ({
       ...prevData,
       termsAccepted: accepted,
     }));
@@ -110,13 +112,11 @@ function FormContent() {
         if (!formData.team.logo) validationError = "Team Logo is required.";
         break;
       case 3:
-        const requiredFields = [
+        const basicRequiredFields = [
           "name",
           "ign",
           "game_id",
           "server_id",
-          "email",
-          "mobile",
           "city",
           "state",
           "device",
@@ -124,11 +124,16 @@ function FormContent() {
           "student_id_url",
         ];
 
+        const emailMobileFields = ["email", "mobile"];
+
+        // Validate main players (1-5)
         for (let i = 0; i < 5; i++) {
           const player = formData.players[(i + 1).toString()];
           const displayName = `Player ${i + 1}`;
+          const isCaptain = i === 0;
 
-          for (const field of requiredFields) {
+          // Check basic required fields for all players
+          for (const field of basicRequiredFields) {
             if (!player || !player[field as keyof Player]) {
               validationError = `${field
                 .replace("_", " ")
@@ -137,10 +142,22 @@ function FormContent() {
               break;
             }
           }
+
+          // Check email and mobile only for captain
+          if (isCaptain) {
+            for (const field of emailMobileFields) {
+              if (!player || !player[field as keyof Player]) {
+                validationError = `${field.toUpperCase()} is required for Captain.`;
+                break;
+              }
+            }
+          }
+
           if (validationError) break;
         }
 
         if (!validationError) {
+          // Validate substitute (player 6) if any data is filled
           const substitute = formData.players["6"];
           if (substitute) {
             const hasAnySubstituteData = Object.values(substitute).some(
@@ -148,7 +165,8 @@ function FormContent() {
             );
 
             if (hasAnySubstituteData) {
-              for (const field of requiredFields) {
+              // If any substitute data is entered, validate all basic fields
+              for (const field of basicRequiredFields) {
                 if (!substitute[field as keyof Player]) {
                   validationError = `${field
                     .replace("_", " ")
@@ -162,6 +180,7 @@ function FormContent() {
         }
 
         if (!validationError) {
+          // Validate coach (player 7) if any data is filled
           const coach = formData.players["7"];
           if (coach) {
             const hasAnyCoachData = Object.values(coach).some(
@@ -169,12 +188,20 @@ function FormContent() {
             );
 
             if (hasAnyCoachData) {
-              for (const field of requiredFields) {
+              // If any coach data is entered, validate all basic fields
+              for (const field of basicRequiredFields) {
                 if (!coach[field as keyof Player]) {
                   validationError = `${field
                     .replace("_", " ")
                     .replace("url", "")
                     .toUpperCase()} is required for Coach.`;
+                  break;
+                }
+              }
+              // Also validate email and mobile for coach
+              for (const field of emailMobileFields) {
+                if (!coach[field as keyof Player]) {
+                  validationError = `${field.toUpperCase()} is required for Coach.`;
                   break;
                 }
               }
@@ -202,7 +229,7 @@ function FormContent() {
     }
   };
 
-  const handleFinalSubmit = async (e: React.FormEvent) => {
+  const handleFinalSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFinalSubmitError(null);
 
