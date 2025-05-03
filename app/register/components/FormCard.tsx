@@ -29,9 +29,7 @@ import {
   RegistrationFormData,
 } from "@/types/registrationTypes";
 
-interface FormContentProps {}
-
-function FormContent({}: FormContentProps) {
+function FormContent({}: Record<string, never>): JSX.Element {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState<number>(1);
   const pathname = usePathname();
@@ -229,7 +227,9 @@ function FormContent({}: FormContentProps) {
     }
   };
 
-  const handleFinalSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFinalSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
     setFinalSubmitError(null);
 
@@ -405,7 +405,7 @@ function FormContent({}: FormContentProps) {
     }
   };
 
-  const renderStepComponent = () => {
+  const renderStepComponent = (): React.ReactNode => {
     switch (activeStep) {
       case 1:
         return (
@@ -535,6 +535,6 @@ function FormContent({}: FormContentProps) {
   );
 }
 
-export default function FormCard() {
+export default function FormCard(): JSX.Element {
   return <FormContent />;
 }
