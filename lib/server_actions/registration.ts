@@ -60,14 +60,14 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
 
     if (existingTeam) {
       // Update existing registration
-      await processRegistrationUpdate(supabase, JSON.stringify(registrationData), existingTeam.university_id, existingTeam.id);
+      await processRegistrationUpdate(registrationData, existingTeam.university_id, existingTeam.id, user.id);
       return {
         success: true,
         message: "Team registration updated successfully!",
       };
     } else {
       // Create new registration
-      await processNewRegistration(supabase, JSON.stringify(registrationData));
+      await processNewRegistration(registrationData, user.id);
       return {
         success: true,
         message: "Team registered successfully!",
