@@ -29,7 +29,7 @@ import {
   RegistrationFormData,
 } from "@/types/registrationTypes";
 
-function FormContent({}: Record<string, never>): JSX.Element {
+function FormContent({}: Record<string, never>): React.ReactElement {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState<number>(1);
   const pathname = usePathname();
@@ -535,6 +535,6 @@ function FormContent({}: Record<string, never>): JSX.Element {
   );
 }
 
-export default function FormCard(): JSX.Element {
+export default function FormCard(): React.ReactElement {
   return <FormContent />;
 }
