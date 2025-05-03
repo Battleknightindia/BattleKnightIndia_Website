@@ -13,6 +13,15 @@ export async function createUniversity(
   logo: File | null
 ): Promise<string> {
   const supabase = await createClient();
+
+  // Process logo first if provided
+  if (logo) {
+    const logoUrl = await processUniversityLogo(logo, data.name);
+    if (logoUrl) {
+      data.logo_url = logoUrl;
+    }
+  }
+
   const { data: university, error } = await supabase
     .from('universities')
     .insert(data)
@@ -21,20 +30,6 @@ export async function createUniversity(
 
   if (error) {
     throw new Error(`Database error creating university: ${error.message}`);
-  }
-
-  if (logo) {
-    const logoUrl = await processUniversityLogo(logo, data.name);
-    if (logoUrl) {
-      const { error: updateError } = await supabase
-        .from('universities')
-        .update({ logo_url: logoUrl })
-        .eq('id', university.id);
-
-      if (updateError) {
-        console.error('Error updating university logo URL:', updateError);
-      }
-    }
   }
 
   return university.id;

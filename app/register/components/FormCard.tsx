@@ -134,35 +134,62 @@ function FormContent() {
         // Referral code is optional, no validation needed here
         break;
       case 3:
-        // --- Update Step 3 Validation based on NEW Player Schema ---
-        // Validate required fields for ALL players who are *included* in the state.
-        // The form currently presents Captain (index 0), Players (1-4), Sub (5), Coach (6).
-        // Players 0-4 are required; Sub and Coach are optional based on data entry.
-        // Check NOT NULL fields for players 0-6 if their data object exists in state.
+        // Validate required fields for ALL players who are included in the state
         for (let i = 0; i < 7; i++) {
           const player = formData.players[(i + 1).toString()];
-          const displayName = `Player ${i + 1}`; // Use simple display name for validation messages
+          const displayName = i === 5 ? "Substitute" : i === 6 ? "Coach" : `Player ${i + 1}`;
 
-          // Only validate if data for this player index exists in the state
-          // Optional players (5, 6) are validated only if they have *any* data entered.
-          const isOptionalRoleWithData =
-            (i === 5 || i === 6) &&
-            player &&
-            (player.name ||
-              player.ign ||
-              player.game_id ||
-              player.server_id ||
-              player.email ||
-              player.mobile ||
-              player.city ||
-              player.state ||
-              player.device ||
-              player.picture_url ||
-              player.student_id_url);
-          const isRequiredRole = i >= 0 && i <= 4;
-
-          if (isRequiredRole || isOptionalRoleWithData) {
-            // Check required fields for this player based on DB schema
+          // Check if any data is entered for substitute (i=5) or coach (i=6)
+          const hasAnyData = player && Object.values(player).some(value => value !== null && value !== undefined && value !== "");
+          
+          // For substitute (i=5) or coach (i=6), if any data is entered, all fields must be filled
+          if ((i === 5 || i === 6) && hasAnyData) {
+            if (!player.name) {
+              validationError = `Name is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.ign) {
+              validationError = `IGN is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.game_id) {
+              validationError = `Game ID is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.server_id) {
+              validationError = `Server ID is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.email) {
+              validationError = `Email is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.mobile) {
+              validationError = `Mobile is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.city) {
+              validationError = `City is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.state) {
+              validationError = `State is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.device) {
+              validationError = `Device is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.picture_url) {
+              validationError = `Picture is required for ${displayName} if adding their details.`;
+              break;
+            }
+            if (!player.student_id_url) {
+              validationError = `Student ID is required for ${displayName} if adding their details.`;
+              break;
+            }
+          } else if (i >= 0 && i <= 4) {
+            // Regular validation for required players (0-4)
             if (!player || !player.name) {
               validationError = `Name is required for ${displayName}.`;
               break;
@@ -171,115 +198,29 @@ function FormContent() {
               validationError = `IGN is required for ${displayName}.`;
               break;
             }
-            
-            if (!player.student_id_url){
-              validationError = `ID
-              is required for ${displayName}.`;
-              break;
-            }
-            
-            if (!player.picture_url){
-              validationError = `Picture is required for ${displayName}.`;
-              break;
-            }
-            
             if (!player.game_id) {
               validationError = `Game ID is required for ${displayName}.`;
               break;
             }
-            
             if (!player.server_id) {
               validationError = `Server ID is required for ${displayName}.`;
               break;
             }
-            // Role should always be set by the form's logic based on index, but check defensively
-            if (!player.role) {
-              validationError = `Role is missing for ${displayName}.`;
+            if (!player.picture_url) {
+              validationError = `Picture is required for ${displayName}.`;
               break;
             }
-
-            // Check Captain/Coach specific required fields if they exist in state
+            if (!player.student_id_url) {
+              validationError = `Student ID is required for ${displayName}.`;
+              break;
+            }
+            // Additional required fields for Captain (i=0)
             if (i === 0 && (!player.email || !player.mobile)) {
               validationError = `Email and Mobile are required for the Captain.`;
               break;
             }
-            if (
-              i === 6 &&
-              player &&
-              (player.name ||
-                player.ign ||
-                player.game_id ||
-                player.server_id ||
-                player.email ||
-                player.mobile ||
-                player.city ||
-                player.state ||
-                player.device ||
-                player.picture_url ||
-                player.student_id_url) &&
-              (!player.email || !player.mobile)
-            ) {
-              validationError = `Email and Mobile are required for the Coach.`;
-              break;
-            }
-          } else if (isRequiredRole && !player) {
-            // Handle the case where a required player (0-4) has no data object in state at all
-            validationError = `Missing data for required ${displayName}.`;
-            break;
           }
         }
-
-        // After checking all players, ensure at least 5 required players (0-4) have data
-        const requiredPlayersCount = Object.entries(formData.players).filter(
-          ([key, player]) => {
-            const index = parseInt(key, 10) - 1;
-            // Count required players (0-4) who have a data object and required fields
-            return (
-              index >= 0 &&
-              index <= 4 &&
-              player &&
-              player.name &&
-              player.ign &&
-              player.game_id &&
-              player.server_id &&
-              player.role
-            );
-          }
-        ).length;
-        if (requiredPlayersCount < 5) {
-          // Refine message - this check might be redundant if loop catches missing fields individually
-          // validationError = validationError || "You must provide complete data for at least 5 players (Captain + 4 Players).";
-        }
-
-        // Ensure Captain has email/mobile
-        const captainData = formData.players["1"];
-        if (captainData && (!captainData.email || !captainData.mobile)) {
-          validationError =
-            validationError || "Captain's Email and Mobile are required.";
-        }
-        // Ensure Coach has email/mobile IF coach data exists
-        const coachDataCheck = formData.players["7"];
-        if (
-          coachDataCheck &&
-          (coachDataCheck.name ||
-            coachDataCheck.ign ||
-            coachDataCheck.game_id ||
-            coachDataCheck.server_id ||
-            coachDataCheck.email ||
-            coachDataCheck.mobile ||
-            coachDataCheck.city ||
-            coachDataCheck.state ||
-            coachDataCheck.device ||
-            coachDataCheck.picture_url ||
-            coachDataCheck.student_id_url) &&
-          (!coachDataCheck.email || !coachDataCheck.mobile)
-        ) {
-          validationError =
-            validationError ||
-            "Coach's Email and Mobile are required if coach details are provided.";
-        }
-
-        // --- End Update Step 3 Validation ---
         break;
       case 4:
         if (!formData.termsAccepted) {
@@ -303,28 +244,42 @@ function FormContent() {
 
   // --- Handler for the Final "Submit Registration" Button (Step 4) ---
   const handleFinalSubmit = async (e: React.FormEvent) => {
-    console.log("[handleFinalSubmit] Function started.");
-    console.log("[handleFinalSubmit] Event received:", e);
-
     e.preventDefault();
-    console.log("[handleFinalSubmit] Default event prevented.");
-
     setFinalSubmitError(null);
 
-    console.log("[handleFinalSubmit] Checking terms acceptance.");
+    // Validate terms acceptance
     if (!formData.termsAccepted) {
       setFinalSubmitError("You must accept the terms and conditions.");
-      console.log(
-        "[handleFinalSubmit] Terms not accepted. Setting error and returning."
-      );
       return;
     }
-    console.log("[handleFinalSubmit] Terms accepted. Proceeding.");
+
+    // Validate substitute and coach data completeness
+    const substitute = formData.players["6"];
+    const coach = formData.players["7"];
+
+    // Check if substitute has any data filled
+    if (substitute && Object.values(substitute).some(value => value !== null && value !== undefined && value !== "")) {
+      const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'email', 'mobile', 'city', 'state', 'device', 'picture_url', 'student_id_url'];
+      for (const field of requiredFields) {
+        if (!substitute[field as keyof Player]) {
+          setFinalSubmitError(`All fields are required for Substitute if adding their details. Missing: ${field.replace('_', ' ')}`);
+          return;
+        }
+      }
+    }
+
+    // Check if coach has any data filled
+    if (coach && Object.values(coach).some(value => value !== null && value !== undefined && value !== "")) {
+      const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'email', 'mobile', 'city', 'state', 'device', 'picture_url', 'student_id_url'];
+      for (const field of requiredFields) {
+        if (!coach[field as keyof Player]) {
+          setFinalSubmitError(`All fields are required for Coach if adding their details. Missing: ${field.replace('_', ' ')}`);
+          return;
+        }
+      }
+    }
 
     setIsSubmittingFinal(true);
-    console.log("[handleFinalSubmit] Setting isSubmittingFinal to true.");
-
-    console.log("[handleFinalSubmit] Preparing FormData...");
     const finalFormData = new FormData();
 
     // Append University Data
@@ -374,9 +329,7 @@ function FormContent() {
     }
 
     try {
-      console.log("[handleFinalSubmit] Attempting to call registerTeam...");
       const result = await registerTeam(finalFormData);
-      console.log("[handleFinalSubmit] Registration complete. Result:", result);
 
       if (result.success) {
         alert(result.message);
@@ -385,7 +338,6 @@ function FormContent() {
         setFinalSubmitError(result.message);
       }
     } catch (error) {
-      console.error("[handleFinalSubmit] Error during registration:", error);
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during registration.";
       setFinalSubmitError(errorMessage);
     } finally {
@@ -543,17 +495,6 @@ function FormContent() {
           <div className="flex justify-between mt-6">
             <Button
               type="button" // Previous button is always type="button"
-              onClick={() => setActiveStep((prev) => Math.max(1, prev - 1))}
-              className="bg-transparent font-bold text-white"
-              disabled={activeStep === 1 || isSubmittingFinal} // Disable on first step or while final submitting
-            >
-              Previous
-            </Button>
-
-            {/* Next Step or Submit Registration Button */}
-            <Button
-              type={activeStep === 4 ? "submit" : "button"} // Final step is type="submit", others are "button"
-              // Call handleNextStep directly for steps 1-3 (frontend validation & navigation)
               // Step 4 button relies on form's onSubmit which calls handleFinalSubmit
               onClick={activeStep === 4 ? undefined : handleNextStep}
               className="bg-[#FFAE00] font-bold text-white"
