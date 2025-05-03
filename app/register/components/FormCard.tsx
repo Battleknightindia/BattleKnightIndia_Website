@@ -134,90 +134,60 @@ function FormContent() {
         // Referral code is optional, no validation needed here
         break;
       case 3:
-        // Validate required fields for ALL players who are included in the state
-        for (let i = 0; i < 7; i++) {
-          const player = formData.players[(i + 1).toString()];
-          const displayName = i === 5 ? "Substitute" : i === 6 ? "Coach" : `Player ${i + 1}`;
+        // Define all required fields that every player must have
+        const requiredFields = [
+          'name', 'ign', 'game_id', 'server_id', 'email', 
+          'mobile', 'city', 'state', 'device', 'picture_url', 'student_id_url'
+        ];
 
-          // Check if any data is entered for substitute (i=5) or coach (i=6)
-          const hasAnyData = player && Object.values(player).some(value => value !== null && value !== undefined && value !== "");
-          
-          // For substitute (i=5) or coach (i=6), if any data is entered, all fields must be filled
-          if ((i === 5 || i === 6) && hasAnyData) {
-            if (!player.name) {
-              validationError = `Name is required for ${displayName} if adding their details.`;
+        // Validate first 5 players (mandatory)
+        for (let i = 0; i < 5; i++) {
+          const player = formData.players[(i + 1).toString()];
+          const displayName = `Player ${i + 1}`;
+
+          for (const field of requiredFields) {
+            if (!player || !player[field as keyof Player]) {
+              validationError = `${field.replace('_', ' ').replace('url', '').toUpperCase()} is required for ${displayName}.`;
               break;
             }
-            if (!player.ign) {
-              validationError = `IGN is required for ${displayName} if adding their details.`;
-              break;
+          }
+          if (validationError) break;
+        }
+
+        // If no errors from mandatory players, check substitute (player 6)
+        if (!validationError) {
+          const substitute = formData.players["6"];
+          if (substitute) {
+            const hasAnySubstituteData = Object.values(substitute).some(value => 
+              value !== null && value !== undefined && value !== ""
+            );
+
+            if (hasAnySubstituteData) {
+              for (const field of requiredFields) {
+                if (!substitute[field as keyof Player]) {
+                  validationError = `${field.replace('_', ' ').replace('url', '').toUpperCase()} is required for Substitute.`;
+                  break;
+                }
+              }
             }
-            if (!player.game_id) {
-              validationError = `Game ID is required for ${displayName} if adding their details.`;
-              break;
-            }
-            if (!player.server_id) {
-              validationError = `Server ID is required for ${displayName} if adding their details.`;
-              break;
-            }
-            if (!player.email) {
-              validationError = `Email is required for ${displayName} if adding their details.`;
-              break;
-            }
-            if (!player.mobile) {
-              validationError = `Mobile is required for ${displayName} if adding their details.`;
-              break;
-            }
-            if (!player.city) {
-              validationError = `City is required for ${displayName} if adding their details.`;
-              break;
-            }
-            if (!player.state) {
-              validationError = `State is required for ${displayName} if adding their details.`;
-              break;
-            }
-            if (!player.device) {
-              validationError = `Device is required for ${displayName} if adding their details.`;
-              break;
-            }
-            if (!player.picture_url) {
-              validationError = `Picture is required for ${displayName} if adding their details.`;
-              break;
-            }
-            if (!player.student_id_url) {
-              validationError = `Student ID is required for ${displayName} if adding their details.`;
-              break;
-            }
-          } else if (i >= 0 && i <= 4) {
-            // Regular validation for required players (0-4)
-            if (!player || !player.name) {
-              validationError = `Name is required for ${displayName}.`;
-              break;
-            }
-            if (!player.ign) {
-              validationError = `IGN is required for ${displayName}.`;
-              break;
-            }
-            if (!player.game_id) {
-              validationError = `Game ID is required for ${displayName}.`;
-              break;
-            }
-            if (!player.server_id) {
-              validationError = `Server ID is required for ${displayName}.`;
-              break;
-            }
-            if (!player.picture_url) {
-              validationError = `Picture is required for ${displayName}.`;
-              break;
-            }
-            if (!player.student_id_url) {
-              validationError = `Student ID is required for ${displayName}.`;
-              break;
-            }
-            // Additional required fields for Captain (i=0)
-            if (i === 0 && (!player.email || !player.mobile)) {
-              validationError = `Email and Mobile are required for the Captain.`;
-              break;
+          }
+        }
+
+        // If no errors from substitute, check coach (player 7)
+        if (!validationError) {
+          const coach = formData.players["7"];
+          if (coach) {
+            const hasAnyCoachData = Object.values(coach).some(value => 
+              value !== null && value !== undefined && value !== ""
+            );
+
+            if (hasAnyCoachData) {
+              for (const field of requiredFields) {
+                if (!coach[field as keyof Player]) {
+                  validationError = `${field.replace('_', ' ').replace('url', '').toUpperCase()} is required for Coach.`;
+                  break;
+                }
+              }
             }
           }
         }
@@ -473,17 +443,6 @@ function FormContent() {
         <CardContent className="flex flex-col gap-6 overflow-hidden">
           {/* Step Content with Animation */}
           <AnimatePresence mode="wait">
-            <motion.div
-              key={activeStep}
-              variants={stepVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
-              {renderStepComponent()} {/* Render the current step component */}
-            </motion.div>
-          </AnimatePresence>
-
           {/* Display Parent-level Error */}
           {finalSubmitError && (
             <div className="text-red-500 text-sm text-center mt-2">
@@ -495,6 +454,17 @@ function FormContent() {
           <div className="flex justify-between mt-6">
             <Button
               type="button" // Previous button is always type="button"
+              onClick={() => setActiveStep((prev) => Math.max(1, prev - 1))}
+              className="bg-transparent font-bold text-white"
+              disabled={activeStep === 1 || isSubmittingFinal} // Disable on first step or while final submitting
+            >
+              Previous
+            </Button>
+
+            {/* Next Step or Submit Registration Button */}
+            <Button
+              type={activeStep === 4 ? "submit" : "button"} // Final step is type="submit", others are "button"
+              // Call handleNextStep directly for steps 1-3 (frontend validation & navigation)
               // Step 4 button relies on form's onSubmit which calls handleFinalSubmit
               onClick={activeStep === 4 ? undefined : handleNextStep}
               className="bg-[#FFAE00] font-bold text-white"
