@@ -73,11 +73,11 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
         message: "Team registered successfully!",
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Registration error:", error);
     return {
       success: false,
-      message: error.message || "Registration failed. Please try again.",
+      message: error instanceof Error ? error.message : "Registration failed. Please try again.",
     };
   }
 }
