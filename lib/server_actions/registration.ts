@@ -5,6 +5,33 @@ import { createClient } from "@/utils/supabase/server";
 import { RegistrationData } from "@/types/registrationTypes";
 import { validateRegistrationData, processNewRegistration, processRegistrationUpdate } from "../registration-services/main";
 
+// Define ProcessedPlayerData type based on the player data structure used in the code
+interface ProcessedPlayerData {
+  name: string;
+  ign: string;
+  game_id: string;
+  server_id: string;
+  role: "captain" | "player" | "substitute" | "coach";
+  email: string;
+  mobile: string;
+  city: string;
+  state: string;
+  device: string;
+}
+
+// Define ProcessedRegistrationData type based on the return type structure
+interface ProcessedRegistrationData {
+  universityName: string;
+  universityCity: string;
+  universityState: string;
+  universityLogo: File;
+  teamName: string;
+  teamLogo: File;
+  referralCode: string;
+  players: ProcessedPlayerData[];
+  files: { file: File; index: number; field: "student_id" }[];
+}
+
 export async function processRegistrationFormData(formData: FormData): Promise<ProcessedRegistrationData> {
   const universityName = formData.get("university_name") as string;
   const universityCity = formData.get("university_city") as string;
@@ -32,7 +59,7 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
       ign: formData.get(`player${i}_ign`) as string,
       game_id: formData.get(`player${i}_game_id`) as string,
       server_id: formData.get(`player${i}_server_id`) as string,
-      role: role as Player["role"],
+      role: role as ProcessedPlayerData["role"],
       email: formData.get(`player${i}_email`) as string,
       mobile: formData.get(`player${i}_mobile`) as string,
       city: formData.get(`player${i}_city`) as string,
@@ -67,8 +94,33 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
       };
     }
 
-    // Extract form data
-    const registrationData: RegistrationData = await processRegistrationFormData(formData);
+    // Extract and process form data
+    const processedData = await processRegistrationFormData(formData);
+    
+    // Map processed data to match RegistrationData type
+    const registrationData: RegistrationData = {
+      universityName: processedData.universityName,
+      universityState: processedData.universityState,
+      universityCity: processedData.universityCity,
+      universityLogo: processedData.universityLogo,
+      teamName: processedData.teamName,
+      teamLogo: processedData.teamLogo,
+      referralCode: processedData.referralCode,
+      players: processedData.players.map((player, index) => ({
+        index,
+        name: player.name,
+        ign: player.ign,
+        gameId: player.game_id,
+        serverId: player.server_id,
+        role: player.role,
+        email: player.email,
+        mobile: player.mobile,
+        city: player.city,
+        state: player.state,
+        device: player.device,
+        studentId: processedData.files.find(f => f.index === index)?.file || null
+      }))
+    };
 
     // Validate registration data
     try {
