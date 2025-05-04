@@ -61,7 +61,7 @@ const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
   return saved ? JSON.parse(saved) : null;
 };
 
-function FormContent({}: Record<string, never>): React.ReactElement {
+const FormContent = ({}: Record<string, never>): React.ReactElement => {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState<number>(1);
   const pathname = usePathname();
@@ -170,11 +170,10 @@ function FormContent({}: Record<string, never>): React.ReactElement {
 
     switch (activeStep) {
       case 1:
-        if (!formData.university.name)
-          validationError = "University Name is required.";
+        if (!formData.university.name) validationError = "University Name is required.";
         if (!formData.university.city) validationError = "City is required.";
-        if (!formData.university.logo) validationError = "Logo is required.";
         if (!formData.university.state) validationError = "State is required.";
+        if (!formData.university.logo) validationError = "University Logo is required.";
         break;
       case 2:
         if (!formData.team.name) validationError = "Team Name is required.";
@@ -189,6 +188,7 @@ function FormContent({}: Record<string, never>): React.ReactElement {
           "city",
           "state",
           "device",
+          "student_id_url"
         ];
 
         const emailMobileFields = ["email", "mobile"];
@@ -196,7 +196,7 @@ function FormContent({}: Record<string, never>): React.ReactElement {
         // Validate main players (1-5)
         for (let i = 0; i < 5; i++) {
           const player = formData.players[(i + 1).toString()];
-          const displayName = `Player ${i + 1}`;
+          const displayName = i === 0 ? "Captain" : `Player ${i + 1}`;
           const isCaptain = i === 0;
 
           // Check basic required fields for all players
@@ -231,7 +231,6 @@ function FormContent({}: Record<string, never>): React.ReactElement {
             );
 
             if (hasAnySubstituteData) {
-              // If any substitute data is entered, validate only basic fields (no email/mobile)
               for (const field of basicRequiredFields) {
                 if (!substitute[field as keyof Player]) {
                   validationError = `${field
@@ -253,7 +252,7 @@ function FormContent({}: Record<string, never>): React.ReactElement {
             );
 
             if (hasAnyCoachData) {
-              // If any coach data is entered, validate all basic fields
+              // Basic fields are required
               for (const field of basicRequiredFields) {
                 if (!coach[field as keyof Player]) {
                   validationError = `${field
@@ -262,11 +261,13 @@ function FormContent({}: Record<string, never>): React.ReactElement {
                   break;
                 }
               }
-              // Also validate email and mobile for coach
-              for (const field of emailMobileFields) {
-                if (!coach[field as keyof Player]) {
-                  validationError = `${field.toUpperCase()} is required for Coach.`;
-                  break;
+              // Email and mobile are required for coach
+              if (!validationError) {
+                for (const field of emailMobileFields) {
+                  if (!coach[field as keyof Player]) {
+                    validationError = `${field.toUpperCase()} is required for Coach.`;
+                    break;
+                  }
                 }
               }
             }
@@ -545,7 +546,7 @@ function FormContent({}: Record<string, never>): React.ReactElement {
       </Card>
     </form>
   );
-}
+};
 
 export default function FormCard(): React.ReactElement {
   return <FormContent />;

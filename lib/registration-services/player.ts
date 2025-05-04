@@ -146,6 +146,11 @@ export function validatePlayerData(
     }
   }
 
+  // Student ID validation for all players
+  if (!playerData.student_id_url) {
+    throw new Error(`Student ID is required for ${displayName}.`);
+  }
+
   // Email and mobile validation only for Captain (index 0) and Coach (index 6)
   if (index === 0 || (index === 6 && !isOptionalRole)) {
     if (!playerData.email?.trim()) {
