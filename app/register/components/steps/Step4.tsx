@@ -34,7 +34,7 @@ const getPlayerRole = (role: Player['role'] | null): string => {
 
 const getFileDisplayName = (fileOrUrl: File | string | null | undefined): string | null => {
   if (!fileOrUrl) {
-      return null;
+    return null;
   }
   if (fileOrUrl instanceof File) {
     return fileOrUrl.name;
@@ -55,11 +55,11 @@ const getFileDisplayName = (fileOrUrl: File | string | null | undefined): string
 
 // Define props Step4 expects from its parent (FormContent)
 interface Step4Props {
-    data: RegistrationFormData;
-    termsAccepted: boolean;
-    onTermsChange: (checked: boolean) => void;
-    onEdit: (section: string, index?: number | null) => void;
-    isSubmitting?: boolean;
+  data: RegistrationFormData;
+  termsAccepted: boolean;
+  onTermsChange: (checked: boolean) => void;
+  onEdit: (section: string, index?: number | null) => void;
+  isSubmitting?: boolean;
 }
 
 
@@ -69,9 +69,9 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
   const teamData = data.team;
   // Iterate over Object.entries to get both key (1-based index string) and value (Player object)
   const playersAndStaffEntries = Object.entries(data.players)
-                      .filter(([, player]) => player !== undefined) as [string, Player][];
-                      // Optional: Sort the array if you want a specific display order
-                      // .e.sort(([, a], [, b]) => { /* sorting logic */ }); // Sorting needs to handle the [key, value] structure
+    .filter(([, player]) => player !== undefined) as [string, Player][];
+  // Optional: Sort the array if you want a specific display order
+  // .e.sort(([, a], [, b]) => { /* sorting logic */ }); // Sorting needs to handle the [key, value] structure
 
 
   // Handle terms change - calls the parent handler
@@ -115,71 +115,71 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
 
           {/* University Details Accordion Item */}
           <AccordionItem value="university" className="border rounded-lg overflow-hidden">
-             <div className="flex items-center justify-between px-4 py-3 bg-[#1B253B]">
-               <AccordionTrigger className="flex-1 hover:no-underline hover:bg-transparent">
-                 <div className="flex items-center">
-                   <GraduationCap className="h-5 w-5 mr-2 text-white" />
-                   <span className="font-medium text-white">University Details</span>
-                 </div>
-               </AccordionTrigger>
-               {/* Edit Button for University */}
-               <Button
-                 type="button"
-                 variant="ghost"
-                 size="sm"
-                 onClick={() => handleEditClick('university')} // Call handler with section name
-                 // --- MODIFIED --- Disable if submitting OR terms accepted
-                 disabled={isSubmitting || termsAccepted}
-                 className={`text-white hover:text-white/80 ${ (isSubmitting || termsAccepted) ? 'opacity-50 cursor-not-allowed' : ''}`} // Added conditional styling
-               >
-                 <Pencil className="h-4 w-4" />
-                 <span className="sr-only">Edit University</span>
-               </Button>
-             </div>
-             <AccordionContent className="px-4 py-3 bg-[#1B253B]">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                   <Label className="text-sm text-gray-500">University Name</Label>
-                   <p className="font-medium">{universityData?.name || "Not provided"}</p>
-                 </div>
-                 <div>
-                   <Label className="text-sm text-gray-500">Location</Label>
-                   <p className="font-medium">
-                     {universityData?.city && universityData?.state
-                       ? `${universityData.city}, ${universityData.state}`
-                       : universityData?.city || universityData?.state || "Not provided"}
-                   </p>
-                 </div>
-                 <div className="md:col-span-2">
-                   <Label className="text-sm text-gray-500">University Logo</Label>
-                   <p className="font-medium">{getFileDisplayName(universityData?.logo) || "Not provided"}</p>
-                    {getFileDisplayName(universityData?.logo) && universityData?.logo && (
-                       <div className="mt-2">
-                         {/* Replaced <img> with <Image /> */}
-                         <Image
-                           src={typeof universityData.logo === 'string' ? universityData.logo : URL.createObjectURL(universityData.logo)}
-                           alt="University Logo Preview"
-                           width={80} // Added width
-                           height={80} // Added height
-                           className="max-h-[80px] object-contain rounded-md"
-                         />
-                       </div>
-                   )}
-                 </div>
-               </div>
-             </AccordionContent>
-            </AccordionItem>
+            <div className="flex items-center justify-between px-4 py-3 bg-[#1B253B]">
+              <AccordionTrigger className="flex-1 hover:no-underline hover:bg-transparent">
+                <div className="flex items-center">
+                  <GraduationCap className="h-5 w-5 mr-2 text-white" />
+                  <span className="font-medium text-white">University Details</span>
+                </div>
+              </AccordionTrigger>
+              {/* Edit Button for University */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEditClick('university')} // Call handler with section name
+                // --- MODIFIED --- Disable if submitting OR terms accepted
+                disabled={isSubmitting || termsAccepted}
+                className={`text-white hover:text-white/80 ${(isSubmitting || termsAccepted) ? 'opacity-50 cursor-not-allowed' : ''}`} // Added conditional styling
+              >
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Edit University</span>
+              </Button>
+            </div>
+            <AccordionContent className="px-4 py-3 bg-[#1B253B]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm text-gray-500">University Name</Label>
+                  <p className="font-medium">{universityData?.name || "Not provided"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-500">Location</Label>
+                  <p className="font-medium">
+                    {universityData?.city && universityData?.state
+                      ? `${universityData.city}, ${universityData.state}`
+                      : universityData?.city || universityData?.state || "Not provided"}
+                  </p>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-sm text-gray-500">University Logo</Label>
+                  <p className="font-medium">{getFileDisplayName(universityData?.logo) || "Not provided"}</p>
+                  {getFileDisplayName(universityData?.logo) && universityData?.logo && (
+                    <div className="mt-2">
+                      {/* Replaced <img> with <Image /> */}
+                      <Image
+                        src={typeof universityData.logo === 'string' ? universityData.logo : URL.createObjectURL(universityData.logo)}
+                        alt="University Logo Preview"
+                        width={80} // Added width
+                        height={80} // Added height
+                        className="max-h-[80px] object-contain rounded-md"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
           {/* Team Details Accordion Item */}
           <AccordionItem value="team" className="border rounded-lg overflow-hidden mt-3">
             <div className="flex items-center justify-between px-4 py-3 bg-[#1B253B]">
-               <AccordionTrigger className="flex-1 hover:no-underline hover:bg-transparent">
-                 <div className="flex items-center">
-                   <Users className="h-5 w-5 mr-2 text-white" />
-                   <span className="font-medium text-white">Team Details</span>
-                 </div>
-               </AccordionTrigger>
-               {/* Edit Button for Team */}
+              <AccordionTrigger className="flex-1 hover:no-underline hover:bg-transparent">
+                <div className="flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-white" />
+                  <span className="font-medium text-white">Team Details</span>
+                </div>
+              </AccordionTrigger>
+              {/* Edit Button for Team */}
               <Button
                 type="button"
                 variant="ghost"
@@ -187,11 +187,11 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                 onClick={() => handleEditClick('team')} // Call handler with section name
                 // --- MODIFIED --- Disable if submitting OR terms accepted
                 disabled={isSubmitting || termsAccepted}
-                className={`text-white hover:text-white/80 ${ (isSubmitting || termsAccepted) ? 'opacity-50 cursor-not-allowed' : ''}`} // Added conditional styling
+                className={`text-white hover:text-white/80 ${(isSubmitting || termsAccepted) ? 'opacity-50 cursor-not-allowed' : ''}`} // Added conditional styling
               >
-                 <Pencil className="h-4 w-4" />
-                 <span className="sr-only">Edit Team</span>
-               </Button>
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Edit Team</span>
+              </Button>
             </div>
             <AccordionContent className="px-4 py-3 bg-[#1B253B]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -202,18 +202,18 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                 <div>
                   <Label className="text-sm text-gray-500">Team Logo</Label>
                   <p className="font-medium">{getFileDisplayName(teamData?.logo) || "Not provided"}</p>
-                    {getFileDisplayName(teamData?.logo) && teamData?.logo && (
-                       <div className="mt-2">
-                         {/* Replaced <img> with <Image /> */}
-                         <Image
-                           src={typeof teamData.logo === 'string' ? teamData.logo : URL.createObjectURL(teamData.logo)}
-                           alt="Team Logo Preview"
-                           width={80} // Added width
-                           height={80} // Added height
-                           className="max-h-[80px] object-contain rounded-md"
-                         />
-                       </div>
-                   )}
+                  {getFileDisplayName(teamData?.logo) && teamData?.logo && (
+                    <div className="mt-2">
+                      {/* Replaced <img> with <Image /> */}
+                      <Image
+                        src={typeof teamData.logo === 'string' ? teamData.logo : URL.createObjectURL(teamData.logo)}
+                        alt="Team Logo Preview"
+                        width={80} // Added width
+                        height={80} // Added height
+                        className="max-h-[80px] object-contain rounded-md"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </AccordionContent>
@@ -228,24 +228,24 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                   <span className="font-medium text-white">Team Members Details</span>
                 </div>
               </AccordionTrigger>
-               {/* Edit Button for Players Section */}
-               {/* This button goes back to the start of Step 3 */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEditClick('players')} // Call handler with section name 'players'
-                  // --- MODIFIED --- Disable if submitting OR terms accepted
-                  disabled={isSubmitting || termsAccepted}
-                  className={`text-white hover:text-white/80 ${ (isSubmitting || termsAccepted) ? 'opacity-50 cursor-not-allowed' : ''}`} // Added conditional styling
-                >
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Edit Team Members</span>
-                </Button>
+              {/* Edit Button for Players Section */}
+              {/* This button goes back to the start of Step 3 */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEditClick('players')} // Call handler with section name 'players'
+                // --- MODIFIED --- Disable if submitting OR terms accepted
+                disabled={isSubmitting || termsAccepted}
+                className={`text-white hover:text-white/80 ${(isSubmitting || termsAccepted) ? 'opacity-50 cursor-not-allowed' : ''}`} // Added conditional styling
+              >
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Edit Team Members</span>
+              </Button>
             </div>
             <AccordionContent className="px-4 py-3 bg-[#1B253B]">
               <div className="space-y-6">
-                 {/* Loop through the players entries (key and value) */}
+                {/* Loop through the players entries (key and value) */}
                 {playersAndStaffEntries.length > 0 ? (
                   // Map gets [key, player] array, where key is the original '1'...'7' string
                   playersAndStaffEntries.map(([playerKey, member], index: number) => (
@@ -254,11 +254,11 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium text-white">
-                             {/* Display Player N or Role Name */}
-                             {member.role === 'coach' || member.role === 'substitute'
-                               ? getPlayerRole(member.role)
-                               : `Player ${index + 1}` // Use current loop index + 1 for display number in the list
-                              }
+                            {/* Display Player N or Role Name */}
+                            {member.role === 'coach' || member.role === 'substitute'
+                              ? getPlayerRole(member.role)
+                              : `Player ${index + 1}` // Use current loop index + 1 for display number in the list
+                            }
                           </h4>
                           {member.role && (
                             <span className="px-2 py-1 text-xs font-medium bg-white text-black border border-white rounded-full">
@@ -266,117 +266,81 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
                             </span>
                           )}
                         </div>
-                           {/* Edit Button for Individual Player */}
-                           {/* This button goes back to Step 3 AND specifies the player index */}
-                           <Button
-                             type="button"
-                             variant="ghost"
-                             size="sm"
-                             onClick={() => handleEditClick('player', parseInt(playerKey, 10))} // Pass section 'player' and the original 1-based index
-                             // --- MODIFIED --- Disable if submitting OR terms accepted
-                             disabled={isSubmitting || termsAccepted}
-                             className={`text-white hover:text-white/80 ${ (isSubmitting || termsAccepted) ? 'opacity-50 cursor-not-allowed' : ''}`} // Added conditional styling
-                           >
-                             <Pencil className="h-4 w-4" />
-                             <span className="sr-only">Edit {getPlayerRole(member.role)}</span> {/* Use role in SR text */}
-                           </Button>
+                        {/* Edit Button for Individual Player */}
+                        {/* This button goes back to Step 3 AND specifies the player index */}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditClick('player', parseInt(playerKey, 10))} // Pass section 'player' and the original 1-based index
+                          // --- MODIFIED --- Disable if submitting OR terms accepted
+                          disabled={isSubmitting || termsAccepted}
+                          className={`text-white hover:text-white/80 ${(isSubmitting || termsAccepted) ? 'opacity-50 cursor-not-allowed' : ''}`} // Added conditional styling
+                        >
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Edit {getPlayerRole(member.role)}</span> {/* Use role in SR text */}
+                        </Button>
                       </div>
-                      {/* ... rest of player details display ... */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <Label className="text-xs text-gray-500">Full Name</Label>
-                            <p className="text-sm font-medium">{member.name || "Not provided"}</p>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-gray-500">In-Game Name</Label>
-                            <p className="text-sm font-medium">{member.ign || "Not provided"}</p>
-                          </div>
-                           {member.role === 'captain' || member.role === 'player' ? (
-                               <>
-                                   <div>
-                                     <Label className="text-xs text-gray-500">Game ID</Label>
-                                     <p className="text-sm font-medium">{member.game_id || "Not provided"}</p>
-                                   </div>
-                                   <div>
-                                     <Label className="text-xs text-gray-500">Server ID</Label>
-                                     <p className="text-sm font-medium">{member.server_id || "Not provided"}</p>
-                                   </div>
-                               </>
-                           ) : (
-                               <div className="md:col-span-2">
-                                   <Label className="text-xs text-gray-500">Game Details</Label>
-                                   <p className="text-sm font-medium">Not Applicable</p>
-                               </div>
-                           )}
-                          <div>
-                            <Label className="text-xs text-gray-500">Email</Label>
-                            <p className="text-sm font-medium">{member.email || "Not provided"}</p>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-gray-500">Mobile</Label>
-                            <p className="text-sm font-medium">{member.mobile || "Not provided"}</p>
-                          </div>
-                           {member.role === 'captain' || member.role === 'player' ? (
-                               <>
-                                 <div>
-                                   <Label className="text-xs text-gray-500">Location</Label>
-                                   <p className="text-sm font-medium">
-                                     {member.city && member.state ? `${member.city}, ${member.state}` : member.city || member.state || "Not provided"}
-                                   </p>
-                                 </div>
-                                 <div>
-                                   <Label className="text-xs text-gray-500">Device</Label>
-                                   <p className="text-sm font-medium">{member.device || "Not provided"}</p>
-                                 </div>
-                               </>
-                           ) : (
-                               <div className="md:col-span-2">
-                                 <Label className="text-xs text-gray-500">Location/Device</Label>
-                                 <p className="text-sm font-medium">Not Applicable</p>
-                               </div>
-                           )}
-                           <div className={(member.role === 'coach' || member.role === 'substitute') ? "md:col-span-2" : ""}>
-                             <Label className="text-xs text-gray-500">Role</Label>
-                             <p className="text-sm font-medium">{getPlayerRole(member.role) || "Not provided"}</p>
-                           </div>
-                          <div>
-                            <Label className="text-xs text-gray-500">Photo</Label>
-                            <p className="font-medium">{getFileDisplayName(member.picture_url) || "Not provided"}</p>
-                               {getFileDisplayName(member.picture_url) && member.picture_url && (
-                                 <div className="mt-2">
-                                   {/* Replaced <img> with <Image /> */}
-                                   <Image
-                                     src={typeof member.picture_url === 'string' ? member.picture_url : URL.createObjectURL(member.picture_url)}
-                                     alt={`${getPlayerRole(member.role)} Photo Preview`}
-                                     width={80} // Added width
-                                     height={80} // Added height
-                                     className="max-h-[80px] object-contain rounded-md"
-                                   />
-                                 </div>
-                               )}
-                          </div>
-                          <div>
-                            <Label className="text-xs text-gray-500">Student Proof</Label>
-                             <p className="font-medium">
-                               {getFileDisplayName(member.student_id_url) ||
-                               (member.role === 'coach' || member.role === 'substitute' ? "Not Required" : "Not provided")}
-                             </p>
-                             {getFileDisplayName(member.student_id_url) && member.student_id_url && (
-                                getFileDisplayName(member.student_id_url) !== "Not Required" && (
-                                   <div className="mt-2">
-                                     {/* Replaced <img> with <Image /> */}
-                                     <Image
-                                       src={typeof member.student_id_url === 'string' ? member.student_id_url : URL.createObjectURL(member.student_id_url)}
-                                       alt={`${getPlayerRole(member.role)} Student Proof Preview`}
-                                       width={80} // Added width
-                                       height={80} // Added height
-                                       className="max-h-[80px] object-contain rounded-md"
-                                     />
-                                   </div>
-                                )
-                             )}
-                          </div>
+                      {/* Updated player details display */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs text-gray-500">Game ID</Label>
+                          <p className="text-sm font-medium">{member.game_id || "Not provided"}</p>
                         </div>
+                        <div>
+                          <Label className="text-xs text-gray-500">Server ID</Label>
+                          <p className="text-sm font-medium">{member.server_id || "Not provided"}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-500">Full Name</Label>
+                          <p className="text-sm font-medium">{member.name || "Not provided"}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-500">In-Game Name (IGN)</Label>
+                          <p className="text-sm font-medium">{member.ign || "Not provided"}</p>
+                        </div>
+                        {member.role === 'captain' || member.role === 'coach' ? (
+                          <>
+                            <div>
+                              <Label className="text-xs text-gray-500">Email</Label>
+                              <p className="text-sm font-medium">{member.email || "Not provided"}</p>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-500">Mobile</Label>
+                              <p className="text-sm font-medium">{member.mobile || "Not provided"}</p>
+                            </div>
+                          </>
+                        ) : null}
+                        <div>
+                          <Label className="text-xs text-gray-500">Location</Label>
+                          <p className="text-sm font-medium">
+                            {member.city && member.state ? `${member.city}, ${member.state}` : member.city || member.state || "Not provided"}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-500">Device</Label>
+                          <p className="text-sm font-medium">{member.device || "Not provided"}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-500">Role</Label>
+                          <p className="text-sm font-medium">{getPlayerRole(member.role)}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs text-gray-500">Student/ID Proof</Label>
+                          <p className="text-sm font-medium">{getFileDisplayName(member.student_id_url) || "Not provided"}</p>
+                          {getFileDisplayName(member.student_id_url) && member.student_id_url && (
+                            <div className="mt-2">
+                              <Image
+                                src={typeof member.student_id_url === 'string' ? member.student_id_url : URL.createObjectURL(member.student_id_url)}
+                                alt={`${getPlayerRole(member.role)} ID Proof Preview`}
+                                width={80}
+                                height={80}
+                                className="max-h-[80px] object-contain rounded-md"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -389,27 +353,27 @@ export default function Step4({ data, termsAccepted, onTermsChange, onEdit, isSu
           </AccordionItem>
 
         </Accordion>
-        
+
         <Button
-  type="button"
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.open('/pdf/rulebook.pdf', '_blank');
-    // Immediately trigger the print dialog for the newly opened tab
-    window.addEventListener('load', () => {
-      window.print();
-    });
-  }}
-  className="w-full bg-blue-500 text-white font-bold"
-  disabled={isSubmitting}
->
-  <FileCheck className="h-4 w-4 mr-2" />
-Download Rulebook
-  </Button>
-        
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open('/pdf/rulebook.pdf', '_blank');
+            // Immediately trigger the print dialog for the newly opened tab
+            window.addEventListener('load', () => {
+              window.print();
+            });
+          }}
+          className="w-full bg-blue-500 text-white font-bold"
+          disabled={isSubmitting}
+        >
+          <FileCheck className="h-4 w-4 mr-2" />
+          Download Rulebook
+        </Button>
+
         {/* --- End Rulebook Download Section --- */}
-        
+
         {/* --- Terms and Conditions Checkbox (Restored) --- */}
         <div className="pt-10 border-t">
           <div className="flex items-start space-x-2 mb-4">
@@ -436,7 +400,7 @@ Download Rulebook
         </div>
         {/* --- End Terms and Conditions Checkbox --- */}
 
-        
+
 
         {/* Final Instruction Message */}
         <div className="flex items-center justify-center p-4 bg-blue-50 rounded-lg border border-blue-100 mt-6">

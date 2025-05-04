@@ -68,7 +68,6 @@ export type PlayerData = {
   city: string | null;
   state: string | null;
   device: string | null;
-  picture: File | null;
   studentId: File | null;
 };
 

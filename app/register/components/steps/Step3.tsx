@@ -66,7 +66,7 @@ export default function Step3({ data, onDataChange }: Step3Props) { // Remove te
   // --- Handlers to update Parent State ---
   const handlePlayerChange = (
     playerIndex: number, // 0-based index (0-6) received from PlayerForm
-    field: keyof Omit<Player, "id" | "role" | "picture_url" | "student_id_url" | "team_id" | "university_id" | "profile_id" | "created_at">,
+    field: keyof Omit<Player, "id" | "role" | "student_id_url" | "team_id" | "university_id" | "profile_id" | "created_at">,
     value: string
   ) => {
      // The value here is always a string from text inputs
@@ -75,7 +75,7 @@ export default function Step3({ data, onDataChange }: Step3Props) { // Remove te
 
   const handlePlayerFileChange = (
     playerIndex: number, // 0-based index (0-6) received from PlayerForm
-    field: "picture_url" | "student_id_url",
+    field: "student_id_url", // Only use the valid field from Player type
     file: File | null
   ) => {
     // File size validation can also be here or in FileUploader
@@ -114,7 +114,7 @@ export default function Step3({ data, onDataChange }: Step3Props) { // Remove te
   // --- Get Current Player Data from Props ---
   const currentPlayer = data[activeTabIndex.toString()] || {
      name: '', ign: '', game_id: '', server_id: '', email: '', mobile: '',
-     city: '', state: '', device: '', picture_url: null, student_id_url: null,
+     city: '', state: '', device: '', student_id_url: null,
      role: ((): Player["role"] => {
        if (activeTabIndex === 1) return "captain";
        if (activeTabIndex === 6) return "substitute";

@@ -14,13 +14,13 @@ interface PlayerFormProps {
   // Handler for text/string input changes, expects index, field name, and value
   onPlayerChange: (
     index: number,
-    field: keyof Omit<Player, "id" | "role" | "picture_url" | "student_id_url" | "team_id" | "university_id" | "profile_id" | "created_at">, // Explicitly list editable fields
+    field: keyof Omit<Player, "id" | "role" | "student_id_url" | "team_id" | "university_id" | "profile_id" | "created_at">, // Explicitly list editable fields
     value: string
   ) => void;
   // Handler for file input changes, expects index, field name, and File or null
   onFileChange: (
     index: number,
-    field: "picture_url" | "student_id_url", // Explicitly list file fields
+    field: "student_id_url", // Explicitly list file fields
     file: File | null
   ) => void;
   // Optional: Pass global loading/error states from parent if needed for UI feedback
@@ -43,7 +43,7 @@ export function PlayerForm({
 
   // Helper function to handle file changes from FileUploader and pass them up
   const handleFileChange = (
-    field: "picture_url" | "student_id_url", // File field name
+    field: "student_id_url", // File field name
     file: File | null // The selected File object or null
   ) => {
     // Call the parent handler provided via props, including the playerIndex
@@ -228,23 +228,6 @@ export function PlayerForm({
         {/* File Upload Components */}
         <div className="grid grid-cols-1 gap-6 pt-4">
           <div className="space-y-2">
-            <Label htmlFor={`player-${playerIndex}-picture`} className="text-white"> {/* Unique ID */}
-              {isCaptain ? "Captain Picture" : isCoach ? "Coach Picture" : "Player Picture"}
-            </Label>
-            <FileUploader
-              id={`player-${playerIndex}-picture`} // Add ID for label association
-              accept="image/*"
-              onFileSelect={(file) => handleFileChange("picture_url", file)} // Call local handler (which calls parent)
-              helpText={
-                isCoach
-                  ? "Upload a photo of the coach in standing position"
-                  : "Upload a photo in standing position"
-              }
-              currentFile={player.picture_url} // Pass current file/URL for preview
-              // disabled={isSubmittingFinal} // Optional: Disable file uploader
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor={`player-${playerIndex}-studentId`} className="text-white"> {/* Unique ID */}
               {isCoach ? "Coach ID Card" : "Student ID Card"}
             </Label>
@@ -267,10 +250,8 @@ export function PlayerForm({
         {(isCaptain || isCoach) && (
           <div className="flex bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-2xl flex-col gap-3 text-white text-[13px]">
             <h3 className="text-[15px] font-semibold">Important notes to the team:</h3>
-            <li>The picture should be in <b>standing position</b> of every member</li>
-            <li>For {isCoach ? "ID Card, you can upload collage/university ID card or any government ID" : "Student ID Card, you can upload your currently studying collage or university ID card it doesn't need to be the same university/collage you are representing"}</li>
-            <li>We are taking this photos for <b>thumbnail purpose</b></li>
             <li>We are taking the email and whatsapp from Captain/Leader and Coach/Manager for communications between us</li>
+            <li>For {isCoach ? "ID Card, you can upload collage/university ID card or any government ID" : "Student ID Card, you can upload your currently studying collage or university ID card it doesn't need to be the same university/collage you are representing"}</li>
             <li>We hope you understand our requirements and compile with it.</li>
           </div>
         )}
