@@ -398,7 +398,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           if (player.device)
             finalFormData.append(`player${i}_device`, player.device);
           if (player.student_id_url instanceof File) {
-            finalFormData.append(`player${i}_student_id_url`, player.student_id_url);
+            finalFormData.append(`player${i}_student_id`, player.student_id_url);
           }
         }
       }
