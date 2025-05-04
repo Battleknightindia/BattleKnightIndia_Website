@@ -321,27 +321,19 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           // Validate coach (player 7) if any data is filled
           const coach = formData.players["7"];
           if (coach) {
-            const hasAnyCoachData = Object.values(coach).some(
-              (value) => value !== null && value !== undefined && value !== ""
+            const requiredCoachFields = ["name", "ign", "game_id", "server_id", "email", "mobile"];
+            const hasPartialData = requiredCoachFields.some(field => 
+              coach[field as keyof Player] !== null && 
+              coach[field as keyof Player] !== undefined && 
+              coach[field as keyof Player] !== ""
             );
 
-            if (hasAnyCoachData) {
-              // Basic fields are required
-              for (const field of basicRequiredFields) {
+            if (hasPartialData) {
+              // If any coach field is filled, all become required
+              for (const field of requiredCoachFields) {
                 if (!coach[field as keyof Player]) {
-                  validationError = `${field
-                    .replace("_", " ")
-                    .toUpperCase()} is required for Coach.`;
+                  validationError = `${field.replace('_', ' ').toUpperCase()} is required for Coach if any coach information is provided.`;
                   break;
-                }
-              }
-              // Email and mobile are required for coach
-              if (!validationError) {
-                for (const field of emailMobileFields) {
-                  if (!coach[field as keyof Player]) {
-                    validationError = `${field.toUpperCase()} is required for Coach.`;
-                    break;
-                  }
                 }
               }
             }

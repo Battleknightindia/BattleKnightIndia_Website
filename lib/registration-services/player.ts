@@ -126,13 +126,34 @@ export function validatePlayerData(
   const displayName = getPlayerRoleDisplayName(index);
   const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'role'] as const;
   
-  // Check if any data is provided for optional roles (Substitute/Coach)
   if (isOptionalRole) {
-    const hasAnyData = Object.values(playerData).some(
-      value => value !== null && value !== undefined && value !== ""
-    );
+    // For substitute (index 5) and coach (index 6)
+    const hasAnyData = Object.entries(playerData).some(([key, value]) => {
+      if (key === 'role') return false; // Skip role field in the check
+      return value !== null && value !== undefined && value !== "";
+    });
+
     if (!hasAnyData) {
       return; // Skip validation if no data is provided for optional roles
+    }
+
+    // For coach specifically
+    if (index === 6) {
+      const requiredCoachFields = ['name', 'ign', 'game_id', 'server_id', 'email', 'mobile'] as const;
+      const hasPartialData = requiredCoachFields.some(field => 
+        playerData[field] !== null && playerData[field] !== undefined && playerData[field] !== ""
+      );
+
+      // If any of the coach fields are filled, all become required
+      if (hasPartialData) {
+        for (const field of requiredCoachFields) {
+          if (!playerData[field]) {
+            throw new Error(`${field.replace('_', ' ').toUpperCase()} is required for ${displayName} if any coach information is provided.`);
+          }
+        }
+      } else {
+        return; // Skip further validation if no coach data is provided
+      }
     }
   }
 
@@ -143,11 +164,8 @@ export function validatePlayerData(
     }
   }
 
-  // Student ID validation is handled during file upload process in checkAndUploadFile
-  // We don't validate it here as it will be handled separately
-
-  // Email and mobile validation only for Captain (index 0) and Coach (index 6)
-  if (index === 0 || (index === 6 && playerData.role === 'coach')) {
+  // Email and mobile validation only for Captain (index 0)
+  if (index === 0) {
     if (!playerData.email?.trim()) {
       throw new Error(`EMAIL is required for ${displayName}.`);
     }
