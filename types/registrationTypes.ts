@@ -21,7 +21,6 @@ export interface Player {
     device?: string | null;
 
     // File fields (can hold File object in state before upload, string URL from DB after upload, or null)
-    picture_url: string | File | null;
     student_id_url: string | File | null;
 
     // Add any other fields if your PlayerForm collects them

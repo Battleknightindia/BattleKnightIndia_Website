@@ -24,7 +24,6 @@ interface RegistrationData {
     city: string | null;
     state: string | null;
     device: string | null;
-    picture: File | null;
     studentId: File | null;
   }[];
 }
@@ -65,10 +64,9 @@ export async function processRegistrationUpdate(
   const existingPlayersMap = new Map(existingPlayers.map(p => [p.game_id, p.id]));
 
   // Process player files
-  const playerFiles = data.players.flatMap(p => [
-    ...(p.picture ? [{ file: p.picture, index: p.index, field: "picture" as const }] : []),
-    ...(p.studentId ? [{ file: p.studentId, index: p.index, field: "student_id" as const }] : [])
-  ]);
+  const playerFiles = data.players.map(p => (
+    p.studentId ? { file: p.studentId, index: p.index, field: "student_id" as const } : null
+  )).filter((item): item is NonNullable<typeof item> => item !== null);
 
   const uploadedUrls = await playerService.processPlayerFiles(
     playerFiles,
@@ -95,7 +93,6 @@ export async function processRegistrationUpdate(
       city: player.city,
       state: player.state,
       device: player.device,
-      picture_url: uploadedUrls[`${player.index}_picture`] || null,
       student_id_url: uploadedUrls[`${player.index}_student_id`] || null,
     };
 
@@ -144,10 +141,9 @@ export async function processNewRegistration(
   );
 
   // Process player files
-  const playerFiles = data.players.flatMap(p => [
-    ...(p.picture ? [{ file: p.picture, index: p.index, field: "picture" as const }] : []),
-    ...(p.studentId ? [{ file: p.studentId, index: p.index, field: "student_id" as const }] : [])
-  ]);
+  const playerFiles = data.players.map(p => (
+    p.studentId ? { file: p.studentId, index: p.index, field: "student_id" as const } : null
+  )).filter((item): item is NonNullable<typeof item> => item !== null);
 
   const uploadedUrls = await playerService.processPlayerFiles(
     playerFiles,
@@ -169,7 +165,6 @@ export async function processNewRegistration(
     city: player.city,
     state: player.state,
     device: player.device,
-    picture_url: uploadedUrls[`${player.index}_picture`] || null,
     student_id_url: uploadedUrls[`${player.index}_student_id`] || null,
   }));
 

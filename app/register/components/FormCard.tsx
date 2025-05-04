@@ -46,7 +46,6 @@ const saveFormToLocalStorage = (formData: RegistrationFormData) => {
         key,
         {
           ...player,
-          picture_url: null, // Don't store File objects
           student_id_url: null, // Don't store File objects
         },
       ])
@@ -66,7 +65,6 @@ const defaultPlayer: Player = {
   city: "",
   state: "",
   device: "",
-  picture_url: null,
   student_id_url: null,
 };
 
@@ -88,7 +86,6 @@ const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
             ...defaultPlayer,
             ...player,
             // Ensure File objects are null since they can't be stored in localStorage
-            picture_url: null,
             student_id_url: null,
           }
         ];
@@ -122,7 +119,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           newPlayers[key] = {
             ...defaultPlayer,
             ...player,
-            picture_url: prevData.players[key]?.picture_url || null,
             student_id_url: prevData.players[key]?.student_id_url || null,
           };
         });
@@ -393,9 +389,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             finalFormData.append(`player${i}_state`, player.state);
           if (player.device)
             finalFormData.append(`player${i}_device`, player.device);
-          if (player.picture_url instanceof File) {
-            finalFormData.append(`player${i}_picture`, player.picture_url);
-          }
           if (player.student_id_url instanceof File) {
             finalFormData.append(`player${i}_student_id`, player.student_id_url);
           }

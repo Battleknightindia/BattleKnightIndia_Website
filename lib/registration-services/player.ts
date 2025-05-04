@@ -15,7 +15,6 @@ export interface PlayerData {
   city?: string | null;
   state?: string | null;
   device?: string | null;
-  picture_url?: string | null;
   student_id_url?: string | null;
 }
 
@@ -52,7 +51,7 @@ export async function findExistingPlayers(
 }
 
 export async function processPlayerFiles(
-  files: { file: File; index: number; field: "picture" | "student_id" }[],
+  files: { file: File; index: number; field: "student_id" }[],
   universityName: string,
   teamName: string
 ): Promise<Record<string, string>> {
@@ -65,9 +64,7 @@ export async function processPlayerFiles(
     const fileExt = file.name.split(".").pop() || 'bin';
     const playerFileNameSegment = getPlayerFileNameSegment(index);
     const playerFileDestinationPath = `${registrationBasePath}/players/${playerFileNameSegment}/${
-      field === "picture"
-        ? playerFileNameSegment + "_pic"
-        : playerFileNameSegment + "_id"
+      playerFileNameSegment + "_id"
     }.${fileExt}`;
 
     try {

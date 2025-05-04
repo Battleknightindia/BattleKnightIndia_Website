@@ -12,7 +12,6 @@ export const playerSchema = z.object({
   city: z.string().nullable(),
   state: z.string().nullable(),
   device: z.string().nullable(),
-  picture_url: z.union([z.string(), z.instanceof(File), z.null()]),
   student_id_url: z.union([z.string(), z.instanceof(File), z.null()]),
 });
 
