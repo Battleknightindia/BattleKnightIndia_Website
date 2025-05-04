@@ -421,11 +421,15 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             finalFormData.append(`player${i}_state`, player.state);
           if (player.device)
             finalFormData.append(`player${i}_device`, player.device);
-          if (player.student_id_url instanceof File) {
-            finalFormData.append(`player${i}_student_id_url`, player.student_id_url);
-          }
         }
       }
+
+      // Add player files to formData
+      playerFiles.forEach(({ file, index }) => {
+        if (file instanceof File) {
+          finalFormData.append(`player${index}_student_id_url`, file);
+        }
+      });
 
       const result = await registerTeam(finalFormData);
 
@@ -538,9 +542,15 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     exit: { opacity: 0, x: -50, transition: { duration: 0.3 } },
   };
 
-  const playerFiles = Object.entries(formData.players).map(([_, p]: [string, Player]) => (
-    p.student_id_url ? { file: p.student_id_url, index: p.role === "captain" ? 1 : p.role === "substitute" ? 6 : p.role === "coach" ? 7 : 2, field: "student_id_url" as const } : null
-  )).filter((item): item is NonNullable<typeof item> => item !== null);
+  const playerFiles = Object.entries(formData.players)
+    .filter((entry): entry is [string, Player] => entry[1] !== undefined)
+    .map(([_, p]) => (
+      p.student_id_url ? { 
+        file: p.student_id_url, 
+        index: p.role === "captain" ? 1 : p.role === "substitute" ? 6 : p.role === "coach" ? 7 : 2, 
+        field: "student_id_url" as const 
+      } : null
+    )).filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
     <form onSubmit={handleFinalSubmit}>
