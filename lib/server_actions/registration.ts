@@ -17,6 +17,8 @@ interface ProcessedPlayerData {
   city: string;
   state: string;
   device: string;
+  student_id_url: File | null;
+  index?: number; // Optional index for player identification
 }
 
 // Define ProcessedRegistrationData type based on the return type structure
@@ -29,7 +31,7 @@ interface ProcessedRegistrationData {
   teamLogo: File;
   referralCode: string;
   players: ProcessedPlayerData[];
-  files: { file: File; index: number; field: "student_id" }[];
+  files: { file: File; index: number; field: "student_id_url" }[];
 }
 
 export async function processRegistrationFormData(formData: FormData): Promise<ProcessedRegistrationData> {
@@ -42,16 +44,16 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
   const referralCode = formData.get("referral_code") as string || "";
 
   const players: ProcessedPlayerData[] = [];
-  const files: { file: File; index: number; field: "student_id" }[] = [];
+  const files: { file: File; index: number; field: "student_id_url" }[] = [];
 
   // Process player data from form
   for (let i = 0; i < 7; i++) {
     const role = formData.get(`player${i}_role`);
     if (!role) continue;
 
-    const studentIdFile = formData.get(`player${i}_student_id`) as File;
+    const studentIdFile = formData.get(`player${i}_student_id_url`) as File;
     if (studentIdFile instanceof File) {
-      files.push({ file: studentIdFile, index: i, field: "student_id" });
+      files.push({ file: studentIdFile, index: i, field: "student_id_url" });
     }
 
     players.push({
@@ -65,6 +67,7 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
       city: formData.get(`player${i}_city`) as string,
       state: formData.get(`player${i}_state`) as string,
       device: formData.get(`player${i}_device`) as string,
+      student_id_url: formData.get(`player${i}_student_id_url`) as File,
     });
   }
 
@@ -118,7 +121,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
         city: player.city,
         state: player.state,
         device: player.device,
-        studentId: processedData.files.find(f => f.index === index)?.file || null
+        student_id_url: processedData.files.find(f => f.index === index)?.file || null
       }))
     };
 

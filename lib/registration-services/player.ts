@@ -51,7 +51,7 @@ export async function findExistingPlayers(
 }
 
 export async function processPlayerFiles(
-  files: { file: File; index: number; field: "student_id" }[],
+  files: { file: File; index: number; field: "student_id_url" }[],
   universityName: string,
   teamName: string
 ): Promise<Record<string, string>> {
@@ -124,7 +124,7 @@ export function validatePlayerData(
   isOptionalRole: boolean = false
 ): void {
   const displayName = getPlayerRoleDisplayName(index);
-  const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'role', 'student_id_url'] as const;
+  const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'role'] as const;
   
   // Check if any data is provided for optional roles (Substitute/Coach)
   if (isOptionalRole) {
@@ -138,18 +138,21 @@ export function validatePlayerData(
 
   // Basic field validation for all players if data is provided
   for (const field of requiredFields) {
-    if (!playerData[field] || playerData[field].toString().trim() === "") {
+    if (!playerData[field]) {
       throw new Error(`${field.replace('_', ' ').toUpperCase()} is required for ${displayName}.`);
     }
   }
 
+  // Student ID validation is handled during file upload process in checkAndUploadFile
+  // We don't validate it here as it will be handled separately
+
   // Email and mobile validation only for Captain (index 0) and Coach (index 6)
-  if (index === 0 || (index === 6 && playerData.role === 'coach' || playerData.role === 'captain')) {
+  if (index === 0 || (index === 6 && playerData.role === 'coach')) {
     if (!playerData.email?.trim()) {
-      throw new Error(`${displayName}'s Email is required.`);
+      throw new Error(`EMAIL is required for ${displayName}.`);
     }
     if (!playerData.mobile?.trim()) {
-      throw new Error(`${displayName}'s Mobile is required.`);
+      throw new Error(`MOBILE is required for ${displayName}.`);
     }
   }
 }

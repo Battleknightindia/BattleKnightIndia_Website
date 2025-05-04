@@ -12,16 +12,16 @@ export interface Player {
     role: 'captain' | 'player' | 'substitute' | 'coach'; // Matches DB constraint
 
     // Optional fields collected in the form
-    game_id?: string | null;
-    server_id?: string | null;
-    email?: string | null;
-    mobile?: string | null;
-    city?: string | null; // City of player (from Step 3)
-    state?: string | null; // State of player (from Step 3)
-    device?: string | null;
+    game_id: string;
+    server_id: string;
+    email: string | null; // Email field (optional in DB schema)
+    mobile: string | null; // Mobile field (optional in DB schema)
+    city: string | null; // City field (optional in DB schema)
+    state: string | null; // State field (optional in DB schema)
+    device: string | null; // Device field (optional in DB schema)
 
     // File fields (can hold File object in state before upload, string URL from DB after upload, or null)
-    student_id_url: string | File | null;
+    student_id_url: File | null;
 
     // Add any other fields if your PlayerForm collects them
 }
@@ -68,7 +68,7 @@ export type PlayerData = {
   city: string | null;
   state: string | null;
   device: string | null;
-  studentId: File | null;
+  student_id_url: File | null;
 };
 
 export type RegistrationData = {

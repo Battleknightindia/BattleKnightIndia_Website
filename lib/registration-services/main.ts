@@ -24,7 +24,7 @@ interface RegistrationData {
     city: string | null;
     state: string | null;
     device: string | null;
-    studentId: File | null;
+    student_id_url: File | null;
   }[];
 }
 
@@ -65,7 +65,7 @@ export async function processRegistrationUpdate(
 
   // Process player files
   const playerFiles = data.players.map(p => (
-    p.studentId ? { file: p.studentId, index: p.index, field: "student_id" as const } : null
+    p.student_id_url ? { file: p.student_id_url, index: p.index, field: "student_id_url" as const } : null
   )).filter((item): item is NonNullable<typeof item> => item !== null);
 
   const uploadedUrls = await playerService.processPlayerFiles(
@@ -142,7 +142,7 @@ export async function processNewRegistration(
 
   // Process player files
   const playerFiles = data.players.map(p => (
-    p.studentId ? { file: p.studentId, index: p.index, field: "student_id" as const } : null
+    p.student_id_url ? { file: p.student_id_url, index: p.index, field: "student_id_url" as const } : null
   )).filter((item): item is NonNullable<typeof item> => item !== null);
 
   const uploadedUrls = await playerService.processPlayerFiles(

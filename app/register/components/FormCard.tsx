@@ -29,6 +29,30 @@ import {
   RegistrationFormData,
 } from "@/types/registrationTypes";
 
+interface RegistrationData {
+  universityName: string;
+  universityState: string | null;
+  universityCity: string | null;
+  universityLogo: File | null;
+  teamName: string;
+  teamLogo: File | null;
+  referralCode: string | null;
+  players: {
+    index: number;
+    name: string;
+    ign: string;
+    gameId: string;
+    serverId: string;
+    role: Player['role'];
+    email: string | null;
+    mobile: string | null;
+    city: string | null;
+    state: string | null;
+    device: string | null;
+    student_id_url: File | null;
+  }[];
+}
+
 // Helper function to save form data to localStorage
 const saveFormToLocalStorage = (formData: RegistrationFormData) => {
   const storableData = {
@@ -254,7 +278,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           }
 
           // Check student ID separately since it can be either a File or string
-          if (!player.student_id_url) {
+          if (!player.student_id_url && !isCaptain) {
             validationError = `Student ID is required for ${displayName}.`;
             break;
           }
@@ -398,7 +422,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           if (player.device)
             finalFormData.append(`player${i}_device`, player.device);
           if (player.student_id_url instanceof File) {
-            finalFormData.append(`player${i}_student_id`, player.student_id_url);
+            finalFormData.append(`player${i}_student_id_url`, player.student_id_url);
           }
         }
       }
@@ -513,6 +537,10 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
     exit: { opacity: 0, x: -50, transition: { duration: 0.3 } },
   };
+
+  const playerFiles = formData.players.map(p => (
+    p.student_id_url ? { file: p.student_id_url, index: p.index, field: "student_id_url" as const } : null
+  )).filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
     <form onSubmit={handleFinalSubmit}>

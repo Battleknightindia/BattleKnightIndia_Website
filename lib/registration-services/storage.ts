@@ -11,21 +11,30 @@ export async function checkAndUploadFile(
   file: File | null | undefined,
   destinationPath: string
 ): Promise<string | null> {
-  if (!file || !(file instanceof File) || file.size === 0) {
-    console.log(`No valid file provided for path ${destinationPath}. Skipping upload.`);
+  // First check - if no file provided
+  if (!file) {
+    console.log(`No file provided for path ${destinationPath}. Skipping upload.`);
     return null;
   }
 
-  // Validate file size (max 5MB)
+  // Second check - validate file instance
+  if (!(file instanceof File)) {
+    throw new Error('Invalid file object provided. Please try uploading again.');
+  }
+
+  // Third check - validate file size
   const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+  if (file.size === 0) {
+    throw new Error(`The file appears to be empty. Please select a valid file.`);
+  }
   if (file.size > maxSize) {
     throw new Error(`File ${file.name} exceeds maximum size of 5MB. Please upload a smaller file.`);
   }
 
-  // Validate file type
+  // Fourth check - validate file type
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) {
-    throw new Error(`File ${file.name} has unsupported type. Please upload a JPEG, PNG, or WebP image.`);
+    throw new Error(`File ${file.name} must be a JPEG, PNG, or WebP image. Current type: ${file.type}`);
   }
 
   const supabase = await createClient();
@@ -36,6 +45,7 @@ export async function checkAndUploadFile(
     const fileName = pathSegments.pop();
     const directoryPath = pathSegments.join('/');
 
+    // List existing files in the directory
     const { data: listData, error: listError } = await supabase.storage
       .from(bucketName)
       .list(directoryPath, {
@@ -43,17 +53,20 @@ export async function checkAndUploadFile(
         limit: 1
       });
 
-    if (listError) {
-      if (listError.message !== 'Not found' && listError.message !== 'The resource was not found') {
-        throw new Error(`Failed to check existing file: ${listError.message}`);
-      }
-    } else if (listData && listData.length > 0 && listData[0].name === fileName) {
+    if (listError && !listError.message.includes('Not found')) {
+      console.error('Error checking existing file:', listError);
+      throw new Error(`Failed to verify existing file: ${listError.message}`);
+    }
+
+    // Remove existing file if found
+    if (listData && listData.length > 0 && listData[0].name === fileName) {
       const { error: removeError } = await supabase.storage
         .from(bucketName)
         .remove([destinationPath]);
 
       if (removeError) {
-        throw new Error(`Failed to update existing file. Please try again.`);
+        console.error('Error removing existing file:', removeError);
+        throw new Error('Failed to update existing file. Please try again.');
       }
     }
 
@@ -62,11 +75,11 @@ export async function checkAndUploadFile(
       .from(bucketName)
       .upload(destinationPath, file, {
         cacheControl: "3600",
-        upsert: false,
+        upsert: true, // Changed to true to ensure upload succeeds
       });
 
     if (uploadError) {
-      // Provide specific error messages for common upload issues
+      console.error('Upload error:', uploadError);
       if (uploadError.message.includes('auth')) {
         throw new Error('Your session has expired. Please sign in again to upload files.');
       }
@@ -76,10 +89,10 @@ export async function checkAndUploadFile(
       if (uploadError.message.includes('network')) {
         throw new Error('Network error while uploading. Please check your connection and try again.');
       }
-      throw new Error(`Failed to upload file. Please try again. (${uploadError.message})`);
+      throw new Error(`Failed to upload file: ${uploadError.message}. Please try again.`);
     }
 
-    // Get public URL
+    // Get public URL for the uploaded file
     const { data: publicUrlData } = supabase.storage
       .from(bucketName)
       .getPublicUrl(destinationPath);
@@ -88,18 +101,22 @@ export async function checkAndUploadFile(
       throw new Error('Failed to get public URL for the uploaded file. Please try again.');
     }
 
+    // Success - return the public URL
     return publicUrlData.publicUrl;
 
   } catch (error: unknown) {
     console.error(`Error processing file upload for path '${destinationPath}':`, error);
     
-    // Add a more user-friendly error message if it's not already handled
     if (error instanceof Error) {
-      if (!error.message.includes('Please')) {
-        throw new Error(`File upload failed: ${error.message}. Please try again.`);
+      // Preserve user-friendly error messages
+      if (error.message.includes('Please')) {
+        throw error;
       }
-      throw error;
+      // Wrap other errors with a user-friendly message
+      throw new Error(`File upload failed: ${error.message}. Please try again.`);
     }
+    
+    // Handle unknown errors
     throw new Error('An unexpected error occurred during file upload. Please try again.');
   }
 }
