@@ -193,6 +193,17 @@ export function validateRegistrationData(data: RegistrationData): void {
   // Validate each player's data
   for (const player of data.players) {
     const isOptionalRole = player.index > 4;
+    
+    // For optional roles (Substitute/Coach), check if any data is provided
+    if (isOptionalRole) {
+      const hasData = Object.entries(player).some(([key, value]) => {
+        if (key === 'index' || key === 'role') return false; // Skip these fields
+        return value !== null && value !== undefined && value !== '';
+      });
+      
+      if (!hasData) continue; // Skip validation if no data is provided
+    }
+
     playerService.validatePlayerData(
       {
         name: player.name,
@@ -202,6 +213,9 @@ export function validateRegistrationData(data: RegistrationData): void {
         role: player.role,
         email: player.email,
         mobile: player.mobile,
+        city: player.city,
+        state: player.state,
+        device: player.device
       },
       player.index,
       isOptionalRole

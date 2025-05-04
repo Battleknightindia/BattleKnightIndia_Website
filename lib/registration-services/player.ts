@@ -128,20 +128,31 @@ export function validatePlayerData(
 ): void {
   const displayName = getPlayerRoleDisplayName(index);
   const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'role'] as const;
-
-  // Check required fields for all players
-  if (!isOptionalRole) {
-    for (const field of requiredFields) {
-      if (!playerData[field] || playerData[field].toString().trim() === "") {
-        throw new Error(`Validation failed: ${field} missing for ${displayName}.`);
-      }
+  
+  // Check if any data is provided for optional roles (Substitute/Coach)
+  if (isOptionalRole) {
+    const hasAnyData = Object.values(playerData).some(
+      value => value !== null && value !== undefined && value !== ""
+    );
+    if (!hasAnyData) {
+      return; // Skip validation if no data is provided for optional roles
     }
   }
 
-  // Special validation for Captain and Coach
+  // Basic field validation for all players if data is provided
+  for (const field of requiredFields) {
+    if (!playerData[field] || playerData[field].toString().trim() === "") {
+      throw new Error(`${field.replace('_', ' ').toUpperCase()} is required for ${displayName}.`);
+    }
+  }
+
+  // Email and mobile validation only for Captain (index 0) and Coach (index 6)
   if (index === 0 || (index === 6 && !isOptionalRole)) {
-    if (!playerData.email?.trim() || !playerData.mobile?.trim()) {
-      throw new Error(`${displayName}'s Email and Mobile are required.`);
+    if (!playerData.email?.trim()) {
+      throw new Error(`${displayName}'s Email is required.`);
+    }
+    if (!playerData.mobile?.trim()) {
+      throw new Error(`${displayName}'s Mobile is required.`);
     }
   }
 }

@@ -8,11 +8,11 @@ export const sanitizeFileName = (name: string | null | undefined): string => {
 
 export async function checkAndUploadFile(
   bucketName: string,
-  file: File,
+  file: File | null | undefined,
   destinationPath: string
 ): Promise<string | null> {
-  if (!file || file.size === 0) {
-    console.log(`No file provided or file is empty for path ${destinationPath}. Skipping upload.`);
+  if (!file || !(file instanceof File) || file.size === 0) {
+    console.log(`No valid file provided for path ${destinationPath}. Skipping upload.`);
     return null;
   }
 
@@ -60,7 +60,7 @@ export async function checkAndUploadFile(
       .from(bucketName)
       .getPublicUrl(destinationPath);
 
-    if (!publicUrlData) {
+    if (!publicUrlData?.publicUrl) {
       throw new Error(`Failed to get public URL for '${destinationPath}' after upload.`);
     }
 

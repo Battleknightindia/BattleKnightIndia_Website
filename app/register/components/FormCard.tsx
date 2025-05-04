@@ -118,8 +118,6 @@ function FormContent({}: Record<string, never>): React.ReactElement {
           "city",
           "state",
           "device",
-          "picture_url",
-          "student_id_url",
         ];
 
         const emailMobileFields = ["email", "mobile"];
@@ -135,7 +133,6 @@ function FormContent({}: Record<string, never>): React.ReactElement {
             if (!player || !player[field as keyof Player]) {
               validationError = `${field
                 .replace("_", " ")
-                .replace("url", "")
                 .toUpperCase()} is required for ${displayName}.`;
               break;
             }
@@ -163,12 +160,11 @@ function FormContent({}: Record<string, never>): React.ReactElement {
             );
 
             if (hasAnySubstituteData) {
-              // If any substitute data is entered, validate all basic fields
+              // If any substitute data is entered, validate only basic fields (no email/mobile)
               for (const field of basicRequiredFields) {
                 if (!substitute[field as keyof Player]) {
                   validationError = `${field
                     .replace("_", " ")
-                    .replace("url", "")
                     .toUpperCase()} is required for Substitute.`;
                   break;
                 }
@@ -191,7 +187,6 @@ function FormContent({}: Record<string, never>): React.ReactElement {
                 if (!coach[field as keyof Player]) {
                   validationError = `${field
                     .replace("_", " ")
-                    .replace("url", "")
                     .toUpperCase()} is required for Coach.`;
                   break;
                 }
@@ -241,6 +236,7 @@ function FormContent({}: Record<string, never>): React.ReactElement {
     const substitute = formData.players["6"];
     const coach = formData.players["7"];
 
+    // Validate substitute without email and mobile requirements
     if (
       substitute &&
       Object.values(substitute).some(
@@ -252,18 +248,14 @@ function FormContent({}: Record<string, never>): React.ReactElement {
         "ign",
         "game_id",
         "server_id",
-        "email",
-        "mobile",
         "city",
         "state",
         "device",
-        "picture_url",
-        "student_id_url",
       ];
       for (const field of requiredFields) {
         if (!substitute[field as keyof Player]) {
           setFinalSubmitError(
-            `All fields are required for Substitute if adding their details. Missing: ${field.replace(
+            `All fields except email and mobile are required for Substitute if adding their details. Missing: ${field.replace(
               "_",
               " "
             )}`
@@ -273,6 +265,7 @@ function FormContent({}: Record<string, never>): React.ReactElement {
       }
     }
 
+    // Validate coach with all fields including email and mobile
     if (
       coach &&
       Object.values(coach).some(
@@ -289,13 +282,11 @@ function FormContent({}: Record<string, never>): React.ReactElement {
         "city",
         "state",
         "device",
-        "picture_url",
-        "student_id_url",
       ];
       for (const field of requiredFields) {
         if (!coach[field as keyof Player]) {
           setFinalSubmitError(
-            `All fields are required for Coach if adding their details. Missing: ${field.replace(
+            `All fields including email and mobile are required for Coach if adding their details. Missing: ${field.replace(
               "_",
               " "
             )}`
