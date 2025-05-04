@@ -135,7 +135,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
   useEffect(() => {
     const savedData = loadFormFromLocalStorage();
     if (savedData) {
-      setFormData((prevData) => {
+      setFormData((prevData: RegistrationFormData) => {
         const newPlayers = { ...prevData.players };
         
         // Merge saved player data with existing File objects
@@ -364,7 +364,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     }
 
     if (activeStep < 4) {
-      setActiveStep((prev) => prev + 1);
+      setActiveStep((prev: number) => prev + 1);
     }
   };
 
@@ -538,8 +538,8 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     exit: { opacity: 0, x: -50, transition: { duration: 0.3 } },
   };
 
-  const playerFiles = formData.players.map(p => (
-    p.student_id_url ? { file: p.student_id_url, index: p.index, field: "student_id_url" as const } : null
+  const playerFiles = Object.entries(formData.players).map(([_, p]: [string, Player]) => (
+    p.student_id_url ? { file: p.student_id_url, index: p.role === "captain" ? 1 : p.role === "substitute" ? 6 : p.role === "coach" ? 7 : 2, field: "student_id_url" as const } : null
   )).filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
@@ -586,7 +586,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           <div className="flex justify-between mt-6">
             <Button
               type="button"
-              onClick={() => setActiveStep((prev) => Math.max(1, prev - 1))}
+              onClick={() => setActiveStep((prev: number) => Math.max(1, prev - 1))}
               className="bg-transparent font-bold text-white"
               disabled={activeStep === 1 || isSubmittingFinal}
             >
