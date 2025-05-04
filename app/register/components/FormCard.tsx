@@ -359,9 +359,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     const finalFormData = new FormData();
 
     try {
-      // Save the current form state to localStorage before submission
-      saveFormToLocalStorage(formData);
-
       // Prepare university data
       finalFormData.append("university_name", formData.university.name);
       finalFormData.append("university_city", formData.university.city);
@@ -401,7 +398,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           if (player.device)
             finalFormData.append(`player${i}_device`, player.device);
           if (player.student_id_url instanceof File) {
-            finalFormData.append(`player${i}_student_id`, player.student_id_url);
+            finalFormData.append(`player${i}_student_id_url`, player.student_id_url);
           }
         }
       }
