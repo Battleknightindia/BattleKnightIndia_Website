@@ -55,10 +55,47 @@ const saveFormToLocalStorage = (formData: RegistrationFormData) => {
   localStorage.setItem("registrationFormData", JSON.stringify(storableData));
 };
 
+const defaultPlayer: Player = {
+  name: "",
+  ign: "",
+  game_id: "",
+  server_id: "",
+  role: "player",
+  email: "",
+  mobile: "",
+  city: "",
+  state: "",
+  device: "",
+  picture_url: null,
+  student_id_url: null,
+};
+
 // Helper function to load form data from localStorage
 const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
   const saved = localStorage.getItem("registrationFormData");
-  return saved ? JSON.parse(saved) : null;
+  if (!saved) return null;
+
+  const parsed = JSON.parse(saved);
+  return {
+    university: parsed.university || { name: "", city: "", state: "", logo: null },
+    team: parsed.team || { name: "", logo: null, referral_code: "" },
+    players: Object.fromEntries(
+      Object.entries(parsed.players || {}).map(([key, playerData]) => {
+        const player = playerData as Partial<Player>;
+        return [
+          key,
+          {
+            ...defaultPlayer,
+            ...player,
+            // Ensure File objects are null since they can't be stored in localStorage
+            picture_url: null,
+            student_id_url: null,
+          }
+        ];
+      })
+    ),
+    termsAccepted: parsed.termsAccepted || false
+  };
 };
 
 const FormContent = ({}: Record<string, never>): React.ReactElement => {
@@ -77,21 +114,27 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
   useEffect(() => {
     const savedData = loadFormFromLocalStorage();
     if (savedData) {
-      setFormData((prevData) => ({
-        ...prevData,
-        ...savedData,
-        // Preserve any File objects from the current state
-        university: { ...prevData.university, ...savedData.university },
-        team: { ...prevData.team, ...savedData.team },
-        players: {
-          ...Object.fromEntries(
-            Object.entries(savedData.players || {}).map(([key, player]) => [
-              key,
-              { ...prevData.players[key], ...player },
-            ])
-          ),
-        },
-      }));
+      setFormData((prevData) => {
+        const newPlayers = { ...prevData.players };
+        
+        // Merge saved player data with existing File objects
+        Object.entries(savedData.players || {}).forEach(([key, player]) => {
+          newPlayers[key] = {
+            ...defaultPlayer,
+            ...player,
+            picture_url: prevData.players[key]?.picture_url || null,
+            student_id_url: prevData.players[key]?.student_id_url || null,
+          };
+        });
+
+        return {
+          ...prevData,
+          university: { ...prevData.university, ...savedData.university },
+          team: { ...prevData.team, ...savedData.team },
+          players: newPlayers,
+          termsAccepted: savedData.termsAccepted || false,
+        };
+      });
     }
   }, []);
 

@@ -127,7 +127,7 @@ export function validatePlayerData(
   isOptionalRole: boolean = false
 ): void {
   const displayName = getPlayerRoleDisplayName(index);
-  const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'role'] as const;
+  const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'role', 'student_id_url'] as const;
   
   // Check if any data is provided for optional roles (Substitute/Coach)
   if (isOptionalRole) {
@@ -146,13 +146,8 @@ export function validatePlayerData(
     }
   }
 
-  // Student ID validation for all players
-  if (!playerData.student_id_url) {
-    throw new Error(`Student ID is required for ${displayName}.`);
-  }
-
   // Email and mobile validation only for Captain (index 0) and Coach (index 6)
-  if (index === 0 || (index === 6 && !isOptionalRole)) {
+  if (index === 0 || (index === 6 && playerData.role === 'coach' || playerData.role === 'captain')) {
     if (!playerData.email?.trim()) {
       throw new Error(`${displayName}'s Email is required.`);
     }
