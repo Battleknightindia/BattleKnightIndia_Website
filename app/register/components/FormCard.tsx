@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -29,6 +29,38 @@ import {
   RegistrationFormData,
 } from "@/types/registrationTypes";
 
+// Helper function to save form data to localStorage
+const saveFormToLocalStorage = (formData: RegistrationFormData) => {
+  const storableData = {
+    ...formData,
+    university: {
+      ...formData.university,
+      logo: null, // Don't store File objects
+    },
+    team: {
+      ...formData.team,
+      logo: null, // Don't store File objects
+    },
+    players: Object.fromEntries(
+      Object.entries(formData.players).map(([key, player]) => [
+        key,
+        {
+          ...player,
+          picture_url: null, // Don't store File objects
+          student_id_url: null, // Don't store File objects
+        },
+      ])
+    ),
+  };
+  localStorage.setItem("registrationFormData", JSON.stringify(storableData));
+};
+
+// Helper function to load form data from localStorage
+const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
+  const saved = localStorage.getItem("registrationFormData");
+  return saved ? JSON.parse(saved) : null;
+};
+
 function FormContent({}: Record<string, never>): React.ReactElement {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState<number>(1);
@@ -41,6 +73,28 @@ function FormContent({}: Record<string, never>): React.ReactElement {
     termsAccepted: false,
   });
 
+  // Load saved form data on component mount
+  useEffect(() => {
+    const savedData = loadFormFromLocalStorage();
+    if (savedData) {
+      setFormData((prevData) => ({
+        ...prevData,
+        ...savedData,
+        // Preserve any File objects from the current state
+        university: { ...prevData.university, ...savedData.university },
+        team: { ...prevData.team, ...savedData.team },
+        players: {
+          ...Object.fromEntries(
+            Object.entries(savedData.players || {}).map(([key, player]) => [
+              key,
+              { ...prevData.players[key], ...player },
+            ])
+          ),
+        },
+      }));
+    }
+  }, []);
+
   const [isSubmittingFinal, setIsSubmittingFinal] = useState<boolean>(false);
   const [finalSubmitError, setFinalSubmitError] = useState<string | null>(null);
 
@@ -49,13 +103,17 @@ function FormContent({}: Record<string, never>): React.ReactElement {
     field: keyof UniversityStepData | keyof TeamStepData,
     value: string | File | null
   ): void => {
-    setFormData((prevData: RegistrationFormData) => ({
-      ...prevData,
-      [step]: {
-        ...prevData[step],
-        [field]: value,
-      } as RegistrationFormData[typeof step],
-    }));
+    setFormData((prevData: RegistrationFormData) => {
+      const newData = {
+        ...prevData,
+        [step]: {
+          ...prevData[step],
+          [field]: value,
+        } as RegistrationFormData[typeof step],
+      };
+      saveFormToLocalStorage(newData);
+      return newData;
+    });
     setFinalSubmitError(null);
   };
 
@@ -71,25 +129,38 @@ function FormContent({}: Record<string, never>): React.ReactElement {
     else if (playerIndex === 5) role = "substitute";
     else if (playerIndex === 6) role = "coach";
 
-    setFormData((prevData: RegistrationFormData) => ({
-      ...prevData,
-      players: {
-        ...prevData.players,
-        [stateKey]: {
-          ...(prevData.players[stateKey] || { role: role }),
-          [field]: value,
-        } as Player,
-      },
-    }));
+    setFormData((prevData: RegistrationFormData) => {
+      const newData = {
+        ...prevData,
+        players: {
+          ...prevData.players,
+          [stateKey]: {
+            ...(prevData.players[stateKey] || { role: role }),
+            [field]: value,
+          } as Player,
+        },
+      };
+      saveFormToLocalStorage(newData);
+      return newData;
+    });
     setFinalSubmitError(null);
   };
 
   const handleTermsChange = (accepted: boolean): void => {
-    setFormData((prevData: RegistrationFormData) => ({
-      ...prevData,
-      termsAccepted: accepted,
-    }));
+    setFormData((prevData: RegistrationFormData) => {
+      const newData = {
+        ...prevData,
+        termsAccepted: accepted,
+      };
+      saveFormToLocalStorage(newData);
+      return newData;
+    });
     setFinalSubmitError(null);
+  };
+
+  // Clean up localStorage after successful submission
+  const clearSavedForm = () => {
+    localStorage.removeItem("registrationFormData");
   };
 
   const handleNextStep = (): void => {
@@ -237,6 +308,9 @@ function FormContent({}: Record<string, never>): React.ReactElement {
     const finalFormData = new FormData();
 
     try {
+      // Save the current form state to localStorage before submission
+      saveFormToLocalStorage(formData);
+
       // Prepare university data
       finalFormData.append("university_name", formData.university.name);
       finalFormData.append("university_city", formData.university.city);
@@ -287,6 +361,7 @@ function FormContent({}: Record<string, never>): React.ReactElement {
       const result = await registerTeam(finalFormData);
 
       if (result.success) {
+        clearSavedForm(); // Clear saved form data on successful submission
         router.push("/register/success");
       } else {
         // Handle specific error cases
