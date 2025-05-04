@@ -233,130 +233,76 @@ function FormContent({}: Record<string, never>): React.ReactElement {
       return;
     }
 
-    const substitute = formData.players["6"];
-    const coach = formData.players["7"];
-
-    // Validate substitute without email and mobile requirements
-    if (
-      substitute &&
-      Object.values(substitute).some(
-        (value) => value !== null && value !== undefined && value !== ""
-      )
-    ) {
-      const requiredFields = [
-        "name",
-        "ign",
-        "game_id",
-        "server_id",
-        "city",
-        "state",
-        "device",
-      ];
-      for (const field of requiredFields) {
-        if (!substitute[field as keyof Player]) {
-          setFinalSubmitError(
-            `All fields except email and mobile are required for Substitute if adding their details. Missing: ${field.replace(
-              "_",
-              " "
-            )}`
-          );
-          return;
-        }
-      }
-    }
-
-    // Validate coach with all fields including email and mobile
-    if (
-      coach &&
-      Object.values(coach).some(
-        (value) => value !== null && value !== undefined && value !== ""
-      )
-    ) {
-      const requiredFields = [
-        "name",
-        "ign",
-        "game_id",
-        "server_id",
-        "email",
-        "mobile",
-        "city",
-        "state",
-        "device",
-      ];
-      for (const field of requiredFields) {
-        if (!coach[field as keyof Player]) {
-          setFinalSubmitError(
-            `All fields including email and mobile are required for Coach if adding their details. Missing: ${field.replace(
-              "_",
-              " "
-            )}`
-          );
-          return;
-        }
-      }
-    }
-
     setIsSubmittingFinal(true);
     const finalFormData = new FormData();
 
-    finalFormData.append("university_name", formData.university.name);
-    finalFormData.append("university_city", formData.university.city);
-    finalFormData.append("university_state", formData.university.state);
-    if (formData.university.logo instanceof File) {
-      finalFormData.append("university_logo", formData.university.logo);
-    }
+    try {
+      // Prepare university data
+      finalFormData.append("university_name", formData.university.name);
+      finalFormData.append("university_city", formData.university.city);
+      finalFormData.append("university_state", formData.university.state);
+      if (formData.university.logo instanceof File) {
+        finalFormData.append("university_logo", formData.university.logo);
+      }
 
-    finalFormData.append("team_name", formData.team.name);
-    if (formData.team.logo instanceof File) {
-      finalFormData.append("team_logo", formData.team.logo);
-    }
-    if (formData.team.referral_code) {
-      finalFormData.append("referral_code", formData.team.referral_code);
-    }
+      // Prepare team data
+      finalFormData.append("team_name", formData.team.name);
+      if (formData.team.logo instanceof File) {
+        finalFormData.append("team_logo", formData.team.logo);
+      }
+      if (formData.team.referral_code) {
+        finalFormData.append("referral_code", formData.team.referral_code);
+      }
 
-    for (let i = 0; i < 7; i++) {
-      const player = formData.players[(i + 1).toString()];
-      if (player) {
-        finalFormData.append(`player${i}_role`, player.role);
-        finalFormData.append(`player${i}_name`, player.name);
-        finalFormData.append(`player${i}_ign`, player.ign);
-        if (player.game_id)
-          finalFormData.append(`player${i}_game_id`, player.game_id);
-        if (player.server_id)
-          finalFormData.append(`player${i}_server_id`, player.server_id);
-        if (player.email)
-          finalFormData.append(`player${i}_email`, player.email);
-        if (player.mobile)
-          finalFormData.append(`player${i}_mobile`, player.mobile);
-        if (player.city) finalFormData.append(`player${i}_city`, player.city);
-        if (player.state)
-          finalFormData.append(`player${i}_state`, player.state);
-        if (player.device)
-          finalFormData.append(`player${i}_device`, player.device);
-        if (player.picture_url instanceof File) {
-          finalFormData.append(`player${i}_picture`, player.picture_url);
-        }
-        if (player.student_id_url instanceof File) {
-          finalFormData.append(`player${i}_student_id`, player.student_id_url);
+      // Prepare player data
+      for (let i = 0; i < 7; i++) {
+        const player = formData.players[(i + 1).toString()];
+        if (player) {
+          finalFormData.append(`player${i}_role`, player.role);
+          finalFormData.append(`player${i}_name`, player.name);
+          finalFormData.append(`player${i}_ign`, player.ign);
+          if (player.game_id)
+            finalFormData.append(`player${i}_game_id`, player.game_id);
+          if (player.server_id)
+            finalFormData.append(`player${i}_server_id`, player.server_id);
+          if (player.email)
+            finalFormData.append(`player${i}_email`, player.email);
+          if (player.mobile)
+            finalFormData.append(`player${i}_mobile`, player.mobile);
+          if (player.city)
+            finalFormData.append(`player${i}_city`, player.city);
+          if (player.state)
+            finalFormData.append(`player${i}_state`, player.state);
+          if (player.device)
+            finalFormData.append(`player${i}_device`, player.device);
+          if (player.picture_url instanceof File) {
+            finalFormData.append(`player${i}_picture`, player.picture_url);
+          }
+          if (player.student_id_url instanceof File) {
+            finalFormData.append(`player${i}_student_id`, player.student_id_url);
+          }
         }
       }
-    }
 
-    try {
       const result = await registerTeam(finalFormData);
 
       if (result.success) {
-        alert(result.message);
         router.push("/register/success");
       } else {
-        setFinalSubmitError(result.message);
+        // Handle specific error cases
+        if (result.message?.toLowerCase().includes("sign in")) {
+          router.push("/login?redirect=/register");
+          return;
+        }
+        setFinalSubmitError(result.message || "Registration failed. Please try again.");
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
+      console.error("Registration submission error:", error);
+      setFinalSubmitError(
+        error instanceof Error && error.message
           ? error.message
-          : "An unexpected error occurred during registration.";
-      setFinalSubmitError(errorMessage);
+          : "An unexpected error occurred. Please try again or contact support."
+      );
     } finally {
       setIsSubmittingFinal(false);
     }
@@ -484,7 +430,7 @@ function FormContent({}: Record<string, never>): React.ReactElement {
           </AnimatePresence>
 
           {finalSubmitError && (
-            <div className="text-red-500 text-sm text-center mt-2">
+            <div className="text-red-500 text-sm text-center mt-2 p-2 bg-red-50 rounded border border-red-200">
               {finalSubmitError}
             </div>
           )}

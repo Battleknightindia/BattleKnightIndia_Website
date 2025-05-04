@@ -12,7 +12,10 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
     // Get user session using auth.getUser()
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (!user || userError) {
-      throw new Error("Authentication required");
+      return {
+        success: false,
+        message: "Please sign in to register your team."
+      };
     }
 
     // Extract form data
@@ -47,37 +50,103 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
         player.mobile
       ),
     };
-    
+
     // Validate registration data
-    validateRegistrationData(registrationData);
+    try {
+      validateRegistrationData(registrationData);
+    } catch (validationError) {
+      return {
+        success: false,
+        message: validationError instanceof Error ? validationError.message : "Invalid registration data. Please check all fields."
+      };
+    }
 
     // Check if university and team already exist for this user
-    const { data: existingTeam } = await supabase
+    const { data: existingTeam, error: teamError } = await supabase
       .from("teams")
       .select("id, university_id")
       .eq("user_id", user.id)
       .single();
 
+    if (teamError && teamError.code !== 'PGRST116') {  // PGRST116 is the "not found" error
+      throw new Error("Failed to check existing team registration");
+    }
+
     if (existingTeam) {
       // Update existing registration
-      await processRegistrationUpdate(registrationData, existingTeam.university_id, existingTeam.id, user.id);
-      return {
-        success: true,
-        message: "Team registration updated successfully!",
-      };
+      try {
+        await processRegistrationUpdate(registrationData, existingTeam.university_id, existingTeam.id, user.id);
+        return {
+          success: true,
+          message: "Your team registration has been successfully updated!"
+        };
+      } catch (error) {
+        // Handle specific error types
+        if (error instanceof Error) {
+          if (error.message.includes("auth")) {
+            return {
+              success: false,
+              message: "Your session has expired. Please sign in again."
+            };
+          }
+          if (error.message.includes("storage") || error.message.includes("upload")) {
+            return {
+              success: false,
+              message: "Failed to upload files. Please check your image files and try again."
+            };
+          }
+          return {
+            success: false,
+            message: error.message
+          };
+        }
+        throw error;
+      }
     } else {
       // Create new registration
-      await processNewRegistration(registrationData, user.id);
-      return {
-        success: true,
-        message: "Team registered successfully!",
-      };
+      try {
+        await processNewRegistration(registrationData, user.id);
+        return {
+          success: true,
+          message: "Your team has been successfully registered! You'll receive a confirmation email shortly."
+        };
+      } catch (error) {
+        // Handle specific error types
+        if (error instanceof Error) {
+          if (error.message.includes("auth")) {
+            return {
+              success: false,
+              message: "Your session has expired. Please sign in again."
+            };
+          }
+          if (error.message.includes("storage") || error.message.includes("upload")) {
+            return {
+              success: false,
+              message: "Failed to upload files. Please check your image files and try again."
+            };
+          }
+          if (error.message.includes("duplicate")) {
+            return {
+              success: false,
+              message: "This team or university name is already registered. Please use a different name."
+            };
+          }
+          return {
+            success: false,
+            message: error.message
+          };
+        }
+        throw error;
+      }
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Registration error:", error);
+    
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Registration failed. Please try again.",
+      message: error instanceof Error 
+        ? `Registration error: ${error.message}`
+        : "An unexpected error occurred. Please try again or contact support."
     };
   }
 }
