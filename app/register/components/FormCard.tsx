@@ -226,8 +226,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           "server_id",
           "city",
           "state",
-          "device",
-          "student_id_url"
+          "device"
         ];
 
         const emailMobileFields = ["email", "mobile"];
@@ -238,9 +237,15 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           const displayName = i === 0 ? "Captain" : `Player ${i + 1}`;
           const isCaptain = i === 0;
 
+          // Check if player exists
+          if (!player) {
+            validationError = `${displayName} information is required.`;
+            break;
+          }
+
           // Check basic required fields for all players
           for (const field of basicRequiredFields) {
-            if (!player || !player[field as keyof Player]) {
+            if (!player[field as keyof Player]) {
               validationError = `${field
                 .replace("_", " ")
                 .toUpperCase()} is required for ${displayName}.`;
@@ -248,10 +253,16 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             }
           }
 
+          // Check student ID separately since it can be either a File or string
+          if (!player.student_id_url) {
+            validationError = `Student ID is required for ${displayName}.`;
+            break;
+          }
+
           // Check email and mobile only for captain
           if (isCaptain) {
             for (const field of emailMobileFields) {
-              if (!player || !player[field as keyof Player]) {
+              if (!player[field as keyof Player]) {
                 validationError = `${field.toUpperCase()} is required for Captain.`;
                 break;
               }
