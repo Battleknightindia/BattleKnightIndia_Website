@@ -165,7 +165,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
             success: true,
             message: "Your team registration has been successfully updated!"
           };
-        } catch (error: any) {
+        } catch (error: unknown) {
           if (error instanceof Error) {
             if (error.message.includes("auth")) {
               return {
@@ -203,7 +203,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
             success: true,
             message: "Your team has been successfully registered! You'll receive a confirmation email shortly."
           };
-        } catch (error: any) {
+        } catch (error: unknown) {
           if (error instanceof Error) {
             if (error.message.includes("auth")) {
               return {
@@ -249,7 +249,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
           "Failed to process form data. Please check all fields and try again."
       };
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Registration error:", error);
     return {
       success: false,
