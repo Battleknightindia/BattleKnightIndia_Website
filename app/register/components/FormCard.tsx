@@ -147,6 +147,8 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
                 // Correctly prioritize the File object from the previous state if it exists,
                 // otherwise fall back to null (which is what savedPlayer has for files).
                 student_id_url: prevPlayer?.student_id_url instanceof File ? prevPlayer.student_id_url : null
+                // Note: savedPlayer?.student_id_url will always be null from localStorage,
+                // so explicitly setting null as the fallback is correct.
              };
 
              // Ensure default role is correctly applied if player object wasn't saved at all
@@ -256,6 +258,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
         if (!validationError && !formData.university.state) validationError = "State is required.";
         if (!validationError && !formData.university.logo) validationError = "University Logo is required.";
         // --- File Size Validation for University Logo ---
+        // Check size ONLY if a File object is present
         if (!validationError && formData.university.logo instanceof File && formData.university.logo.size > MAX_FILE_SIZE) {
             validationError = `University Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
         }
@@ -265,6 +268,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
         if (!formData.team.name) validationError = "Team Name is required.";
         if (!validationError && !formData.team.logo) validationError = "Team Logo is required.";
          // --- File Size Validation for Team Logo ---
+         // Check size ONLY if a File object is present
         if (!validationError && formData.team.logo instanceof File && formData.team.logo.size > MAX_FILE_SIZE) {
              validationError = `Team Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
          }
@@ -370,8 +374,8 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
                   if (validationError) break; // Exit if file is missing
 
                  // --- File Size Validation for Student ID (Substitute) ---
-                 // Check size ONLY if a file is actually present
-                 if (subHasFile && substitute.student_id_url.size > MAX_FILE_SIZE) {
+                 // Check size ONLY if a file is actually present - FIX APPLIED HERE
+                 if (substitute.student_id_url instanceof File && substitute.student_id_url.size > MAX_FILE_SIZE) {
                      validationError = `Substitute Student ID proof size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
                  }
                   if (validationError) break; // Exit if file size is too large
@@ -413,8 +417,8 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
                  // Student ID is optional for Coach, so no requirement check here (!coachHasFile).
 
                  // --- File Size Validation for Coach ID (Coach) ---
-                 // Check size ONLY if a file is actually present
-                 if (coachHasFile && coach.student_id_url.size > MAX_FILE_SIZE) {
+                 // Check size ONLY if a file is actually present - FIX APPLIED HERE
+                 if (coach.student_id_url instanceof File && coach.student_id_url.size > MAX_FILE_SIZE) {
                      validationError = `Coach ID proof size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
                  }
                   if (validationError) break; // Exit if file size is too large
@@ -464,13 +468,13 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
 
      // Re-validate other steps before final submission, just to be safe
      let finalValidationErrors: string | null = null;
+     const MAX_FILE_SIZE = 200 * 1024; // 200 KB // Define again for this function
 
      // Check step 1 validity (presence and type)
      if (!formData.university.name || !formData.university.city || !formData.university.state || !(formData.university.logo instanceof File)) {
          finalValidationErrors = "Please complete Step 1 (University Details).";
      }
       // Add file size check here for robustness, in case handleNextStep was bypassed
-      const MAX_FILE_SIZE = 200 * 1024; // 200 KB
       if (!finalValidationErrors && formData.university.logo instanceof File && formData.university.logo.size > MAX_FILE_SIZE) {
           finalValidationErrors = `University Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB). Please go back to Step 1.`;
       }
@@ -482,16 +486,16 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
      }
       // Add file size check here for robustness
       if (!finalValidationErrors && formData.team.logo instanceof File && formData.team.logo.size > MAX_FILE_SIZE) {
-           finalValidationErrors = `Team Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB). Please go back to Step 2.`;
+        finalValidationErrors = `Team Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB). Please go back to Step 2.`;
        }
 
      // Check step 3 (basic check for main players)
      const mainPlayersFilled = [1, 2, 3, 4, 5].every(index => formData.players[index.toString()]?.name);
      if (!finalValidationErrors && !mainPlayersFilled) {
-         finalValidationErrors = "Please complete Step 3 (Player Details) for at least the main 5 Player.";
+         finalValidationErrors = "Please complete Step 3 (Player Details) for at least the main 5 players.";
      }
-     
-     // Explicit check for mandatory players' student IDs (Captain + Players 2-5)
+
+      // Explicit check for mandatory players' student IDs (Captain + Players 2-5)
       // Add file size check here for robustness
       if (!finalValidationErrors) {
           for (let i = 0; i < 5; i++) {
@@ -515,6 +519,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             const optionalPlayerKeys = ["6", "7"];
             for (const key of optionalPlayerKeys) {
                 const player = formData.players[key];
+                 // Check size ONLY if a File object is present
                  if (player?.student_id_url instanceof File && player.student_id_url.size > MAX_FILE_SIZE) {
                      const displayName = key === "6" ? "Substitute" : "Coach";
                       finalValidationErrors = `${displayName} ID proof size exceeds the limit (${MAX_FILE_SIZE / 1024}KB). Please go back to Step 3.`;
@@ -633,7 +638,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
       setIsSubmittingFinal(false);
     }
   };
-
+  
   const handleEdit = (section: string, index?: number | null): void => {
     setFinalSubmitError(null);
 
