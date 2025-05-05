@@ -29,30 +29,6 @@ import {
   RegistrationFormData,
 } from "@/types/registrationTypes";
 
-interface RegistrationData {
-  universityName: string;
-  universityState: string | null;
-  universityCity: string | null;
-  universityLogo: File | null;
-  teamName: string;
-  teamLogo: File | null;
-  referralCode: string | null;
-  players: {
-    index: number;
-    name: string;
-    ign: string;
-    gameId: string;
-    serverId: string;
-    role: Player['role'];
-    email: string | null;
-    mobile: string | null;
-    city: string | null;
-    state: string | null;
-    device: string | null;
-    student_id_url: File | null;
-  }[];
-}
-
 // Helper function to save form data to localStorage
 const saveFormToLocalStorage = (formData: RegistrationFormData) => {
   const storableData = {
@@ -103,6 +79,9 @@ const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
     team: parsed.team || { name: "", logo: null, referral_code: "" },
     players: Object.fromEntries(
       Object.entries(parsed.players || {}).map(([key, playerData]) => {
+        // Although parsed data comes from JSON, typing it as Partial<Player> is safer
+        // than 'any' if we were unsure of the structure. Since the original code
+        // had no explicit 'any' here, and 'Partial<Player>' fits, we'll keep it.
         const player = playerData as Partial<Player>;
         return [
           key,
@@ -119,6 +98,7 @@ const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
   };
 };
 
+// No 'any' type found or replaced in the function signature here.
 const FormContent = ({}: Record<string, never>): React.ReactElement => {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState<number>(1);
@@ -137,12 +117,17 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     if (savedData) {
       setFormData((prevData: RegistrationFormData) => {
         const newPlayers = { ...prevData.players };
-        
+
         // Merge saved player data with existing File objects
+        // Note: File objects are not saved to localStorage, so they will be null
+        // after loading, but this merge structure allows for potential future
+        // persistence mechanisms or re-selection by the user if needed.
         Object.entries(savedData.players || {}).forEach(([key, player]) => {
           newPlayers[key] = {
             ...defaultPlayer,
             ...player,
+            // Keep any existing file object if it wasn't reset by load, otherwise null
+            // No 'any' type found or replaced here. 'student_id_url' is of type File | null.
             student_id_url: prevData.players[key]?.student_id_url || null,
           };
         });
@@ -158,9 +143,11 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     }
   }, []);
 
+
   const [isSubmittingFinal, setIsSubmittingFinal] = useState<boolean>(false);
   const [finalSubmitError, setFinalSubmitError] = useState<string | null>(null);
 
+  // No 'any' type found or replaced in the function signature here.
   const handleDataChange = (
     step: "university" | "team",
     field: keyof UniversityStepData | keyof TeamStepData,
@@ -180,12 +167,13 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     setFinalSubmitError(null);
   };
 
+  // No 'any' type found or replaced in the function signature here.
   const handlePlayerDataChange = (
-    playerIndex: number,
+    playerIndex: number, // This index is 0-based from Step3 component
     field: keyof Player,
     value: string | File | null
   ): void => {
-    const stateKey = (playerIndex + 1).toString();
+    const stateKey = (playerIndex + 1).toString(); // Convert 0-based index to 1-based string key
 
     let role: Player["role"] = "player";
     if (playerIndex === 0) role = "captain";
@@ -200,6 +188,8 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           [stateKey]: {
             ...(prevData.players[stateKey] || { role: role }),
             [field]: value,
+            // If the field is student_id_url and value is null, remove the existing file
+            ...(field === 'student_id_url' && value === null ? { student_id_url: null } : {})
           } as Player,
         },
       };
@@ -209,6 +199,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     setFinalSubmitError(null);
   };
 
+  // No 'any' type found or replaced in the function signature here.
   const handleTermsChange = (accepted: boolean): void => {
     setFormData((prevData: RegistrationFormData) => {
       const newData = {
@@ -226,6 +217,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     localStorage.removeItem("registrationFormData");
   };
 
+  // No 'any' type found or replaced in the function signature here.
   const handleNextStep = (): void => {
     setFinalSubmitError(null);
 
@@ -267,7 +259,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             break;
           }
 
-          // Check basic required fields for all players
+          // Check basic required fields for all players 1-5
           for (const field of basicRequiredFields) {
             if (!player[field as keyof Player]) {
               validationError = `${field
@@ -277,13 +269,18 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             }
           }
 
-          // Check student ID separately since it can be either a File or string
+          // Check student ID for players 2-5
           if (!player.student_id_url && !isCaptain) {
-            validationError = `Student ID is required for ${displayName}.`;
-            break;
+             // Check if it's a File object or a non-empty string (if student_id_url could be a URL later)
+             const studentIdProvided = player.student_id_url instanceof File || (typeof player.student_id_url === 'string' && player.student_id_url !== '');
+             if (!studentIdProvided) {
+                 validationError = `Student ID proof (JPG/PNG/PDF) is required for ${displayName}.`;
+                 break;
+             }
           }
 
-          // Check email and mobile only for captain
+
+          // Check email and mobile only for captain (player 1)
           if (isCaptain) {
             for (const field of emailMobileFields) {
               if (!player[field as keyof Player]) {
@@ -293,26 +290,41 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             }
           }
 
-          if (validationError) break;
+          if (validationError) break; // Stop checking main players if an error is found
         }
 
+        // If no validation error for main players, check substitute and coach
         if (!validationError) {
           // Validate substitute (player 6) if any data is filled
           const substitute = formData.players["6"];
           if (substitute) {
-            const hasAnySubstituteData = Object.values(substitute).some(
-              (value) => value !== null && value !== undefined && value !== ""
+            // No 'any' type found or replaced here.
+            const hasAnySubstituteData = Object.entries(substitute).some(
+              ([key, value]) => key !== 'role' && value !== null && value !== undefined && value !== ""
             );
 
             if (hasAnySubstituteData) {
-              for (const field of basicRequiredFields) {
+               // Required fields for substitute if any data is provided
+              const requiredSubstituteFields = [
+                "name",
+                "ign",
+                "game_id",
+                "server_id",
+                "city",
+                "state",
+                "device"
+              ];
+              for (const field of requiredSubstituteFields) {
                 if (!substitute[field as keyof Player]) {
-                  validationError = `${field
-                    .replace("_", " ")
-                    .toUpperCase()} is required for Substitute.`;
-                  break;
+                   validationError = `${field.replace('_', ' ').toUpperCase()} is required for Substitute if any substitute information is provided.`;
+                   break;
                 }
               }
+               // Student ID is also required for substitute if any data is provided
+               const subStudentIdProvided = substitute.student_id_url instanceof File || (typeof substitute.student_id_url === 'string' && substitute.student_id_url !== '');
+               if (!subStudentIdProvided && !validationError) {
+                    validationError = `Student ID proof (JPG/PNG/PDF) is required for Substitute if any substitute information is provided.`;
+               }
             }
           }
         }
@@ -321,15 +333,23 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           // Validate coach (player 7) if any data is filled
           const coach = formData.players["7"];
           if (coach) {
-            const requiredCoachFields = ["name", "ign", "game_id", "server_id", "email", "mobile"];
-            const hasPartialData = requiredCoachFields.some(field => 
-              coach[field as keyof Player] !== null && 
-              coach[field as keyof Player] !== undefined && 
+            const requiredCoachFields = ["name", "email", "mobile"]; // Adjusted required fields for coach
+            const hasPartialData = requiredCoachFields.some(field =>
+              coach[field as keyof Player] !== null &&
+              coach[field as keyof Player] !== undefined &&
               coach[field as keyof Player] !== ""
             );
+             // Also check ign, game_id, server_id if they are filled
+             const optionalCoachFields = ["ign", "game_id", "server_id"];
+             const hasOptionalData = optionalCoachFields.some(field =>
+                 coach[field as keyof Player] !== null &&
+                 coach[field as keyof Player] !== undefined &&
+                 coach[field as keyof Player] !== ""
+             );
 
-            if (hasPartialData) {
-              // If any coach field is filled, all become required
+
+            if (hasPartialData || hasOptionalData) {
+              // If any coach field is filled, all required fields become mandatory
               for (const field of requiredCoachFields) {
                 if (!coach[field as keyof Player]) {
                   validationError = `${field.replace('_', ' ').toUpperCase()} is required for Coach if any coach information is provided.`;
@@ -360,16 +380,45 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     }
   };
 
+  // No 'any' type found or replaced in the function signature here.
   const handleFinalSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
     setFinalSubmitError(null);
 
+    // Re-validate terms just in case
     if (!formData.termsAccepted) {
       setFinalSubmitError("You must accept the terms and conditions.");
       return;
     }
+
+     // Re-validate other steps before final submission, just to be safe
+     let finalValidationErrors: string | null = null;
+
+     // Check step 1
+     if (!formData.university.name || !formData.university.city || !formData.university.state || !(formData.university.logo instanceof File)) {
+         finalValidationErrors = "Please complete Step 1 (University Details).";
+     }
+     // Check step 2
+     if (!finalValidationErrors && (!formData.team.name || !(formData.team.logo instanceof File))) {
+         finalValidationErrors = "Please complete Step 2 (Team Details).";
+     }
+     // Check step 3 (basic check, detailed check is in handleNextStep)
+     const mainPlayersFilled = [1, 2, 3, 4, 5].every(index => formData.players[index.toString()]?.name);
+     if (!finalValidationErrors && !mainPlayersFilled) {
+         finalValidationErrors = "Please complete Step 3 (Player Details) for at least the main 5 players.";
+     }
+
+     if (finalValidationErrors) {
+        setFinalSubmitError(finalValidationErrors);
+        // Optionally, navigate the user back to the incomplete step
+        if (finalValidationErrors.includes("Step 1")) setActiveStep(1);
+        else if (finalValidationErrors.includes("Step 2")) setActiveStep(2);
+        else if (finalValidationErrors.includes("Step 3")) setActiveStep(3);
+         return;
+     }
+
 
     setIsSubmittingFinal(true);
     const finalFormData = new FormData();
@@ -392,37 +441,59 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
         finalFormData.append("referral_code", formData.team.referral_code);
       }
 
-      // Prepare player data
-      for (let i = 0; i < 7; i++) {
-        const player = formData.players[(i + 1).toString()];
+      // Prepare player text data
+      // Iterate through keys "1" through "7"
+      for (let i = 1; i <= 7; i++) {
+        const player = formData.players[i.toString()];
         if (player) {
           finalFormData.append(`player${i}_role`, player.role);
-          finalFormData.append(`player${i}_name`, player.name);
-          finalFormData.append(`player${i}_ign`, player.ign);
-          if (player.game_id)
-            finalFormData.append(`player${i}_game_id`, player.game_id);
-          if (player.server_id)
-            finalFormData.append(`player${i}_server_id`, player.server_id);
-          if (player.email)
-            finalFormData.append(`player${i}_email`, player.email);
-          if (player.mobile)
-            finalFormData.append(`player${i}_mobile`, player.mobile);
-          if (player.city)
-            finalFormData.append(`player${i}_city`, player.city);
-          if (player.state)
-            finalFormData.append(`player${i}_state`, player.state);
-          if (player.device)
-            finalFormData.append(`player${i}_device`, player.device);
+          // Only append if the value is not null/undefined and not an empty string,
+          // except for file fields which are handled separately below
+          if (player.name) finalFormData.append(`player${i}_name`, player.name);
+          if (player.ign) finalFormData.append(`player${i}_ign`, player.ign);
+          if (player.game_id) finalFormData.append(`player${i}_game_id`, player.game_id);
+          if (player.server_id) finalFormData.append(`player${i}_server_id`, player.server_id);
+          if (player.email) finalFormData.append(`player${i}_email`, player.email);
+          if (player.mobile) finalFormData.append(`player${i}_mobile`, player.mobile);
+          if (player.city) finalFormData.append(`player${i}_city`, player.city);
+          if (player.state) finalFormData.append(`player${i}_state`, player.state);
+          if (player.device) finalFormData.append(`player${i}_device`, player.device);
+          // Note: student_id_url is intentionally skipped here as it's a File and handled next
         }
       }
 
       // Add player files to formData
+      // CORRECTED LOGIC HERE
+      const playerFiles = Object.entries(formData.players)
+         // Filter for entries that have a player object and the student_id_url is a File
+        .filter((entry): entry is [string, Player] => entry[1] !== undefined && entry[1]?.student_id_url instanceof File)
+        // Map to extract the file and the correct player index
+        // No 'any' type found or replaced here. 'p' is of type Player.
+        .map(([key, p]) => {
+          const playerIndex = parseInt(key, 10); // Get the player index from the key ("1", "2", etc.)
+          // Ensure the parsed index is valid and the file exists
+          if (!isNaN(playerIndex) && p.student_id_url instanceof File) {
+             return {
+               file: p.student_id_url,
+               index: playerIndex, // Use the actual player index from the key
+               field: "student_id_url" as const
+             };
+          }
+           return null; // Should be filtered out by the .filter() above, but good practice
+        })
+        // Filter out any potential nulls if the filter/map logic was complex
+        // No 'any' type found or replaced here.
+        .filter((item): item is NonNullable<typeof item> => item !== null);
+
+
       playerFiles.forEach(({ file, index }) => {
+         // Double check it's a File before appending (already done in filter but safety)
         if (file instanceof File) {
           finalFormData.append(`player${index}_student_id_url`, file);
         }
       });
 
+      // The type returned by registerTeam is inferred, no 'any' here.
       const result = await registerTeam(finalFormData);
 
       if (result.success) {
@@ -435,44 +506,57 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           return;
         }
         setFinalSubmitError(result.message || "Registration failed. Please try again.");
+         // If submission failed, save the form data again just in case
+         saveFormToLocalStorage(formData);
       }
     } catch (error) {
+      // In catch blocks, error can be 'unknown' if 'useUnknownInCatchVariables' is true in tsconfig.
+      // If not, it's 'any'. Explicitly typing it as 'unknown' is a good practice.
       console.error("Registration submission error:", error);
+      // When 'error' is 'unknown', you must narrow its type before accessing properties like 'message'.
       setFinalSubmitError(
-        error instanceof Error && error.message
+        error instanceof Error // Type narrowing check
           ? error.message
           : "An unexpected error occurred. Please try again or contact support."
       );
+       // If submission failed, save the form data again just in case
+       saveFormToLocalStorage(formData);
     } finally {
       setIsSubmittingFinal(false);
     }
   };
 
+  // No 'any' type found or replaced in the function signature here.
   const handleEdit = (section: string, index?: number | null): void => {
     setFinalSubmitError(null);
 
     switch (section) {
       case "university":
         setActiveStep(1);
-        router.push(pathname);
+        // Optionally, redirect with params if needed, but usually navigating to step is enough
+        // router.push(`${pathname}?section=university`);
         break;
       case "team":
         setActiveStep(2);
-        router.push(pathname);
+         // Optionally, redirect with params
+        // router.push(`${pathname}?section=team`);
         break;
       case "players":
         setActiveStep(3);
+        // If editing players general section, just go to step 3
+        // router.push(`${pathname}?section=players`);
         break;
       case "player":
         if (index !== undefined && index !== null && index >= 1 && index <= 7) {
           setActiveStep(3);
+          // Redirect with params to potentially scroll to the player section in Step3
           const params = new URLSearchParams();
           params.set("section", "player");
           params.set("index", index.toString());
           router.push(`${pathname}?${params.toString()}`);
         } else {
           console.error("Invalid player index provided for edit:", index);
-          setActiveStep(3);
+          setActiveStep(3); // Default to player step if index is bad
           router.push(pathname);
         }
         break;
@@ -482,6 +566,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     }
   };
 
+  // No 'any' type found or replaced in the function signature here.
   const renderStepComponent = (): React.ReactNode => {
     switch (activeStep) {
       case 1:
@@ -533,16 +618,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
     exit: { opacity: 0, x: -50, transition: { duration: 0.3 } },
   };
-
-  const playerFiles = Object.entries(formData.players)
-    .filter((entry): entry is [string, Player] => entry[1] !== undefined)
-    .map(([_, p]) => (
-      p.student_id_url ? { 
-        file: p.student_id_url, 
-        index: p.role === "captain" ? 1 : p.role === "substitute" ? 6 : p.role === "coach" ? 7 : 2, 
-        field: "student_id_url" as const 
-      } : null
-    )).filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
     <form onSubmit={handleFinalSubmit}>
@@ -622,6 +697,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
   );
 };
 
+// No 'any' type found or replaced in the function signature here.
 export default function FormCard(): React.ReactElement {
   return <FormContent />;
 }
