@@ -262,15 +262,11 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             }
           }
 
-          // Check student ID for players 2-5
-          if (!player.student_id_url && !isCaptain) {
-             // Check if it's a File object or a non-empty string (if student_id_url could be a URL later)
-             // FIX: Add null check before instanceof File
-             const studentIdProvided = (player.student_id_url !== null && player.student_id_url instanceof File) || (typeof player.student_id_url === 'string' && player.student_id_url !== '');
-             if (!studentIdProvided) {
-                 validationError = `Student ID proof (JPG/PNG/PDF) is required for ${displayName}.`;
-                 break;
-             }
+          // Check student ID for players 2-5 (required if not captain)
+          // Based on type `File | null`, required means must not be null.
+          if (!isCaptain && player.student_id_url === null) {
+             validationError = `Student ID proof (JPG/PNG/PDF) is required for ${displayName}.`;
+             break; // Exit the loop
           }
 
 
@@ -292,21 +288,24 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           // Validate substitute (player 6) if any data is filled
           const substitute = formData.players["6"];
           if (substitute) {
-            const hasAnySubstituteData = Object.entries(substitute).some(
-              ([key, value]) => key !== 'role' && value !== null && value !== undefined && value !== ""
-            );
+            const requiredSubstituteFields = [
+              "name",
+              "ign",
+              "game_id",
+              "server_id",
+              "city",
+              "state",
+              "device"
+            ];
+             const hasAnySubstituteData = requiredSubstituteFields.some(field =>
+               substitute[field as keyof Player] !== null &&
+               substitute[field as keyof Player] !== undefined &&
+               substitute[field as keyof Player] !== ""
+             );
+
 
             if (hasAnySubstituteData) {
                // Required fields for substitute if any data is provided
-              const requiredSubstituteFields = [
-                "name",
-                "ign",
-                "game_id",
-                "server_id",
-                "city",
-                "state",
-                "device"
-              ];
               for (const field of requiredSubstituteFields) {
                 if (!substitute[field as keyof Player]) {
                    validationError = `${field.replace('_', ' ').toUpperCase()} is required for Substitute if any substitute information is provided.`;
@@ -314,10 +313,9 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
                 }
               }
                // Student ID is also required for substitute if any data is provided
-               // FIX: Add null check before instanceof File
-               const subStudentIdProvided = (substitute.student_id_url !== null && substitute.student_id_url instanceof File) || (typeof substitute.student_id_url === 'string' && substitute.student_id_url !== '');
-               if (!subStudentIdProvided && !validationError) {
-                    validationError = `Student ID proof (JPG/PNG/PDF) is required for Substitute if any substitute information is provided.`;
+               // If substitute data is filled AND student_id_url is null, set error
+               if (substitute.student_id_url === null && !validationError) {
+                   validationError = `Student ID proof (JPG/PNG/PDF) is required for Substitute if any substitute information is provided.`;
                }
             }
           }
