@@ -27,6 +27,7 @@ import {
   UniversityStepData,
   TeamStepData,
   RegistrationFormData,
+  PlayersStepData
 } from "@/types/registrationTypes";
 
 // Helper function to save form data to localStorage
@@ -73,28 +74,36 @@ const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
   const saved = localStorage.getItem("registrationFormData");
   if (!saved) return null;
 
-  const parsed = JSON.parse(saved);
-  return {
-    university: parsed.university || { name: "", city: "", state: "", logo: null },
-    team: parsed.team || { name: "", logo: null, referral_code: "" },
-    players: Object.fromEntries(
-      Object.entries(parsed.players || {}).map(([key, playerData]) => {
-        // Although parsed data comes from JSON, typing it as Partial<Player> is safer.
-        const player = playerData as Partial<Player>;
-        return [
-          key,
-          {
-            ...defaultPlayer,
-            ...player,
-            // Ensure File objects are null since they can't be stored in localStorage
-            student_id_url: null,
-          }
-        ];
-      })
-    ),
-    termsAccepted: parsed.termsAccepted || false
-  };
+  try {
+      const parsed = JSON.parse(saved);
+       // Ensure parsed.players is an object before Object.entries
+      const parsedPlayers = typeof parsed.players === 'object' && parsed.players !== null ? parsed.players : {};
+
+      return {
+        university: parsed.university || { name: "", city: "", state: "", logo: null },
+        team: parsed.team || { name: "", logo: null, referral_code: "" },
+        players: Object.fromEntries(
+          Object.entries(parsedPlayers).map(([key, playerData]) => {
+            const player = playerData as Partial<Player>;
+            return [
+              key,
+              {
+                ...defaultPlayer,
+                ...player,
+                // Ensure File objects are null since they can't be stored in localStorage
+                student_id_url: null,
+              }
+            ];
+          })
+        ),
+        termsAccepted: parsed.termsAccepted || false
+      };
+  } catch (e) {
+      console.error("Failed to parse localStorage data:", e);
+      return null; // Return null if parsing fails
+  }
 };
+
 
 const FormContent = ({}: Record<string, never>): React.ReactElement => {
   const router = useRouter();
@@ -113,31 +122,50 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     const savedData = loadFormFromLocalStorage();
     if (savedData) {
       setFormData((prevData: RegistrationFormData) => {
-        const newPlayers = { ...prevData.players };
+        const newPlayers: PlayersStepData = {}; // Start with an empty object or default structure
 
-        // Merge saved player data with existing File objects
-        // Note: File objects are not saved to localStorage, so they will be null
-        // after loading, but this merge structure allows for potential future
-        // persistence mechanisms or re-selection by the user if needed.
-        Object.entries(savedData.players || {}).forEach(([key, player]) => {
-          newPlayers[key] = {
-            ...defaultPlayer,
-            ...player,
-            // Keep any existing file object if it wasn't reset by load, otherwise null
-            student_id_url: prevData.players[key]?.student_id_url || null,
-          };
+        // Iterate over all possible player keys (1-7) to ensure all players are considered
+        // whether they were in saved data, previous state, or are just defaults.
+        // Using keys 1 through 7 explicitly for structure.
+        const allPlayerKeys = Array.from({ length: 7 }, (_, i) => (i + 1).toString());
+
+        allPlayerKeys.forEach(key => {
+            const prevPlayer = prevData.players[key];
+            const savedPlayer = (savedData.players || {})[key]; // Ensure savedData.players is treated as an object
+
+            // Determine the player's role based on key, falling back to saved/default if needed
+             let role: Player["role"] = defaultPlayer.role;
+             if (key === "1") role = "captain";
+             else if (key === "6") role = "substitute";
+             else if (key === "7") role = "coach";
+
+
+            newPlayers[key] = {
+                ...defaultPlayer, // Start with defaults
+                role: role, // Set role based on key
+                ...(savedPlayer || {}), // Apply saved non-file data (will overwrite default text fields if saved)
+                // Correctly prioritize the File object from the previous state if it exists,
+                // otherwise fall back to null (which is what savedPlayer has for files).
+                student_id_url: prevPlayer?.student_id_url instanceof File ? prevPlayer.student_id_url : null
+             };
+
+             // Ensure default role is correctly applied if player object wasn't saved at all
+             if (!savedPlayer && !prevPlayer) {
+                 newPlayers[key].role = role;
+             }
         });
 
+
         return {
-          ...prevData,
-          university: { ...prevData.university, ...savedData.university },
-          team: { ...prevData.team, ...savedData.team },
-          players: newPlayers,
-          termsAccepted: savedData.termsAccepted || false,
+          ...prevData, // Spread previous state
+          university: { ...prevData.university, ...savedData.university }, // Overwrite with merged university
+          team: { ...prevData.team, ...savedData.team }, // Overwrite with merged team
+          players: newPlayers, // Overwrite with merged players
+          termsAccepted: savedData.termsAccepted ?? prevData.termsAccepted, // Use saved terms if available, else prev
         };
       });
     }
-  }, []);
+  }, []); // Depend only on initial mount (empty array)
 
 
   const [isSubmittingFinal, setIsSubmittingFinal] = useState<boolean>(false);
@@ -169,21 +197,25 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
   ): void => {
     const stateKey = (playerIndex + 1).toString(); // Convert 0-based index to 1-based string key
 
-    let role: Player["role"] = "player";
-    if (playerIndex === 0) role = "captain";
-    else if (playerIndex === 5) role = "substitute";
-    else if (playerIndex === 6) role = "coach";
-
     setFormData((prevData: RegistrationFormData) => {
+      const playerToUpdate = prevData.players[stateKey];
+      // Determine the role based on key if the player object doesn't exist yet
+      let role: Player["role"] = defaultPlayer.role;
+      if (stateKey === "1") role = "captain";
+      else if (stateKey === "6") role = "substitute";
+      else if (stateKey === "7") role = "coach";
+
+
       const newData = {
         ...prevData,
         players: {
           ...prevData.players,
           [stateKey]: {
-            ...(prevData.players[stateKey] || { role: role }),
+            ...(playerToUpdate || { role: role }), // Use existing data if available, otherwise default with role
             [field]: value,
-            // If the field is student_id_url and value is null, remove the existing file
+            // If the field is student_id_url and value is null, explicitly set to null (handles clearing)
             ...(field === 'student_id_url' && value === null ? { student_id_url: null } : {})
+             // Note: If value is a File, it's correctly assigned by [field]: value
           } as Player,
         },
       };
@@ -215,17 +247,28 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     setFinalSubmitError(null);
 
     let validationError: string | null = null;
+    const MAX_FILE_SIZE = 200 * 1024; // 200 KB
 
     switch (activeStep) {
       case 1:
         if (!formData.university.name) validationError = "University Name is required.";
-        if (!formData.university.city) validationError = "City is required.";
-        if (!formData.university.state) validationError = "State is required.";
-        if (!formData.university.logo) validationError = "University Logo is required.";
+        if (!validationError && !formData.university.city) validationError = "City is required.";
+        if (!validationError && !formData.university.state) validationError = "State is required.";
+        if (!validationError && !formData.university.logo) validationError = "University Logo is required.";
+        // --- File Size Validation for University Logo ---
+        if (!validationError && formData.university.logo instanceof File && formData.university.logo.size > MAX_FILE_SIZE) {
+            validationError = `University Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
+        }
+        // --- End File Size Validation ---
         break;
       case 2:
         if (!formData.team.name) validationError = "Team Name is required.";
-        if (!formData.team.logo) validationError = "Team Logo is required.";
+        if (!validationError && !formData.team.logo) validationError = "Team Logo is required.";
+         // --- File Size Validation for Team Logo ---
+        if (!validationError && formData.team.logo instanceof File && formData.team.logo.size > MAX_FILE_SIZE) {
+             validationError = `Team Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
+         }
+         // --- End File Size Validation ---
         break;
       case 3:
         const basicRequiredFields = [
@@ -242,11 +285,12 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
 
         // Validate main players (1-5)
         for (let i = 0; i < 5; i++) {
-          const player = formData.players[(i + 1).toString()];
+          const playerKey = (i + 1).toString();
+          const player = formData.players[playerKey];
           const displayName = i === 0 ? "Captain" : `Player ${i + 1}`;
           const isCaptain = i === 0;
 
-          // Check if player exists
+          // Check if player object exists (basic requirement for players 1-5)
           if (!player) {
             validationError = `${displayName} information is required.`;
             break;
@@ -261,13 +305,20 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
               break;
             }
           }
+          if (validationError) break; // Exit inner field loop
 
-          // Check student ID for players 2-5 (required if not captain)
-          // Based on type `File | null`, required means must not be null.
-          if (!isCaptain && player.student_id_url === null) {
+          // Check student ID for players 1-5 (now required for all of them, INCLUDING CAPTAIN)
+          if (player.student_id_url === null) {
              validationError = `Student ID proof (JPG/PNG/PDF) is required for ${displayName}.`;
-             break; // Exit the loop
+             break; // Exit the loop for players 1-5
           }
+           // --- File Size Validation for Student ID (Players 1-5) ---
+           // Check size ONLY if a File object is present
+           if (player.student_id_url instanceof File && player.student_id_url.size > MAX_FILE_SIZE) {
+                validationError = `${displayName} Student ID proof size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
+                break; // Exit the loop
+           }
+           // --- End File Size Validation ---
 
 
           // Check email and mobile only for captain (player 1)
@@ -278,6 +329,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
                 break;
               }
             }
+            if (validationError) break; // Exit inner field loop
           }
 
           if (validationError) break; // Stop checking main players if an error is found
@@ -285,77 +337,100 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
 
         // If no validation error for main players, check substitute and coach
         if (!validationError) {
-          // Validate substitute (player 6) if any data is filled
+          // Validate substitute (player 6) if any data or file is filled
           const substitute = formData.players["6"];
-          if (substitute) {
-            const requiredSubstituteFields = [
-              "name",
-              "ign",
-              "game_id",
-              "server_id",
-              "city",
-              "state",
-              "device"
-            ];
-             const hasAnySubstituteData = requiredSubstituteFields.some(field =>
-               substitute[field as keyof Player] !== null &&
-               substitute[field as keyof Player] !== undefined &&
-               substitute[field as keyof Player] !== ""
-             );
+           if (substitute) { // Check if the substitute object exists
+              const requiredSubstituteFields = [
+                "name", "ign", "game_id", "server_id", "city", "state", "device"
+              ];
+              const subHasBasicData = requiredSubstituteFields.some(field =>
+                substitute[field as keyof Player] !== null &&
+                substitute[field as keyof Player] !== undefined &&
+                substitute[field as keyof Player] !== ""
+              );
+              const subHasFile = substitute.student_id_url instanceof File;
 
+              // If the substitute has *any* basic data OR a file, then validate them
+              if (subHasBasicData || subHasFile) {
+                 // Require basic fields if basic data was provided
+                 if (subHasBasicData) {
+                    for (const field of requiredSubstituteFields) {
+                      if (!substitute[field as keyof Player]) {
+                         validationError = `${field.replace('_', ' ').toUpperCase()} is required for Substitute if any basic information is provided.`;
+                         break;
+                      }
+                    }
+                 }
+                 if (validationError) break; // Exit if basic fields validation failed
 
-            if (hasAnySubstituteData) {
-               // Required fields for substitute if any data is provided
-              for (const field of requiredSubstituteFields) {
-                if (!substitute[field as keyof Player]) {
-                   validationError = `${field.replace('_', ' ').toUpperCase()} is required for Substitute if any substitute information is provided.`;
-                   break;
-                }
+                 // Require the file itself if *any* data (basic or file) was provided
+                 if (!subHasFile) {
+                    validationError = `Student ID proof (JPG/PNG/PDF) is required for Substitute if any information is provided.`;
+                 }
+                  if (validationError) break; // Exit if file is missing
+
+                 // --- File Size Validation for Student ID (Substitute) ---
+                 // Check size ONLY if a file is actually present
+                 if (subHasFile && substitute.student_id_url.size > MAX_FILE_SIZE) {
+                     validationError = `Substitute Student ID proof size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
+                 }
+                  if (validationError) break; // Exit if file size is too large
               }
-               // Student ID is also required for substitute if any data is provided
-               // If substitute data is filled AND student_id_url is null, set error
-               if (substitute.student_id_url === null && !validationError) {
-                   validationError = `Student ID proof (JPG/PNG/PDF) is required for Substitute if any substitute information is provided.`;
-               }
-            }
-          }
+           }
         }
 
+        // If no validation error so far, check coach (player 7)
         if (!validationError) {
-          // Validate coach (player 7) if any data is filled
           const coach = formData.players["7"];
-          if (coach) {
-            const requiredCoachFields = ["name", "email", "mobile"]; // Adjusted required fields for coach
-            const hasPartialData = requiredCoachFields.some(field =>
-              coach[field as keyof Player] !== null &&
-              coach[field as keyof Player] !== undefined &&
-              coach[field as keyof Player] !== ""
-            );
-             // Also check ign, game_id, server_id if they are filled
-             const optionalCoachFields = ["ign", "game_id", "server_id"];
-             const hasOptionalData = optionalCoachFields.some(field =>
-                 coach[field as keyof Player] !== null &&
-                 coach[field as keyof Player] !== undefined &&
-                 coach[field as keyof Player] !== ""
-             );
+           if (coach) { // Check if the coach object exists
+              const requiredCoachFields = ["name", "email", "mobile"]; // Adjusted required fields for coach
+              const optionalCoachFields = ["ign", "game_id", "server_id"]; // Optional text fields
+              const coachHasRequiredBasicData = requiredCoachFields.some(field =>
+                coach[field as keyof Player] !== null &&
+                coach[field as keyof Player] !== undefined &&
+                coach[field as keyof Player] !== ""
+              );
+              const coachHasOptionalBasicData = optionalCoachFields.some(field =>
+                  coach[field as keyof Player] !== null &&
+                  coach[field as keyof Player] !== undefined &&
+                  coach[field as keyof Player] !== ""
+              );
+              const coachHasFile = coach.student_id_url instanceof File;
 
+              // If the coach has *any* required basic data, optional basic data, OR a file, then validate them
+              if (coachHasRequiredBasicData || coachHasOptionalBasicData || coachHasFile) {
+                 // Require basic email/mobile fields IF any text data was filled
+                 if(coachHasRequiredBasicData || coachHasOptionalBasicData) {
+                    for (const field of requiredCoachFields) {
+                      if (!coach[field as keyof Player]) {
+                        validationError = `${field.replace('_', ' ').toUpperCase()} is required for Coach if any information is provided.`;
+                        break;
+                      }
+                    }
+                 }
+                 if (validationError) break; // Exit if basic fields validation failed
 
-            if (hasPartialData || hasOptionalData) {
-              // If any coach field is filled, all required fields become mandatory
-              for (const field of requiredCoachFields) {
-                if (!coach[field as keyof Player]) {
-                  validationError = `${field.replace('_', ' ').toUpperCase()} is required for Coach if any coach information is provided.`;
-                  break;
-                }
+                 // Student ID is optional for Coach, so no requirement check here (!coachHasFile).
+
+                 // --- File Size Validation for Coach ID (Coach) ---
+                 // Check size ONLY if a file is actually present
+                 if (coachHasFile && coach.student_id_url.size > MAX_FILE_SIZE) {
+                     validationError = `Coach ID proof size exceeds the limit (${MAX_FILE_SIZE / 1024}KB).`;
+                 }
+                  if (validationError) break; // Exit if file size is too large
               }
-            }
-          }
+           }
         }
         break;
       case 4:
+        // Check terms accepted - already present
         if (!formData.termsAccepted) {
           validationError = "You must accept the terms and conditions.";
         }
+        // Note: File size validation could also be added here as a final check
+        // for all files (uni logo, team logo, all players) before submitting,
+        // in case the user bypassed step-by-step validation somehow.
+        // Keeping it on next step as requested.
         break;
       default:
         console.warn("handleNextStep called on unhandled step:", activeStep);
@@ -367,9 +442,12 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
       return;
     }
 
+    // If validation passes for the current step, move to the next
     if (activeStep < 4) {
       setActiveStep((prev: number) => prev + 1);
     }
+     // If activeStep is 4 and validation passed, the submit button's
+     // type="submit" will trigger handleFinalSubmit.
   };
 
   const handleFinalSubmit = async (
@@ -387,19 +465,64 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
      // Re-validate other steps before final submission, just to be safe
      let finalValidationErrors: string | null = null;
 
-     // Check step 1
+     // Check step 1 validity (presence and type)
      if (!formData.university.name || !formData.university.city || !formData.university.state || !(formData.university.logo instanceof File)) {
          finalValidationErrors = "Please complete Step 1 (University Details).";
      }
-     // Check step 2
+      // Add file size check here for robustness, in case handleNextStep was bypassed
+      const MAX_FILE_SIZE = 200 * 1024; // 200 KB
+      if (!finalValidationErrors && formData.university.logo instanceof File && formData.university.logo.size > MAX_FILE_SIZE) {
+          finalValidationErrors = `University Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB). Please go back to Step 1.`;
+      }
+
+
+     // Check step 2 validity (presence and type)
      if (!finalValidationErrors && (!formData.team.name || !(formData.team.logo instanceof File))) {
          finalValidationErrors = "Please complete Step 2 (Team Details).";
      }
-     // Check step 3 (basic check, detailed check is in handleNextStep)
+      // Add file size check here for robustness
+      if (!finalValidationErrors && formData.team.logo instanceof File && formData.team.logo.size > MAX_FILE_SIZE) {
+           finalValidationErrors = `Team Logo size exceeds the limit (${MAX_FILE_SIZE / 1024}KB). Please go back to Step 2.`;
+       }
+
+     // Check step 3 (basic check for main players)
      const mainPlayersFilled = [1, 2, 3, 4, 5].every(index => formData.players[index.toString()]?.name);
      if (!finalValidationErrors && !mainPlayersFilled) {
-         finalValidationErrors = "Please complete Step 3 (Player Details) for at least the main 5 players.";
+         finalValidationErrors = "Please complete Step 3 (Player Details) for at least the main 5 Player.";
      }
+     
+     // Explicit check for mandatory players' student IDs (Captain + Players 2-5)
+      // Add file size check here for robustness
+      if (!finalValidationErrors) {
+          for (let i = 0; i < 5; i++) {
+              const playerKey = (i + 1).toString();
+              const player = formData.players[playerKey];
+              const displayName = i === 0 ? "Captain" : `Player ${i + 1}`;
+
+              if (!player || player.student_id_url === null) {
+                 finalValidationErrors = `Student ID proof is required for ${displayName}. Please go back to Step 3.`;
+                 break;
+              }
+               if (player.student_id_url instanceof File && player.student_id_url.size > MAX_FILE_SIZE) {
+                    finalValidationErrors = `${displayName} Student ID proof size exceeds the limit (${MAX_FILE_SIZE / 1024}KB). Please go back to Step 3.`;
+                    break;
+               }
+          }
+      }
+
+       // Optional players (Substitute/Coach): if file is provided, check size
+        if (!finalValidationErrors) {
+            const optionalPlayerKeys = ["6", "7"];
+            for (const key of optionalPlayerKeys) {
+                const player = formData.players[key];
+                 if (player?.student_id_url instanceof File && player.student_id_url.size > MAX_FILE_SIZE) {
+                     const displayName = key === "6" ? "Substitute" : "Coach";
+                      finalValidationErrors = `${displayName} ID proof size exceeds the limit (${MAX_FILE_SIZE / 1024}KB). Please go back to Step 3.`;
+                      break;
+                 }
+            }
+        }
+
 
      if (finalValidationErrors) {
         setFinalSubmitError(finalValidationErrors);
@@ -549,7 +672,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
         break;
     }
   };
-
+  
   const renderStepComponent = (): React.ReactNode => {
     switch (activeStep) {
       case 1:
