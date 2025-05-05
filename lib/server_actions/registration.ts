@@ -17,7 +17,7 @@ interface ProcessedPlayerData {
   city: string;
   state: string;
   device: string;
-  student_id_url: File | null;
+  student_id_url: File | null; // Keep as File | null as it might be null
   index?: number; // Optional index for player identification
 }
 
@@ -43,7 +43,7 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
   const teamLogo = formData.get("team_logo");
   const referralCode = formData.get("referral_code") as string || "";
 
-  // Validate file uploads
+  // Validate file uploads for university and team logos (assuming these are always required and must be files)
   if (!(universityLogo instanceof File)) {
     throw new Error("University logo must be a valid image file");
   }
@@ -60,11 +60,15 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
     if (!role) continue;
 
     const studentIdFile = formData.get(`player${i}_student_id_url`);
-    if (studentIdFile && studentIdFile instanceof File) {
+
+    // Check if a file was provided and if it is a File instance
+    // If it is a File, add it to the files array for later upload processing.
+    // The validation check for whether the student ID is *required*
+    // or if it must be a *valid image* is removed here as requested.
+    if (studentIdFile instanceof File) {
       files.push({ file: studentIdFile, index: i, field: "student_id_url" });
-    } else if (i !== 0 && i !== 6) { // Skip validation for captain and coach
-      throw new Error(`Student ID for Player ${i + 1} must be a valid image file`);
-    }
+    } 
+    // Removed: else if (i !== 0 && i !== 6) { ... throw error ... }
 
     players.push({
       name: formData.get(`player${i}_name`) as string,
@@ -77,7 +81,8 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
       city: formData.get(`player${i}_city`) as string,
       state: formData.get(`player${i}_state`) as string,
       device: formData.get(`player${i}_device`) as string,
-      student_id_url: studentIdFile as File,
+      // Assign the file if it's a File instance, otherwise null
+      student_id_url: studentIdFile instanceof File ? studentIdFile : null,
     });
   }
 
@@ -132,6 +137,8 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
           city: player.city,
           state: player.state,
           device: player.device,
+          // student_id_url comes from the files array, populated in processRegistrationFormData
+          // based on whether a valid File was provided.
           student_id_url: processedData.files.find(f => f.index === index)?.file || null
         }))
       };
@@ -141,6 +148,8 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
         validateRegistrationData(registrationData);
       } catch (validationError) {
         console.error("Validation error:", validationError);
+        // Note: validateRegistrationData might still throw errors if it has its own checks
+        // like ensuring required fields are present, even if file type isn't checked here.
         return {
           success: false,
           message: validationError instanceof Error ? validationError.message : "Invalid registration data. Please check all fields."
@@ -169,6 +178,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
         } catch (error: unknown) {
           console.error("Update registration error:", error);
           if (error instanceof Error) {
+            // Keep specific error handling for auth, storage/upload, and potential other errors
             if (error.message.includes("auth")) {
               return {
                 success: false,
@@ -176,7 +186,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
               };
             }
             if (error.message.includes("storage") || error.message.includes("upload")) {
-              const errorMessage = error.message.includes("size") ? 
+               const errorMessage = error.message.includes("size") ? 
                 error.message : 
                 "Failed to upload files. Please ensure all files are valid images under 5MB.";
               return {
@@ -184,6 +194,9 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
                 message: errorMessage
               };
             }
+             // This check is less likely to be hit now that processRegistrationFormData
+             // doesn't throw this specific error, but keeping it doesn't hurt.
+             // validateRegistrationData or processing functions might still throw similar errors.
             if (error.message.includes("Student ID") || error.message.includes("Captain")) {
               return {
                 success: false,
@@ -208,6 +221,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
         } catch (error: unknown) {
           console.error("New registration error:", error);
           if (error instanceof Error) {
+             // Keep specific error handling for auth, storage/upload, duplicate, and potential other errors
             if (error.message.includes("auth")) {
               return {
                 success: false,
@@ -215,7 +229,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
               };
             }
             if (error.message.includes("storage") || error.message.includes("upload")) {
-              const errorMessage = error.message.includes("size") ? 
+               const errorMessage = error.message.includes("size") ? 
                 error.message : 
                 "Failed to upload files. Please ensure all files are valid images under 5MB.";
               return {
@@ -229,6 +243,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
                 message: "This team or university name is already registered. Please use a different name."
               };
             }
+            // This check is less likely to be hit now, see comment above.
             if (error.message.includes("Student ID") || error.message.includes("Captain")) {
               return {
                 success: false,
@@ -245,6 +260,8 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
       }
     } catch (processingError) {
       console.error("Form data processing error:", processingError);
+      // This catch block will no longer receive the "Student ID... valid image file" error
+      // from processRegistrationFormData, but might catch other processing errors.
       return {
         success: false,
         message: processingError instanceof Error ? 
