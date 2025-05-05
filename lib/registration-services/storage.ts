@@ -1,3 +1,4 @@
+
 import { createClient } from '@/utils/supabase/server';
 
 export const sanitizeFileName = (name: string | null | undefined): string => {
@@ -29,20 +30,6 @@ export async function checkAndUploadFile(
   }
   if (file.size > maxSize) {
     throw new Error(`File ${file.name} exceeds maximum size of 5MB. Please upload a smaller file.`);
-  }
-
-  // Fourth check - validate file type and ensure it's an image
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  const fileType = file.type.toLowerCase();
-  
-  if (!fileType) {
-    // Some mobile browsers might not set the type correctly
-    const extension = file.name.split('.').pop()?.toLowerCase();
-    if (!extension || !['jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
-      throw new Error(`File must be a JPEG, PNG, or WebP image. Current file: ${file.name}`);
-    }
-  } else if (!allowedTypes.includes(fileType)) {
-    throw new Error(`File must be a JPEG, PNG, or WebP image. Current type: ${fileType}`);
   }
 
   const supabase = await createClient();
@@ -88,7 +75,7 @@ export async function checkAndUploadFile(
         .upload(destinationPath, file, {
           cacheControl: "3600",
           upsert: true,
-          contentType: fileType || 'image/jpeg' // Ensure content type is set
+          contentType: file.type || 'application/octet-stream'
         });
 
       if (!uploadError) {
