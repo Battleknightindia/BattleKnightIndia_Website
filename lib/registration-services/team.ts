@@ -22,6 +22,7 @@ export async function createTeam(
     .single();
 
   if (error) {
+    console.error(`Database error creating team: ${error.message}`);
     throw new Error(`Database error creating team: ${error.message}`);
   }
 
@@ -59,6 +60,7 @@ export async function updateTeam(
     .single();
 
   if (teamError) {
+    console.error(`Database error checking team ownership: ${teamError.message}`);
     throw new Error(`Database error checking team ownership: ${teamError.message}`);
   }
 
@@ -81,6 +83,7 @@ export async function updateTeam(
     .eq('id', teamId);
 
   if (updateError) {
+    console.error(`Database error updating team: ${updateError.message}`);
     throw new Error(`Database error updating team: ${updateError.message}`);
   }
 }

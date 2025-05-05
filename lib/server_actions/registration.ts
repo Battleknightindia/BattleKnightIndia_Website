@@ -140,6 +140,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
       try {
         validateRegistrationData(registrationData);
       } catch (validationError) {
+        console.error("Validation error:", validationError);
         return {
           success: false,
           message: validationError instanceof Error ? validationError.message : "Invalid registration data. Please check all fields."
@@ -166,6 +167,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
             message: "Your team registration has been successfully updated!"
           };
         } catch (error: unknown) {
+          console.error("Update registration error:", error);
           if (error instanceof Error) {
             if (error.message.includes("auth")) {
               return {
@@ -204,6 +206,7 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
             message: "Your team has been successfully registered! You'll receive a confirmation email shortly."
           };
         } catch (error: unknown) {
+          console.error("New registration error:", error);
           if (error instanceof Error) {
             if (error.message.includes("auth")) {
               return {

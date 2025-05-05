@@ -119,6 +119,7 @@ export async function updatePlayers(
       .eq("id", id);
 
     if (error) {
+      console.error(`Database error updating player: ${error.message}`);
       throw new Error(`Database error updating player: ${error.message}`);
     }
   }
@@ -136,6 +137,7 @@ export async function createPlayers(
     .select();
 
   if (error) {
+    console.error(`Database error inserting players: ${error.message}`);
     throw new Error(`Database error inserting players: ${error.message}`);
   }
 }

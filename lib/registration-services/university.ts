@@ -29,6 +29,7 @@ export async function createUniversity(
     .single();
 
   if (error) {
+    console.error(`Database error creating university: ${error.message}`);
     throw new Error(`Database error creating university: ${error.message}`);
   }
 
