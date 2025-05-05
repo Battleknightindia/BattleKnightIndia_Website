@@ -113,7 +113,7 @@ export function VolunteerForm({ open, onOpenChange }: { open: boolean; onOpenCha
       console.error("Error during volunteer registration:", error)
        const submissionErrorElement = document.getElementById("form-error-message");
        if (submissionErrorElement) {
-          submissionErrorElement.textContent = "An unexpected error occurred during submission.";
+          submissionErrorElement.textContent = `An unexpected error occurred during submission. Possible causes: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`;
        }
     }
   }

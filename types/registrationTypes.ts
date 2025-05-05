@@ -4,26 +4,25 @@ export interface Player {
     id?: string; // UUID from DB
     team_id?: string | null; // UUID from DB
     university_id?: string | null; // UUID from DB
+    profile_id?: string | null; // UUID from DB
     created_at?: string; // Timestamp from DB
 
     // Fields collected in the form (required based on DB schema or form logic)
     name: string;
     ign: string;
     role: 'captain' | 'player' | 'substitute' | 'coach'; // Matches DB constraint
-
-    // Optional fields collected in the form
     game_id: string;
     server_id: string;
+
+    // Optional fields collected in the form
     email: string | null; // Email field (optional in DB schema)
     mobile: string | null; // Mobile field (optional in DB schema)
     city: string | null; // City field (optional in DB schema)
     state: string | null; // State field (optional in DB schema)
     device: string | null; // Device field (optional in DB schema)
-
+    
     // File fields (can hold File object in state before upload, string URL from DB after upload, or null)
     student_id_url: File | null;
-
-    // Add any other fields if your PlayerForm collects them
 }
 
 // Interface for the players section data (Record keyed by 1-based index)

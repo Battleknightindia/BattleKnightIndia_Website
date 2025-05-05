@@ -185,6 +185,14 @@ export function validateRegistrationData(data: RegistrationData): void {
     throw new Error("You must provide complete details for the Captain and 4 Players");
   }
 
+  // Validate file presence before processing
+  if (!data.universityLogo) {
+    throw new Error("University logo is required");
+  }
+  if (!data.teamLogo) {
+    throw new Error("Team logo is required");
+  }
+
   // Validate each player's data
   for (const player of data.players) {
     const isOptionalRole = player.index > 4;
@@ -199,21 +207,31 @@ export function validateRegistrationData(data: RegistrationData): void {
       if (!hasData) continue; // Skip validation if no data is provided
     }
 
-    playerService.validatePlayerData(
-      {
-        name: player.name,
-        ign: player.ign,
-        game_id: player.gameId,
-        server_id: player.serverId,
-        role: player.role,
-        email: player.email,
-        mobile: player.mobile,
-        city: player.city,
-        state: player.state,
-        device: player.device
-      },
-      player.index,
-      isOptionalRole
-    );
+    try {
+      playerService.validatePlayerData(
+        {
+          name: player.name,
+          ign: player.ign,
+          game_id: player.gameId,
+          server_id: player.serverId,
+          role: player.role,
+          email: player.email,
+          mobile: player.mobile,
+          city: player.city,
+          state: player.state,
+          device: player.device
+        },
+        player.index,
+        isOptionalRole
+      );
+    } catch (error) {
+      // Enhance error message with player role information
+      const playerRole = player.index === 0 ? "Captain" : 
+                        player.index === 5 ? "Substitute" :
+                        player.index === 6 ? "Coach" :
+                        `Player ${player.index + 1}`;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`${playerRole}: ${errorMessage}`);
+    }
   }
 }

@@ -19,7 +19,7 @@ export async function checkAndUploadFile(
 
   // Second check - validate file instance
   if (!(file instanceof File)) {
-    throw new Error('Invalid file object provided. Please try uploading again.');
+    throw new Error('Invalid file format. Please try uploading again.');
   }
 
   // Third check - validate file size
@@ -31,10 +31,18 @@ export async function checkAndUploadFile(
     throw new Error(`File ${file.name} exceeds maximum size of 5MB. Please upload a smaller file.`);
   }
 
-  // Fourth check - validate file type
+  // Fourth check - validate file type and ensure it's an image
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) {
-    throw new Error(`File ${file.name} must be a JPEG, PNG, or WebP image. Current type: ${file.type}`);
+  const fileType = file.type.toLowerCase();
+  
+  if (!fileType) {
+    // Some mobile browsers might not set the type correctly
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    if (!extension || !['jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
+      throw new Error(`File must be a JPEG, PNG, or WebP image. Current file: ${file.name}`);
+    }
+  } else if (!allowedTypes.includes(fileType)) {
+    throw new Error(`File must be a JPEG, PNG, or WebP image. Current type: ${fileType}`);
   }
 
   const supabase = await createClient();
@@ -70,26 +78,42 @@ export async function checkAndUploadFile(
       }
     }
 
-    // Upload new file
-    const { error: uploadError } = await supabase.storage
-      .from(bucketName)
-      .upload(destinationPath, file, {
-        cacheControl: "3600",
-        upsert: true, // Changed to true to ensure upload succeeds
-      });
+    // Upload new file with retry mechanism
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    while (retryCount <= maxRetries) {
+      const { error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(destinationPath, file, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: fileType || 'image/jpeg' // Ensure content type is set
+        });
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      if (uploadError.message.includes('auth')) {
-        throw new Error('Your session has expired. Please sign in again to upload files.');
+      if (!uploadError) {
+        break; // Success, exit retry loop
       }
-      if (uploadError.message.includes('quota')) {
-        throw new Error('Storage quota exceeded. Please contact support.');
+
+      if (uploadError) {
+        console.error(`Upload attempt ${retryCount + 1} failed:`, uploadError);
+        
+        if (retryCount === maxRetries) {
+          if (uploadError.message.includes('auth')) {
+            throw new Error('Your session has expired. Please sign in again to upload files.');
+          }
+          if (uploadError.message.includes('quota')) {
+            throw new Error('Storage quota exceeded. Please contact support.');
+          }
+          if (uploadError.message.includes('network')) {
+            throw new Error('Network error while uploading. Please check your connection and try again.');
+          }
+          throw new Error('Failed to upload file after multiple attempts. Please try again.');
+        }
       }
-      if (uploadError.message.includes('network')) {
-        throw new Error('Network error while uploading. Please check your connection and try again.');
-      }
-      throw new Error(`Failed to upload file: ${uploadError.message}. Please try again.`);
+      
+      retryCount++;
+      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
     }
 
     // Get public URL for the uploaded file
@@ -101,9 +125,7 @@ export async function checkAndUploadFile(
       throw new Error('Failed to get public URL for the uploaded file. Please try again.');
     }
 
-    // Success - return the public URL
     return publicUrlData.publicUrl;
-
   } catch (error: unknown) {
     console.error(`Error processing file upload for path '${destinationPath}':`, error);
     

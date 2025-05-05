@@ -59,27 +59,49 @@ export async function processPlayerFiles(
   const sanitizedTeamName = sanitizeFileName(teamName);
   const registrationBasePath = `${sanitizedUniName}/${sanitizedTeamName}`;
   const uploadedUrlsMap: Record<string, string> = {};
+  const uploadPromises: Promise<void>[] = [];
 
   for (const { file, index, field } of files) {
-    const fileExt = file.name.split(".").pop() || 'bin';
+    // Skip if no file is provided
+    if (!file) continue;
+
+    // Skip file upload for coach (index 6)
+    if (index === 6) continue;
+
+    const fileExt = file.name.split(".").pop()?.toLowerCase() || 'bin';
     const playerFileNameSegment = getPlayerFileNameSegment(index);
     const playerFileDestinationPath = `${registrationBasePath}/players/${playerFileNameSegment}/${
       playerFileNameSegment + "_id"
     }.${fileExt}`;
 
-    try {
-      const url = await checkAndUploadFile(
-        "registrations",
-        file,
-        playerFileDestinationPath
-      );
-      if (url) {
-        uploadedUrlsMap[`${index}_${field}`] = url;
+    const uploadPromise = (async () => {
+      try {
+        const url = await checkAndUploadFile(
+          "registrations",
+          file,
+          playerFileDestinationPath
+        );
+        if (url) {
+          uploadedUrlsMap[`${index}_${field}`] = url;
+        }
+      } catch (error) {
+        console.error(`File upload failed for player ${index}:`, error);
+        const playerRole = index === 0 ? "Captain" : 
+                         index === 5 ? "Substitute" :
+                         `Player ${index + 1}`;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`${playerRole}: ${errorMessage}`);
       }
-    } catch (error) {
-      console.error(`File upload failed for ${file.name}:`, error);
-      throw error;
-    }
+    })();
+
+    uploadPromises.push(uploadPromise);
+  }
+
+  // Wait for all uploads to complete
+  try {
+    await Promise.all(uploadPromises);
+  } catch (error) {
+    throw error; // Re-throw to be handled by the caller
   }
 
   return uploadedUrlsMap;

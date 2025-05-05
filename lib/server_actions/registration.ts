@@ -38,10 +38,18 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
   const universityName = formData.get("university_name") as string;
   const universityCity = formData.get("university_city") as string;
   const universityState = formData.get("university_state") as string;
-  const universityLogo = formData.get("university_logo") as File;
+  const universityLogo = formData.get("university_logo");
   const teamName = formData.get("team_name") as string;
-  const teamLogo = formData.get("team_logo") as File;
+  const teamLogo = formData.get("team_logo");
   const referralCode = formData.get("referral_code") as string || "";
+
+  // Validate file uploads
+  if (!(universityLogo instanceof File)) {
+    throw new Error("University logo must be a valid image file");
+  }
+  if (!(teamLogo instanceof File)) {
+    throw new Error("Team logo must be a valid image file");
+  }
 
   const players: ProcessedPlayerData[] = [];
   const files: { file: File; index: number; field: "student_id_url" }[] = [];
@@ -51,9 +59,11 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
     const role = formData.get(`player${i}_role`);
     if (!role) continue;
 
-    const studentIdFile = formData.get(`player${i}_student_id_url`) as File;
-    if (studentIdFile instanceof File) {
+    const studentIdFile = formData.get(`player${i}_student_id_url`);
+    if (studentIdFile && studentIdFile instanceof File) {
       files.push({ file: studentIdFile, index: i, field: "student_id_url" });
+    } else if (i !== 0 && i !== 6) { // Skip validation for captain and coach
+      throw new Error(`Student ID for Player ${i + 1} must be a valid image file`);
     }
 
     players.push({
@@ -67,7 +77,7 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
       city: formData.get(`player${i}_city`) as string,
       state: formData.get(`player${i}_state`) as string,
       device: formData.get(`player${i}_device`) as string,
-      student_id_url: formData.get(`player${i}_student_id_url`) as File,
+      student_id_url: studentIdFile as File,
     });
   }
 
@@ -98,129 +108,154 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
     }
 
     // Extract and process form data
-    const processedData = await processRegistrationFormData(formData);
-    
-    // Map processed data to match RegistrationData type
-    const registrationData: RegistrationData = {
-      universityName: processedData.universityName,
-      universityState: processedData.universityState,
-      universityCity: processedData.universityCity,
-      universityLogo: processedData.universityLogo,
-      teamName: processedData.teamName,
-      teamLogo: processedData.teamLogo,
-      referralCode: processedData.referralCode,
-      players: processedData.players.map((player, index) => ({
-        index,
-        name: player.name,
-        ign: player.ign,
-        gameId: player.game_id,
-        serverId: player.server_id,
-        role: player.role,
-        email: player.email,
-        mobile: player.mobile,
-        city: player.city,
-        state: player.state,
-        device: player.device,
-        student_id_url: processedData.files.find(f => f.index === index)?.file || null
-      }))
-    };
-
-    // Validate registration data
     try {
-      validateRegistrationData(registrationData);
-    } catch (validationError) {
+      const processedData = await processRegistrationFormData(formData);
+      
+      // Map processed data to match RegistrationData type
+      const registrationData: RegistrationData = {
+        universityName: processedData.universityName,
+        universityState: processedData.universityState,
+        universityCity: processedData.universityCity,
+        universityLogo: processedData.universityLogo,
+        teamName: processedData.teamName,
+        teamLogo: processedData.teamLogo,
+        referralCode: processedData.referralCode,
+        players: processedData.players.map((player, index) => ({
+          index,
+          name: player.name,
+          ign: player.ign,
+          gameId: player.game_id,
+          serverId: player.server_id,
+          role: player.role,
+          email: player.email,
+          mobile: player.mobile,
+          city: player.city,
+          state: player.state,
+          device: player.device,
+          student_id_url: processedData.files.find(f => f.index === index)?.file || null
+        }))
+      };
+
+      // Validate registration data
+      try {
+        validateRegistrationData(registrationData);
+      } catch (validationError) {
+        return {
+          success: false,
+          message: validationError instanceof Error ? validationError.message : "Invalid registration data. Please check all fields."
+        };
+      }
+
+      // Check if university and team already exist for this user
+      const { data: existingTeam, error: teamError } = await supabase
+        .from("teams")
+        .select("id, university_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (teamError && teamError.code !== 'PGRST116') {  // PGRST116 is the "not found" error
+        throw new Error("Failed to check existing team registration");
+      }
+
+      if (existingTeam) {
+        // Update existing registration
+        try {
+          await processRegistrationUpdate(registrationData, existingTeam.university_id, existingTeam.id, user.id);
+          return {
+            success: true,
+            message: "Your team registration has been successfully updated!"
+          };
+        } catch (error: any) {
+          if (error instanceof Error) {
+            if (error.message.includes("auth")) {
+              return {
+                success: false,
+                message: "Your session has expired. Please sign in again."
+              };
+            }
+            if (error.message.includes("storage") || error.message.includes("upload")) {
+              const errorMessage = error.message.includes("size") ? 
+                error.message : 
+                "Failed to upload files. Please ensure all files are valid images under 5MB.";
+              return {
+                success: false,
+                message: errorMessage
+              };
+            }
+            if (error.message.includes("Student ID") || error.message.includes("Captain")) {
+              return {
+                success: false,
+                message: error.message
+              };
+            }
+            return {
+              success: false,
+              message: error.message
+            };
+          }
+          throw error;
+        }
+      } else {
+        // Create new registration
+        try {
+          await processNewRegistration(registrationData, user.id);
+          return {
+            success: true,
+            message: "Your team has been successfully registered! You'll receive a confirmation email shortly."
+          };
+        } catch (error: any) {
+          if (error instanceof Error) {
+            if (error.message.includes("auth")) {
+              return {
+                success: false,
+                message: "Your session has expired. Please sign in again."
+              };
+            }
+            if (error.message.includes("storage") || error.message.includes("upload")) {
+              const errorMessage = error.message.includes("size") ? 
+                error.message : 
+                "Failed to upload files. Please ensure all files are valid images under 5MB.";
+              return {
+                success: false,
+                message: errorMessage
+              };
+            }
+            if (error.message.includes("duplicate")) {
+              return {
+                success: false,
+                message: "This team or university name is already registered. Please use a different name."
+              };
+            }
+            if (error.message.includes("Student ID") || error.message.includes("Captain")) {
+              return {
+                success: false,
+                message: error.message
+              };
+            }
+            return {
+              success: false,
+              message: error.message
+            };
+          }
+          throw error;
+        }
+      }
+    } catch (processingError) {
+      console.error("Form data processing error:", processingError);
       return {
         success: false,
-        message: validationError instanceof Error ? validationError.message : "Invalid registration data. Please check all fields."
+        message: processingError instanceof Error ? 
+          processingError.message : 
+          "Failed to process form data. Please check all fields and try again."
       };
-    }
-
-    // Check if university and team already exist for this user
-    const { data: existingTeam, error: teamError } = await supabase
-      .from("teams")
-      .select("id, university_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (teamError && teamError.code !== 'PGRST116') {  // PGRST116 is the "not found" error
-      throw new Error("Failed to check existing team registration");
-    }
-
-    if (existingTeam) {
-      // Update existing registration
-      try {
-        await processRegistrationUpdate(registrationData, existingTeam.university_id, existingTeam.id, user.id);
-        return {
-          success: true,
-          message: "Your team registration has been successfully updated!"
-        };
-      } catch (error) {
-        // Handle specific error types
-        if (error instanceof Error) {
-          if (error.message.includes("auth")) {
-            return {
-              success: false,
-              message: "Your session has expired. Please sign in again."
-            };
-          }
-          if (error.message.includes("storage") || error.message.includes("upload")) {
-            return {
-              success: false,
-              message: "Failed to upload files. Please check your image files and try again."
-            };
-          }
-          return {
-            success: false,
-            message: error.message
-          };
-        }
-        throw error;
-      }
-    } else {
-      // Create new registration
-      try {
-        await processNewRegistration(registrationData, user.id);
-        return {
-          success: true,
-          message: "Your team has been successfully registered! You'll receive a confirmation email shortly."
-        };
-      } catch (error) {
-        // Handle specific error types
-        if (error instanceof Error) {
-          if (error.message.includes("auth")) {
-            return {
-              success: false,
-              message: "Your session has expired. Please sign in again."
-            };
-          }
-          if (error.message.includes("storage") || error.message.includes("upload")) {
-            return {
-              success: false,
-              message: "Failed to upload files. Please check your image files and try again."
-            };
-          }
-          if (error.message.includes("duplicate")) {
-            return {
-              success: false,
-              message: "This team or university name is already registered. Please use a different name."
-            };
-          }
-          return {
-            success: false,
-            message: error.message
-          };
-        }
-        throw error;
-      }
     }
   } catch (error) {
     console.error("Registration error:", error);
-    
     return {
       success: false,
-      message: error instanceof Error 
-        ? `Registration error: ${error.message}`
-        : "An unexpected error occurred. Please try again or contact support."
+      message: error instanceof Error ? 
+        `Registration error: ${error.message}` : 
+        "An unexpected error occurred. Please try again or contact support."
     };
   }
 }
