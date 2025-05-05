@@ -1,4 +1,4 @@
-// ./app/step2/FormCard.tsx
+// ./app/register/components/FormCard.tsx
 "use client";
 
 import Image from "next/image";
@@ -79,9 +79,7 @@ const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
     team: parsed.team || { name: "", logo: null, referral_code: "" },
     players: Object.fromEntries(
       Object.entries(parsed.players || {}).map(([key, playerData]) => {
-        // Although parsed data comes from JSON, typing it as Partial<Player> is safer
-        // than 'any' if we were unsure of the structure. Since the original code
-        // had no explicit 'any' here, and 'Partial<Player>' fits, we'll keep it.
+        // Although parsed data comes from JSON, typing it as Partial<Player> is safer.
         const player = playerData as Partial<Player>;
         return [
           key,
@@ -98,7 +96,6 @@ const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
   };
 };
 
-// No 'any' type found or replaced in the function signature here.
 const FormContent = ({}: Record<string, never>): React.ReactElement => {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState<number>(1);
@@ -127,7 +124,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
             ...defaultPlayer,
             ...player,
             // Keep any existing file object if it wasn't reset by load, otherwise null
-            // No 'any' type found or replaced here. 'student_id_url' is of type File | null.
             student_id_url: prevData.players[key]?.student_id_url || null,
           };
         });
@@ -147,7 +143,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
   const [isSubmittingFinal, setIsSubmittingFinal] = useState<boolean>(false);
   const [finalSubmitError, setFinalSubmitError] = useState<string | null>(null);
 
-  // No 'any' type found or replaced in the function signature here.
   const handleDataChange = (
     step: "university" | "team",
     field: keyof UniversityStepData | keyof TeamStepData,
@@ -167,7 +162,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     setFinalSubmitError(null);
   };
 
-  // No 'any' type found or replaced in the function signature here.
   const handlePlayerDataChange = (
     playerIndex: number, // This index is 0-based from Step3 component
     field: keyof Player,
@@ -199,7 +193,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     setFinalSubmitError(null);
   };
 
-  // No 'any' type found or replaced in the function signature here.
+
   const handleTermsChange = (accepted: boolean): void => {
     setFormData((prevData: RegistrationFormData) => {
       const newData = {
@@ -217,7 +211,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     localStorage.removeItem("registrationFormData");
   };
 
-  // No 'any' type found or replaced in the function signature here.
   const handleNextStep = (): void => {
     setFinalSubmitError(null);
 
@@ -272,7 +265,8 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           // Check student ID for players 2-5
           if (!player.student_id_url && !isCaptain) {
              // Check if it's a File object or a non-empty string (if student_id_url could be a URL later)
-             const studentIdProvided = player.student_id_url instanceof File || (typeof player.student_id_url === 'string' && player.student_id_url !== '');
+             // FIX: Add null check before instanceof File
+             const studentIdProvided = (player.student_id_url !== null && player.student_id_url instanceof File) || (typeof player.student_id_url === 'string' && player.student_id_url !== '');
              if (!studentIdProvided) {
                  validationError = `Student ID proof (JPG/PNG/PDF) is required for ${displayName}.`;
                  break;
@@ -298,7 +292,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           // Validate substitute (player 6) if any data is filled
           const substitute = formData.players["6"];
           if (substitute) {
-            // No 'any' type found or replaced here.
             const hasAnySubstituteData = Object.entries(substitute).some(
               ([key, value]) => key !== 'role' && value !== null && value !== undefined && value !== ""
             );
@@ -321,7 +314,8 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
                 }
               }
                // Student ID is also required for substitute if any data is provided
-               const subStudentIdProvided = substitute.student_id_url instanceof File || (typeof substitute.student_id_url === 'string' && substitute.student_id_url !== '');
+               // FIX: Add null check before instanceof File
+               const subStudentIdProvided = (substitute.student_id_url !== null && substitute.student_id_url instanceof File) || (typeof substitute.student_id_url === 'string' && substitute.student_id_url !== '');
                if (!subStudentIdProvided && !validationError) {
                     validationError = `Student ID proof (JPG/PNG/PDF) is required for Substitute if any substitute information is provided.`;
                }
@@ -380,7 +374,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     }
   };
 
-  // No 'any' type found or replaced in the function signature here.
   const handleFinalSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
@@ -463,12 +456,10 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
       }
 
       // Add player files to formData
-      // CORRECTED LOGIC HERE
       const playerFiles = Object.entries(formData.players)
          // Filter for entries that have a player object and the student_id_url is a File
         .filter((entry): entry is [string, Player] => entry[1] !== undefined && entry[1]?.student_id_url instanceof File)
         // Map to extract the file and the correct player index
-        // No 'any' type found or replaced here. 'p' is of type Player.
         .map(([key, p]) => {
           const playerIndex = parseInt(key, 10); // Get the player index from the key ("1", "2", etc.)
           // Ensure the parsed index is valid and the file exists
@@ -482,7 +473,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
            return null; // Should be filtered out by the .filter() above, but good practice
         })
         // Filter out any potential nulls if the filter/map logic was complex
-        // No 'any' type found or replaced here.
         .filter((item): item is NonNullable<typeof item> => item !== null);
 
 
@@ -493,7 +483,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
         }
       });
 
-      // The type returned by registerTeam is inferred, no 'any' here.
       const result = await registerTeam(finalFormData);
 
       if (result.success) {
@@ -509,11 +498,9 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
          // If submission failed, save the form data again just in case
          saveFormToLocalStorage(formData);
       }
-    } catch (error) {
-      // In catch blocks, error can be 'unknown' if 'useUnknownInCatchVariables' is true in tsconfig.
-      // If not, it's 'any'. Explicitly typing it as 'unknown' is a good practice.
-      console.error("Registration submission error:", error);
+    } catch (error: unknown) { // Explicitly type error as unknown
       // When 'error' is 'unknown', you must narrow its type before accessing properties like 'message'.
+      console.error("Registration submission error:", error);
       setFinalSubmitError(
         error instanceof Error // Type narrowing check
           ? error.message
@@ -526,7 +513,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     }
   };
 
-  // No 'any' type found or replaced in the function signature here.
   const handleEdit = (section: string, index?: number | null): void => {
     setFinalSubmitError(null);
 
@@ -566,7 +552,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     }
   };
 
-  // No 'any' type found or replaced in the function signature here.
   const renderStepComponent = (): React.ReactNode => {
     switch (activeStep) {
       case 1:
@@ -697,7 +682,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
   );
 };
 
-// No 'any' type found or replaced in the function signature here.
 export default function FormCard(): React.ReactElement {
   return <FormContent />;
 }
