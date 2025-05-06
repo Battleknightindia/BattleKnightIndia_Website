@@ -187,14 +187,4 @@ export function validatePlayerData(
       throw new Error(`${field.replace('_', ' ').toUpperCase()} is required for ${displayName}.`);
     }
   }
-
-  // Email and mobile validation only for Captain (index 1)
-  if (index === 1) {
-    if (!playerData.email?.trim()) {
-      throw new Error(`EMAIL is required for ${displayName}.`);
-    }
-    if (!playerData.mobile?.trim()) {
-      throw new Error(`MOBILE is required for ${displayName}.`);
-    }
-  }
 }
