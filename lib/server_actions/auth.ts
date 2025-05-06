@@ -51,12 +51,12 @@ export async function loginWithEmail(formData: FormData) {
 
   if (error) {
     if (error.message.includes('Invalid credentials')) {
-      return redirect('/login?message=Hmm, that email and password combination doesn\'t seem right. Please double-check and try again.')
+      return redirect('/login?message=Hmm, that email and password combination doesn\'t seem right. Please double-check and try again. If you don\'t have an account, please sign up or use Google OAuth by clicking the Google icon.');
     } else if (error.message.includes('User not confirmed')) {
-      return redirect('/login?message=Almost there! Please verify your account by clicking the link we sent to your email address.')
+      return redirect('/login?message=Almost there! Please verify your account by clicking the link we sent to your email address by the name Supabase.');
     } else {
       console.error('Login error:', error.message);
-      return redirect('/login?message=Oops! Something went wrong during login. Please try again in a moment.')
+      return redirect('/login?message=Oops! Something went wrong during login. Please try again in a moment.');
     }
   }
 
