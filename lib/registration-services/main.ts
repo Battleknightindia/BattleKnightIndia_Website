@@ -80,13 +80,32 @@ export async function processRegistrationUpdate(
     const playersToCreate: playerService.PlayerData[] = [];
 
     for (const player of data.players) {
+      console.log("Processing player data:", player);
+
+      // Validate player data before processing
+      try {
+        validateRegistrationData({
+          universityName: data.universityName,
+          teamName: data.teamName,
+          players: [player],
+          universityState: data.universityState,
+          universityCity: data.universityCity,
+          universityLogo: data.universityLogo,
+          teamLogo: data.teamLogo,
+          referralCode: data.referralCode,
+        });
+      } catch (validationError) {
+        console.error("Validation error for player:", player, validationError);
+        throw validationError;
+      }
+
       const existingId = existingPlayersMap.get(player.gameId);
       const playerData: playerService.PlayerData = {
         team_id: teamId,
         university_id: universityId,
         game_id: player.gameId,
         server_id: player.serverId,
-        ign: player.ign,
+        ign: player.ign || "Unknown IGN", // Fallback value for ign
         name: player.name,
         role: player.role,
         email: player.email,

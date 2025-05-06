@@ -311,6 +311,12 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           }
           if (validationError) break; // Exit inner field loop
 
+          // Add validation to ensure ign is not empty before submission
+          if (!player.ign) {
+            validationError = `${displayName} IGN is required.`;
+            break;
+          }
+
           // Check student ID for players 1-5 (now required for all of them, INCLUDING CAPTAIN)
           if (player.student_id_url === null) {
              validationError = `Student ID proof (JPG/PNG/PDF) is required for ${displayName}.`;

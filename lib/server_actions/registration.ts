@@ -120,22 +120,27 @@ export async function registerTeam(formData: FormData): Promise<{ success: boole
         teamName: processedData.teamName,
         teamLogo: processedData.teamLogo,
         referralCode: processedData.referralCode,
-        players: processedData.players.map((player, index) => ({
-          index,
-          name: player.name,
-          ign: player.ign,
-          gameId: player.game_id,
-          serverId: player.server_id,
-          role: player.role,
-          email: player.email,
-          mobile: player.mobile,
-          city: player.city,
-          state: player.state,
-          device: player.device,
-          // student_id_url comes from the files array, populated in processRegistrationFormData
-          // based on whether a valid File was provided.
-          student_id_url: processedData.files.find(f => f.index === index)?.file || null
-        }))
+        players: processedData.players.map((player, index) => {
+          // Log the ign field to verify its presence after form submission
+          console.log("Player IGN:", player.ign);
+
+          return {
+            index,
+            name: player.name,
+            ign: player.ign,
+            gameId: player.game_id,
+            serverId: player.server_id,
+            role: player.role,
+            email: player.email,
+            mobile: player.mobile,
+            city: player.city,
+            state: player.state,
+            device: player.device,
+            // student_id_url comes from the files array, populated in processRegistrationFormData
+            // based on whether a valid File was provided.
+            student_id_url: processedData.files.find(f => f.index === index)?.file || null
+          };
+        })
       };
 
       // Validate registration data
