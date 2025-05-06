@@ -468,7 +468,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
 
      // Re-validate other steps before final submission, just to be safe
      let finalValidationErrors: string | null = null;
-     const MAX_FILE_SIZE = 150 * 1024; // 200 KB // Define again for this function
+     const MAX_FILE_SIZE = 200 * 1024; // 200 KB // Define again for this function
 
      // Check step 1 validity (presence and type)
      if (!formData.university.name || !formData.university.city || !formData.university.state || !(formData.university.logo instanceof File)) {

@@ -23,12 +23,12 @@ export async function checkAndUploadFile(
   }
 
   // Third check - validate file size
-  const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+  const maxSize = 200 * 1024; // 200KB in bytes
   if (file.size === 0) {
     throw new Error(`The file appears to be empty. Please select a valid file.`);
   }
   if (file.size > maxSize) {
-    throw new Error(`File ${file.name} exceeds maximum size of 5MB. Please upload a smaller file.`);
+    throw new Error(`File ${file.name} exceeds maximum size of 200KB. Please upload a smaller file.`);
   }
 
   const supabase = await createClient();
