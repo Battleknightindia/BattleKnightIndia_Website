@@ -430,12 +430,6 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
               }
               if (validationError) break; // Exit if basic fields validation failed
 
-              // Require the file itself if *any* data (basic or file) was provided
-              if (!subHasFile) {
-                validationError = `Student ID proof (JPG/PNG/PDF) is required for Substitute if any information is provided.`;
-              }
-              if (validationError) break; // Exit if file is missing
-
               // --- File Size Validation for Student ID (Substitute) ---
               // Check size ONLY if a file is actually present - FIX APPLIED HERE
               if (
