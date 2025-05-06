@@ -65,9 +65,6 @@ export async function processPlayerFiles(
     // Skip if no file is provided
     if (!file) continue;
 
-    // Skip file upload for coach (index 6)
-    if (index === 6) continue;
-
     const fileExt = file.name.split(".").pop()?.toLowerCase() || 'bin';
     const playerFileNameSegment = getPlayerFileNameSegment(index);
     const playerFileDestinationPath = `${registrationBasePath}/players/${playerFileNameSegment}/${
