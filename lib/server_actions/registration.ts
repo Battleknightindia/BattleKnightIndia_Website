@@ -55,20 +55,15 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
   const files: { file: File; index: number; field: "student_id_url" }[] = [];
 
   // Process player data from form
-  for (let i = 0; i < 7; i++) {
+  for (let i = 1; i <= 7; i++) { // Adjusted for 1-based index
     const role = formData.get(`player${i}_role`);
     if (!role) continue;
 
     const studentIdFile = formData.get(`player${i}_student_id_url`);
 
-    // Check if a file was provided and if it is a File instance
-    // If it is a File, add it to the files array for later upload processing.
-    // The validation check for whether the student ID is *required*
-    // or if it must be a *valid image* is removed here as requested.
     if (studentIdFile instanceof File) {
-      files.push({ file: studentIdFile, index: i, field: "student_id_url" });
-    } 
-    // Removed: else if (i !== 0 && i !== 6) { ... throw error ... }
+      files.push({ file: studentIdFile, index: i, field: "student_id_url" }); // Adjusted for 1-based index
+    }
 
     players.push({
       name: formData.get(`player${i}_name`) as string,
@@ -81,8 +76,8 @@ export async function processRegistrationFormData(formData: FormData): Promise<P
       city: formData.get(`player${i}_city`) as string,
       state: formData.get(`player${i}_state`) as string,
       device: formData.get(`player${i}_device`) as string,
-      // Assign the file if it's a File instance, otherwise null
       student_id_url: studentIdFile instanceof File ? studentIdFile : null,
+      index: i, // Adjusted for 1-based index
     });
   }
 

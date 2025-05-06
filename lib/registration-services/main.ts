@@ -13,7 +13,7 @@ interface RegistrationData {
   teamLogo: File | null;
   referralCode: string | null;
   players: {
-    index: number;
+    index: number; // Adjusted to use 1-based index
     name: string;
     ign: string;
     gameId: string;
@@ -200,7 +200,7 @@ export function validateRegistrationData(data: RegistrationData): void {
   }
 
   // Validate required players (Captain + 4 Players)
-  const requiredPlayers = data.players.filter(p => p.index >= 0 && p.index <= 4);
+  const requiredPlayers = data.players.filter(p => p.index >= 1 && p.index <= 5);
   if (requiredPlayers.length < 5) {
     throw new Error("You must provide complete details for the Captain and 4 Players");
   }
@@ -215,7 +215,7 @@ export function validateRegistrationData(data: RegistrationData): void {
 
   // Validate each player's data
   for (const player of data.players) {
-    const isOptionalRole = player.index > 4;
+    const isOptionalRole = player.index > 5;
     
     // For optional roles (Substitute/Coach), check if any data is provided
     if (isOptionalRole) {
@@ -246,10 +246,10 @@ export function validateRegistrationData(data: RegistrationData): void {
       );
     } catch (error) {
       // Enhance error message with player role information
-      const playerRole = player.index === 0 ? "Captain" : 
-                        player.index === 5 ? "Substitute" :
-                        player.index === 6 ? "Coach" :
-                        `Player ${player.index + 1}`;
+      const playerRole = player.index === 1 ? "Captain" : 
+                        player.index === 6 ? "Substitute" :
+                        player.index === 7 ? "Coach" :
+                        `Player ${player.index}`;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`${playerRole}: ${errorMessage}`);
     }

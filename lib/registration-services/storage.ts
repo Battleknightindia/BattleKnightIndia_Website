@@ -1,4 +1,3 @@
-
 import { createClient } from '@/utils/supabase/server';
 
 export const sanitizeFileName = (name: string | null | undefined): string => {
@@ -65,40 +64,41 @@ export async function checkAndUploadFile(
       }
     }
 
+    // Adjust cache control for faster access
+    const cacheControlValue = "public, max-age=31536000"; // 1 year caching
+
     // Upload new file with retry mechanism
     let retryCount = 0;
-    const maxRetries = 2;
-    
-    while (retryCount <= maxRetries) {
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(destinationPath, file, {
-          cacheControl: "3600",
+          cacheControl: cacheControlValue,
           upsert: true,
-          contentType: file.type || 'application/octet-stream'
+          contentType: file.type || 'application/octet-stream',
         });
 
       if (!uploadError) {
         break; // Success, exit retry loop
       }
 
-      if (uploadError) {
-        console.error(`Upload attempt ${retryCount + 1} failed:`, uploadError);
-        
-        if (retryCount === maxRetries) {
-          if (uploadError.message.includes('auth')) {
-            throw new Error('Your session has expired. Please sign in again to upload files.');
-          }
-          if (uploadError.message.includes('quota')) {
-            throw new Error('Storage quota exceeded. Please contact support.');
-          }
-          if (uploadError.message.includes('network')) {
-            throw new Error('Network error while uploading. Please check your connection and try again.');
-          }
-          throw new Error('Failed to upload file after multiple attempts. Please try again.');
+      console.error(`Retry ${retryCount + 1} failed:`, uploadError);
+
+      if (retryCount === maxRetries - 1) {
+        if (uploadError.message.includes('auth')) {
+          throw new Error('Your session has expired. Please sign in again to upload files.');
         }
+        if (uploadError.message.includes('quota')) {
+          throw new Error('Storage quota exceeded. Please contact support.');
+        }
+        if (uploadError.message.includes('network')) {
+          throw new Error('Network error while uploading. Please check your connection and try again.');
+        }
+        throw new Error('Failed to upload file after multiple attempts. Please try again.');
       }
-      
+
       retryCount++;
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
     }
@@ -115,7 +115,7 @@ export async function checkAndUploadFile(
     return publicUrlData.publicUrl;
   } catch (error: unknown) {
     console.error(`Error processing file upload for path '${destinationPath}':`, error);
-    
+
     if (error instanceof Error) {
       // Preserve user-friendly error messages
       if (error.message.includes('Please')) {
@@ -124,7 +124,7 @@ export async function checkAndUploadFile(
       // Wrap other errors with a user-friendly message
       throw new Error(`File upload failed: ${error.message}. Please try again.`);
     }
-    
+
     // Handle unknown errors
     throw new Error('An unexpected error occurred during file upload. Please try again.');
   }

@@ -19,18 +19,18 @@ export interface PlayerData {
 }
 
 export const getPlayerRoleDisplayName = (index: number): string => {
-  if (index === 0) return "Captain";
-  if (index >= 1 && index <= 4) return `Player ${index + 1}`;
-  if (index === 5) return "Substitute";
-  if (index === 6) return "Coach";
-  return `Unknown Member ${index + 1}`;
+  if (index === 1) return "Captain"; // Adjusted for 1-based index
+  if (index >= 2 && index <= 5) return `Player ${index}`; // Adjusted for 1-based index
+  if (index === 6) return "Substitute"; // Adjusted for 1-based index
+  if (index === 7) return "Coach"; // Adjusted for 1-based index
+  return `Unknown Member ${index}`;
 };
 
 export const getPlayerFileNameSegment = (index: number): string => {
-  if (index === 0) return "captain";
-  if (index >= 1 && index <= 4) return `player${index + 1}`;
-  if (index === 5) return "substitute";
-  if (index === 6) return "coach";
+  if (index === 1) return "captain"; // Adjusted for 1-based index
+  if (index >= 2 && index <= 5) return `player${index}`; // Adjusted for 1-based index
+  if (index === 6) return "substitute"; // Adjusted for 1-based index
+  if (index === 7) return "coach"; // Adjusted for 1-based index
   return `unknown${index}`;
 };
 
@@ -86,9 +86,9 @@ export async function processPlayerFiles(
         }
       } catch (error) {
         console.error(`File upload failed for player ${index}:`, error);
-        const playerRole = index === 0 ? "Captain" : 
-                         index === 5 ? "Substitute" :
-                         `Player ${index + 1}`;
+        const playerRole = index === 1 ? "Captain" : 
+                         index === 6 ? "Substitute" :
+                         `Player ${index}`;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`${playerRole}: ${errorMessage}`);
       }
@@ -151,7 +151,7 @@ export function validatePlayerData(
   const requiredFields = ['name', 'ign', 'game_id', 'server_id', 'role'] as const;
   
   if (isOptionalRole) {
-    // For substitute (index 5) and coach (index 6)
+    // For substitute (index 6) and coach (index 7)
     const hasAnyData = Object.entries(playerData).some(([key, value]) => {
       if (key === 'role') return false; // Skip role field in the check
       return value !== null && value !== undefined && value !== "";
@@ -162,7 +162,7 @@ export function validatePlayerData(
     }
 
     // For coach specifically
-    if (index === 6) {
+    if (index === 7) {
       const requiredCoachFields = ['name', 'ign', 'game_id', 'server_id', 'email', 'mobile'] as const;
       const hasPartialData = requiredCoachFields.some(field => 
         playerData[field] !== null && playerData[field] !== undefined && playerData[field] !== ""
@@ -188,8 +188,8 @@ export function validatePlayerData(
     }
   }
 
-  // Email and mobile validation only for Captain (index 0)
-  if (index === 0) {
+  // Email and mobile validation only for Captain (index 1)
+  if (index === 1) {
     if (!playerData.email?.trim()) {
       throw new Error(`EMAIL is required for ${displayName}.`);
     }

@@ -8,7 +8,7 @@ import Image from 'next/image';
 
 // Import the data fetching function from your volunteersData.ts file
 // Adjust the import path as necessary based on your project structure
-import { fetchTeamsByReferralCodeAndCaptainData } from "@/lib/volunteersData"; // <<< ADJUST PATH
+import { fetchTeamsByReferralCodeAndCaptainData, fetchvolunteerData } from "@/lib/volunteersData"; // <<< ADJUST PATH
 
 // getStatusBadge is defined and will be called in the JSX
 // Using the getStatusBadge implementation provided by the user
@@ -53,22 +53,23 @@ const ReferredTeamsSection: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true); // State to indicate loading status
   const [error, setError] = useState<string | null>(null); // State to hold any error messages
 
-  // Assume the referral_code is available here, e.g., from context, props, or a constant
-  // As per your instruction, we assume referralCode is available in this scope.
-  // Replace "YOUR_STATIC_REFERRAL_CODE" with how you obtain the referral code if it's not a constant
-  const referralCode = "YOUR_STATIC_REFERRAL_CODE"; // <<< IMPORTANT: Ensure this variable holds the correct referral code
-
-  // useEffect to fetch data when the component mounts or referralCode changes
+  // useEffect to fetch data when the component mounts
   useEffect(() => {
     const loadTeams = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Call the imported data fetching function
+        // Fetch the referral code dynamically
+        const volunteerData = await fetchvolunteerData();
+        if (!volunteerData?.referral_code) {
+          throw new Error("Referral code not found for the logged-in user.");
+        }
+
+        // Call the imported data fetching function with the referral code
         const fetchedTeams = await fetchTeamsByReferralCodeAndCaptainData();
         setTeams(fetchedTeams); // Store all fetched teams
         setFilteredTeams(fetchedTeams); // Initially, filtered teams are all fetched teams
-      } catch (err: unknown) { // Use 'any' or a more specific error type if known
+      } catch (err: unknown) {
         console.error("Failed to fetch referred teams:", err);
         setError(`Failed to load referred teams: ${(err as Error)?.message || 'Unknown error'}`);
       } finally {
@@ -76,15 +77,8 @@ const ReferredTeamsSection: React.FC = () => {
       }
     };
 
-    // Only load teams if referralCode is available (optional, but good practice if referralCode might be initially null/undefined)
-    if (referralCode) {
-        loadTeams();
-    } else {
-        setLoading(false); // Stop loading if no referral code is available
-        setError("Referral code not provided.");
-    }
-
-  }, [referralCode]); // Re-run effect if referralCode changes
+    loadTeams(); // Call the function to load teams
+  }, []); // Removed dependency on hardcoded referralCode
 
   // useEffect to filter teams based on search query
   useEffect(() => {
