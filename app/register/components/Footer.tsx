@@ -13,7 +13,7 @@ const TournamentFooter = () => {
             Update the src path to your logo file.
           */}
           <img
-            src="/path/to/your/logo.png" // <--- !!! UPDATE THIS PATH !!!
+            src="/path/to/your/logo.png" // <--- !!! UPDATE THIS PATH !!
             alt="National College Cup Logo"
             className="h-16 w-auto md:mr-6 mb-4 md:mb-0"
           />
