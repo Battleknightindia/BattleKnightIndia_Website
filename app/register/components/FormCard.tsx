@@ -116,7 +116,7 @@ const loadFormFromLocalStorage = (): Partial<RegistrationFormData> | null => {
 // Helper function for image compression
 const compressImage = async (file: File): Promise<File> => {
   const options = {
-    maxSizeMB: 0.2, // Target size of 200KB
+    maxSizeMB: 0.15, // Target size of 200KB
     maxWidthOrHeight: 1024, // Resize to a maximum dimension of 1024px
     useWebWorker: true,
   };
@@ -281,7 +281,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
     setFinalSubmitError(null);
 
     let validationError: string | null = null;
-    const MAX_FILE_SIZE = 200 * 1024; // 200 KB
+    const MAX_FILE_SIZE = 150 * 1024; // 200 KB
 
     switch (activeStep) {
       case 1:

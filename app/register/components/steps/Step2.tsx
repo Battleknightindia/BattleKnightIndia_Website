@@ -130,7 +130,7 @@ export default function Step2({ data, onDataChange }: Step2Props) {
                     id="team-logo"
                     accept="image/*"
                     onFileSelect={handleFileChange}
-                    helpText="Upload your team logo (PNG or JPG, max 5MB)"
+                    helpText="Upload your team logo (PNG or JPG, max 150KB)"
                     currentFile={data.logo}
                 />
                 {data.logo instanceof File && <p className="text-sm text-white/70">Selected file: {data.logo.name}</p>}

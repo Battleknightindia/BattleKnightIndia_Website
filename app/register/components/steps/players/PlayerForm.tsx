@@ -235,11 +235,7 @@ export function PlayerForm({
               id={`player-${playerIndex}-studentId`} // Add ID for label association
               accept="image/*" // Or adjust based on allowed file types for ID cards
               onFileSelect={(file) => handleFileChange("student_id_url", file)} // Call local handler (which calls parent)
-              helpText={
-                isCoach
-                  ? "Upload college/university ID card or any valid government ID"
-                  : "Upload student ID card"
-              }
+              helpText={" Upload your ID card (PNG or JPG, max 150KB)"}
               currentFile={player.student_id_url} // Pass current file/URL for preview
               // disabled={isSubmittingFinal} // Optional: Disable file uploader
             />

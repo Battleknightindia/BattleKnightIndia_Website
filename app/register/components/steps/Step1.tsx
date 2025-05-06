@@ -140,7 +140,7 @@ export default function Step1({ data, onDataChange }: Step1Props) {
           id="university-logo" // Pass ID for accessibility
           accept="image/*"
           onFileSelect={handleFileChange} // Call local handler (which calls parent)
-          helpText="Upload your university logo (PNG or JPG, max 5MB)"
+          helpText="Upload your university logo (PNG or JPG, max 150KB)"
           // Pass the current file/URL down for FileUploader to display preview logic internally if it supports it
           // currentFile={data.logo} // If FileUploader has a value/currentFile prop
         />
