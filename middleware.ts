@@ -4,7 +4,7 @@ import { updateSession } from '@/utils/supabase/middleware'
 import { createClient } from '@/utils/supabase/server'; 
 
 export async function middleware(request: NextRequest) {
-  const response = await updateSession(request);
+  const response = await updateSession(request)
 
   const supabase = await createClient(); 
 
@@ -27,18 +27,15 @@ export async function middleware(request: NextRequest) {
   if (user && !isExcluded) {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('user_id, is_volunteer')
+      .select('user_id')
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (profileError && profileError.code !== 'PGRST116') {
+    if (profileError && profileError.code !== 'PGRST116') { //&& profileError.code !== 'PGRST116'
       console.error('Middleware profile check error:', profileError);
     } else if (!profile) {
       console.log(`Middleware: User ${user.id} missing profile, redirecting to /complete-profile from ${pathname}`);
-      return NextResponse.redirect(new URL('/complete-profile', request.url));
-    } else if (pathname.startsWith('/volunteers') && !profile.is_volunteer) {
-      console.log(`Middleware: User ${user.id} is not a volunteer, access denied to /volunteers`);
-      return new NextResponse('You haven\'t registered as a volunteer, therefore you are not allowed to enter.', { status: 403 });
+      return NextResponse.redirect(new URL('/complete-profile', request.url))
     }
   }
 
@@ -47,6 +44,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-};
+}
