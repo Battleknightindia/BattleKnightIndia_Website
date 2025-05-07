@@ -6,22 +6,16 @@ import AboutSection from "@/components/AboutSection";
 import NorthEastCup from "@/components/NorthEastCup";
 import CosplaySection from "@/components/CosplaySection";
 import Footer from "@/components/Footer";
-import { VolunteerForm } from "@/components/VolunteerForm";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { ProfileCard } from "@/components/EditProfile";
 import { useProfile } from "@/hooks/useProfile";
 import NavBar from "@/components/NavBar";
-import { DiamondFab } from "@/components/VolunteerJoin";
-import { isVolunteer } from "@/utils/volunteer_helper";
-import { SlideInNotification } from "@/components/VolunteerNotification";
 
 export default function Home() {
   const supabase = createClient();
   const [refreshProfileKey, setRefreshProfileKey] = useState(0);
-  const { profile, loading } = useProfile();
   const [showForceProfile, setShowForceProfile] = useState(false);
-  const [showForm, setShowForm] = useState(false)
 
   // Removed unused function: handleOpenForm
 
@@ -72,15 +66,6 @@ export default function Home() {
         forceCompletion={true}
         onProfileUpdate={handleProfileUpdate}
       />
-      {!isVolunteer(profile) && (
-        <>
-          {/* Directly calling setShowForm(true) */}
-          <DiamondFab onOpenForm={() => setShowForm(true)} />
-          {/* Directly calling setShowForm(true) */}
-          <SlideInNotification onOpenForm={() => setShowForm(true)} />
-        </>
-      )}
-      <VolunteerForm open={showForm} onOpenChange={setShowForm} />
     </>
   );
 }
