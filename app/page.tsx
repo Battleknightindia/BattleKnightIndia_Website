@@ -15,6 +15,7 @@ import NavBar from "@/components/NavBar";
 export default function Home() {
   const supabase = createClient();
   const [refreshProfileKey, setRefreshProfileKey] = useState(0);
+  const { profile, loading } = useProfile();
   const [showForceProfile, setShowForceProfile] = useState(false);
 
   // Removed unused function: handleOpenForm
