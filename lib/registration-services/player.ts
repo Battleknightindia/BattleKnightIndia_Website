@@ -179,8 +179,8 @@ export async function updatePlayers(
     const { id, ...updateData } = player;
 
     // Remove undefined fields from updateData before sending to Supabase
-    // FIX: Assert that key is a valid key of updateData
-    Object.keys(updateData).forEach((key: keyof typeof updateData) => {
+    // FIX: Cast Object.keys result to (keyof typeof updateData)[]
+    (Object.keys(updateData) as (keyof typeof updateData)[]).forEach((key) => {
         if (updateData[key] === undefined) {
             delete updateData[key];
         }
