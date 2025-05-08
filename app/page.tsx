@@ -10,7 +10,7 @@ import { createClient } from "@/utils/supabase/client";
 import { ProfileCard } from "@/components/EditProfile";
 import { useProfile } from "@/hooks/useProfile";
 import NavBar from "@/components/NavBar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 export default function Home() {
   const supabase = createClient();
   const [refreshProfileKey, setRefreshProfileKey] = useState(0);
