@@ -74,6 +74,7 @@ export async function findExistingPlayers(
 }
 
 // Modified to use Promise.allSettled and return map of successful uploads
+// Replaced 'any' with 'unknown' in error handling
 export async function processPlayerFiles(
   files: { file: File; index: number; field: "student_id_url" }[], // index is 1-based
   universityName: string,
@@ -84,7 +85,8 @@ export async function processPlayerFiles(
   // Construct the base path for files related to this registration
   const registrationBasePath = `${sanitizedUniName}/${sanitizedTeamName}`;
   const uploadedUrlsMap: Record<string, string> = {};
-  const uploadPromises: Promise<{ key: string; status: string; value?: string; reason?: any }>[] = [];
+  // Use unknown for potential rejection reasons
+  const uploadPromises: Promise<{ key: string; status: string; value?: string; reason?: unknown }>[] = [];
 
   for (const { file, index, field } of files) {
     // This check might be redundant due to filtering in main.ts, but safe
@@ -122,13 +124,14 @@ export async function processPlayerFiles(
             } else {
                 // checkAndUploadFile returned null, treat as a handled failure
                 console.warn(`checkAndUploadFile returned null for player index ${index}, field ${field}.`);
+                // Return a rejected status with a clear error
                 return { status: 'rejected', key, reason: new Error(`Upload returned null URL`) };
             }
-        } catch (error: any) {
+        } catch (error: unknown) { // Changed any to unknown here
             // Catch errors thrown by checkAndUploadFile
             console.error(`File upload task failed for player index ${index}, field ${field}:`, error);
             // Return a rejected status with the error
-            return { status: 'rejected', key, reason: error };
+            return { status: 'rejected', key, reason: error }; // reason is already unknown here
         }
     };
 
@@ -146,14 +149,16 @@ export async function processPlayerFiles(
       // The result object shape is based on what the uploadTask async function returns
       if (result.status === 'fulfilled') {
           // result.value contains the object { status: 'fulfilled', key, value: url }
+          // Cast to a more specific type if needed, but the properties are known here
           const { key, value: url } = result.value as { key: string; value: string };
           uploadedUrlsMap[key] = url;
           console.log(`Processed fulfilled upload for key ${key}. URL: ${url}`);
-      } else {
+      } else { // result.status === 'rejected'
            // result.reason contains the error object from the catch block in uploadTask
-          const { key, reason } = result.value as { key: string; reason: any };
+           // reason is of type unknown from the PromiseSettledResult type
+          const { key, reason } = result.reason as { key: string; reason: unknown }; // reason is already unknown
           console.error(`Processed rejected upload for key ${key}. Reason:`, reason);
-           // Note: We are not throwing here, just logging. Required file check happens later.
+           // Note: We are not throwing here, just logging. Required file check happens later in main.ts.
       }
   });
 
