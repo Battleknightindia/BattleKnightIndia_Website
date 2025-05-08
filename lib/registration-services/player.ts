@@ -175,9 +175,16 @@ export async function updatePlayers(
    // Simple loop for now:
   console.log(`Attempting to update ${players.length} player(s).`);
   for (const player of players) {
-    const { id, ...updateData } = player; // Extract id, rest is update data
-    // Remove undefined fields from updateData to avoid Supabase errors if strict
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+    // Destructure id, the rest is updateData
+    const { id, ...updateData } = player;
+
+    // Remove undefined fields from updateData before sending to Supabase
+    // FIX: Assert that key is a valid key of updateData
+    Object.keys(updateData).forEach((key: keyof typeof updateData) => {
+        if (updateData[key] === undefined) {
+            delete updateData[key];
+        }
+    });
 
     const { error } = await supabase
       .from("players")
