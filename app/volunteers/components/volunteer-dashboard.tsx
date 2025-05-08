@@ -64,7 +64,7 @@ export function Volunteer() {
   }, [supabase.auth]); // Added supabase.auth here
 
   const copyReferralCode = () => {
-    navigator.clipboard.writeText(volunteerData.referralCode);
+    navigator.clipboard.writeText(volunteer?.referral_code || "Not Registered");
     toast(REFERRALTOAST);
   };
 
