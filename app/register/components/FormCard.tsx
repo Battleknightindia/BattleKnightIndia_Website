@@ -568,6 +568,9 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
           finalFormData.append(`player${i}_role`, player.role);
           // Only append if the value is not null/undefined and not an empty string,
           // except for file fields which are handled separately below
+	  if (i > 5 && !player.name){
+           continue;
+	  }
           if (player.name) finalFormData.append(`player${i}_name`, player.name);
           if (player.ign) finalFormData.append(`player${i}_ign`, player.ign);
           if (player.game_id) finalFormData.append(`player${i}_game_id`, player.game_id);
