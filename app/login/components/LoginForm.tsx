@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -21,28 +22,20 @@ export function LoginForm({
       <Card className="bg-zinc-950 text-white">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Login</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-center">
             Choose your preferred method to login
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex flex-col gap-6">
-
-              <div className="relative text-center text-sm text-gray-400 after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-gray-700">
-                <span className="relative z-10 bg-zinc-950 px-2 text-gray-400">Continue with</span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <OAuthButtons />
-              </div>
-            </div>
+          <div className="flex justify-center items-center">
+            <OAuthButtons />
+          </div>
         </CardContent>
       </Card>
 
       <div className="text-center text-xs text-muted-foreground">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our <a href="#" className="underline hover:text-primary">Terms of Service</a> and <a href="#" className="underline hover:text-primary">Privacy Policy</a>.
       </div>
     </div>
   );
 }
-
