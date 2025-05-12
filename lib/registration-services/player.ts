@@ -95,12 +95,6 @@ export async function processPlayerFiles(
         continue;
     }
 
-    // Adjust to 1-based indexing: Skip file upload for coach (index 7)
-    if (index === 7) {
-        console.log(`Skipping student ID file upload for Coach (index ${index}). Student ID is optional for Coach.`);
-        continue;
-    }
-
     // Get the file segment name using the 1-based index
     const playerFileNameSegment = getPlayerFileNameSegment(index); // This now uses 1-based index
     // Construct the destination path within the storage bucket

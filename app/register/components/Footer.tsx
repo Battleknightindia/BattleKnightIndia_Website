@@ -33,7 +33,7 @@ const TournamentFooter = () => {
           <div className="flex justify-center gap-6">
             {/* Discord Icon (SVG) */}
             <a
-              href="https://discord.gg/UW4YWvR5QR" // <--- !!! UPDATE WITH ACTUAL LINK !!!
+              href="https://discord.gg/EWXeFK3VhP" // <--- !!! UPDATE WITH ACTUAL LINK !!!
               target="_blank"
               rel="noopener noreferrer"
               className="w-12 h-12 rounded-full bg-[#5865F2] flex items-center justify-center transition-colors hover:bg-blue-700"
