@@ -51,7 +51,7 @@ const TournamentFooter = () => {
             </a>
             {/* WhatsApp Icon (SVG) */}
             <a
-              href="https://chat.whatsapp.com/K5BXRXVVy1N7lgCQSEzXey" // <--- !!! UPDATE WITH ACTUAL LINK !!!
+              href="https://chat.whatsapp.com/K5BXRXVVy1N7lgCQSEzXey"
               target="_blank"
               rel="noopener noreferrer"
               className="w-12 h-12 rounded-full bg-[#25D366] flex items-center justify-center transition-colors hover:bg-green-600"
