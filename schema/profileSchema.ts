@@ -1,3 +1,4 @@
+// ../schema/profileSchema.ts
 import { z } from "zod";
 
 export const editprofileSchema = z.object({
@@ -6,10 +7,9 @@ export const editprofileSchema = z.object({
   gameId: z.string().min(1),
   serverId: z.string().min(1),
   roles: z.string().min(1),
-  state: z.string().optional(), // Note: .optional().nullable() might be better here too if empty string/null is possible
-  city: z.string().optional(),   // Note: .optional().nullable() might be better here too if empty string/null is possible
-
-  profileImage: z.string().optional().nullable(), // <-- Changed this line
+  state: z.string().optional(),
+  city: z.string().optional(),
+  profileImage: z.string().optional().nullable(),
 });
 
 // Keep the rest of the schemas and types as they are
@@ -22,7 +22,10 @@ export const viewprofileSchema = z.object({
   state: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   avatar_url: z.string().url().optional().nullable(),
+  // Add the is_volunteer field here
+  is_volunteer: z.boolean().default(false), // Assuming it's a boolean, default to false if null/undefined
 });
 
 export type EditProfileFormState = z.infer<typeof editprofileSchema>;
 export type ViewProfileFormType = z.infer<typeof viewprofileSchema>;
+
