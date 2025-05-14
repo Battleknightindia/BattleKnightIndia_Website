@@ -11,12 +11,14 @@ interface volunteerType {
 // Get a consistent gradient color for the avatar
 export async function getReferral(supabase: SupabaseClient, user: User){
     console.log("Referral_code is generated for user")
+    
     const { data: profile } = await supabase
       .from("profiles")
       .update({is_volunteer:true})
-      .eq("user_id", user.id))
-      .select("ign")
+      .eq("user_id", user.id) // Apply the filter here
+      .select("ign") // Select the column after filtering
       .single();
+
     const rand = Math.floor(10000 + Math.random() * 90000); 
     return `${profile?.ign}_${rand}`;
 }
