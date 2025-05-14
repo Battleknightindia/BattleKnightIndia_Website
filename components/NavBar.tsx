@@ -368,13 +368,14 @@ export default function NavBar() {
                 <UserIcon className="mr-2 h-4 w-4" />
                 View Profile
               </Button>
+              {/* Volunteer Dashboard Button (Mobile) */}
               {isVolunteer(profile) && (
                 <Button
                   variant="outline"
                   className="w-full border-zinc-700 text-emerald-500 hover:bg-zinc-900"
                   onClick={() => {
-                    router.push("/volunteers/dashboard");
-                    toggleMenu();
+                    router.push("/volunteers");
+                    toggleMenu(); // Close menu after navigating
                   }}
                 >
                   <Diamond className="mr-2 h-4 w-4" />
@@ -389,7 +390,7 @@ export default function NavBar() {
                   toggleMenu();
                 }}
               >
-                <LogOut onClick={()=> { handleLogout();toggleMenu();}} className="mr-2 h-4 w-4"/>
+                <LogOut className="mr-2 h-4 w-4"/>
                 Log Out
               </Button>
             </div>
@@ -409,3 +410,4 @@ export default function NavBar() {
     </>
   );
 }
+
