@@ -14,8 +14,8 @@ export async function getReferral(supabase: SupabaseClient, user: User){
     const { data: profile } = await supabase
       .from("profiles")
       .update({is_volunteer:true})
+      .eq("user_id", user.id))
       .select("ign")
-      .eq("user_id", user.id)
       .single();
     const rand = Math.floor(10000 + Math.random() * 90000); 
     return `${profile?.ign}_${rand}`;
