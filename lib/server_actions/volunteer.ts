@@ -13,6 +13,7 @@ export async function getReferral(supabase: SupabaseClient, user: User){
     console.log("Referral_code is generated for user")
     const { data: profile } = await supabase
       .from("profiles")
+      .update({is_volunteer:true})
       .select("ign")
       .eq("user_id", user.id)
       .single();
