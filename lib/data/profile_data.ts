@@ -1,11 +1,9 @@
-"use client";
-
-import { createClient } from "@/utils/supabase/client";
-import { viewprofileSchema } from "../schema/profileSchema";
-import { COLORS } from "./constant/profile";
+import { createClient } from "@/utils/supabase/server";
+import { viewprofileSchema } from "@/schema/profileSchema";
+import { COLORS } from "../constant/profile";
 
 export async function fetchProfile() {
-  const supabase = createClient();
+  const supabase = await createClient();
   // Get User Id from supabase
   const {data: { user },error: userError} = await supabase.auth.getUser();
   if (userError || !user) {

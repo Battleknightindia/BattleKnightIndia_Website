@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       // *** PASTE YOUR EXTRACTED SUPABASE HOSTNAME HERE ***
       // Example: 'abcdef12345.supabase.co'
       'zuvpacjjywckyrgluxru.supabase.co', // Replace this placeholder!
+      'placehold.co',
       // Add any other external image domains you might use
     ],
   },

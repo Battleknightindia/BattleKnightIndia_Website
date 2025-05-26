@@ -22,6 +22,7 @@ export const viewprofileSchema = z.object({
   state: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   avatar_url: z.string().url().optional().nullable(),
+  is_admin:z.boolean().optional().default(false),
   // Add the is_volunteer field here
   is_volunteer: z.boolean().default(false), // Assuming it's a boolean, default to false if null/undefined
 });

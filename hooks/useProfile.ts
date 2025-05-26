@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { fetchProfile } from "@/lib/profileData"
+import { fetchProfile } from "@/lib/data/profile_data"
 import type {ViewProfileFormType } from "@/schema/profileSchema";
 
 

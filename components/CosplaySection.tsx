@@ -7,12 +7,16 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
-import { COSPLAY_DATA } from "@/lib/constant/home_page"
+import { CosplayItem } from "@/types/homepageType"
 
-export default function CosplaySection() {
+type Props = {
+  cosplayData: CosplayItem[]
+}
+
+export default function CosplaySection({cosplayData}: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   // Removed userLikes state
-  // Removed cosplays state - using COSPLAY_DATA directly now
+  // Removed cosplays state - using cosplayData directly now
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -58,11 +62,11 @@ export default function CosplaySection() {
   // Removed handleLike function
 
   const nextCard = () => {
-    setCurrentIndex(prev => (prev + 1) % COSPLAY_DATA.length);
+    setCurrentIndex(prev => (prev + 1) % cosplayData.length);
   };
 
   const prevCard = () => {
-    setCurrentIndex(prev => (prev - 1 + COSPLAY_DATA.length) % COSPLAY_DATA.length);
+    setCurrentIndex(prev => (prev - 1 + cosplayData.length) % cosplayData.length);
   };
 
   // Add meta viewport tag to prevent zoom
@@ -180,10 +184,10 @@ export default function CosplaySection() {
             onTouchEnd={handleTouchEnd}
           >
             <div className="absolute inset-0 flex">
-              {COSPLAY_DATA.map((cosplay, index) => {
+              {cosplayData.map((cosplay, index) => {
 
                 // Calculate relative position for infinite card display
-                const position = (index - currentIndex + COSPLAY_DATA.length) % COSPLAY_DATA.length;
+                const position = (index - currentIndex + cosplayData.length) % cosplayData.length;
                 let transformClass = 'opacity-0 invisible';
                 let zIndex = 0;
                 // Removed isSecondImage and lowerImageClass logic
@@ -196,7 +200,7 @@ export default function CosplaySection() {
                  else if (position === 1) {
                    transformClass = 'translate-x-[105%] opacity-0 invisible'; // Position next card off-screen to the right
                    zIndex = 5;
-                 } else if (position === COSPLAY_DATA.length - 1) {
+                 } else if (position === cosplayData.length - 1) {
                    transformClass = 'translate-x-[-105%] opacity-0 invisible'; // Position previous card off-screen to the left
                    zIndex = 5;
                  }
@@ -217,7 +221,7 @@ export default function CosplaySection() {
                       <div className="relative h-[450px] w-full overflow-hidden rounded-lg"> {/* Keep fixed height for card image area */}
                         <Image
                           src={cosplay.image || "/placeholder.svg"}
-                          alt={cosplay.character} // Still useful for alt text
+                          alt={"Cosplay"} // Still useful for alt text
                           fill // Use fill to make image responsive within its container
                           className="object-cover transition-all duration-500" // object-cover or object-contain depending on desired fit
                           sizes="(max-width: 768px) 100vw, 33vw" // Add sizes for better performance
@@ -233,7 +237,7 @@ export default function CosplaySection() {
 
             {/* Small indicator dots to show position */}
             <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1 z-20">
-              {COSPLAY_DATA.map((_, index) => (
+              {cosplayData.map((_, index) => (
                 <div
                   key={index}
                   className={cn(
@@ -251,7 +255,7 @@ export default function CosplaySection() {
           <h3 className="text-2xl font-bold text-white mb-6 text-center">Cosplay Gallery</h3>
           {/* Reverted grid back to 3 columns as requested */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {COSPLAY_DATA.map((cosplay, index) => (
+            {cosplayData.map((cosplay, index) => (
               <div
                 key={cosplay.id}
                 className={cn(
@@ -264,7 +268,7 @@ export default function CosplaySection() {
                 <div className="relative aspect-[3/4] w-full overflow-hidden">
                 <Image
                     src={cosplay.image || "/placeholder.svg"}
-                    alt={cosplay.character}
+                    alt={"Cosplay"}
                     fill
                     className={cn("object-cover transition-all duration-500", "grayscale group-hover:grayscale-0")}
                   />

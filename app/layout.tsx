@@ -5,7 +5,7 @@ import { fontClass } from "@/lib/constant/fonts";
 import { Suspense } from 'react'; // Import Suspense from react
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
-const metadata = {
+export const metadata = {
   title: 'Battle Knight India',
   description: "Battle Knight India is a gaming community that focuses on competitive gaming and esports.",
   icons: {

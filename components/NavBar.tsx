@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { getInitials, getAvatarColor, getAvatarUrl } from "@/lib/profileData";
+import { getInitials, getAvatarColor, getAvatarUrl } from "@/lib/data/profile_data";
 import {
   DropdownMenu,
   DropdownMenuContent,

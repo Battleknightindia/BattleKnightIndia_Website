@@ -78,18 +78,26 @@ export function FileUploader({
     }
 
     // Check file type
-    if (
-      accept &&
-      !new RegExp("^" + accept.replace(/\*/g, ".*") + "$").test(file.type)
-    ) {
-      setError(`Invalid file type. Please upload a ${accept} file.`); // USED
-      setDisplayedFileName(null); // Clear displayed name
-      onFileSelect(null); // Do not select the invalid file
-      // Reset the input value
-      if (inputRef.current) {
-        inputRef.current.value = "";
+    if (accept) {
+      // Support multiple accept types (e.g., 'image/*,video/*')
+      const acceptPatterns = accept.split(',').map(s => s.trim()).filter(Boolean);
+      const matches = acceptPatterns.some(pattern => {
+        if (pattern === '*/*') return true;
+        if (pattern.endsWith('/*')) {
+          // e.g., image/*
+          return file.type.startsWith(pattern.slice(0, -1));
+        }
+        return file.type === pattern;
+      });
+      if (!matches) {
+        setError(`Invalid file type. Please upload a ${accept} file.`);
+        setDisplayedFileName(null);
+        onFileSelect(null);
+        if (inputRef.current) {
+          inputRef.current.value = "";
+        }
+        return;
       }
-      return;
     }
 
     // Check file size

@@ -43,6 +43,8 @@ next-env.d.ts
 logs
 *.log
 
+.vs
+
 # Codebase specific
 # Cache
 .cache/
