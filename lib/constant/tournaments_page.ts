@@ -20,7 +20,7 @@ export const liveTournament: LiveTournament = {
 
 export const pastTournaments: PastTournament[] = [
     {
-      id: 1,
+      id: "1",
       name: "Valorant Masters",
       image: "/placeholder.svg?height=400&width=600",
       prizeMoney: "$75,000",
@@ -33,7 +33,7 @@ export const pastTournaments: PastTournament[] = [
       champions_logo: "/placeholder.svg"
     },
     {
-      id: 2,
+      id: '2',
       name: "League of Legends Regional Qualifier",
       image: "/placeholder.svg?height=400&width=600",
       prizeMoney: "$50,000",
@@ -46,7 +46,7 @@ export const pastTournaments: PastTournament[] = [
       champions_logo: "/placeholder.svg"
     },
     {
-      id: 3,
+      id: "3",
       name: "Fortnite Summer Showdown",
       image: "/placeholder.svg?height=400&width=600",
       prizeMoney: "$100,000",
