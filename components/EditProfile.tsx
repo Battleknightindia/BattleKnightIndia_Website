@@ -16,7 +16,7 @@ import Image from "next/image"; // Import the Image component
 type Profile = {
   id?: string;
   fullName: string;
-  gameName: string;
+  ign: string;
   gameId: string;
   serverId: string;
   roles: string; // comma-separated
@@ -39,7 +39,7 @@ interface ProfileCardProps {
 // Zod schema for validation
 const ProfileFormSchema = z.object({
   fullName: z.string().min(1, "Your name is required"),
-  gameName: z.string().min(1, "Game name is required"),
+  ign: z.string().min(1, "In-Game Name is required"),
   gameId: z.string().min(1, "Game ID is required"),
   serverId: z.string().min(1, "Server ID is required"),
   roles: z.string().min(1, "Select at least one role"), // comma-separated
@@ -57,7 +57,7 @@ export function ProfileCard({
 }: ProfileCardProps) {
   const [formData, setFormData] = useState<ProfileFormType>({
     fullName: "",
-    gameName: "",
+    ign: "",
     gameId: "",
     serverId: "",
     roles: "",
@@ -270,9 +270,9 @@ export function ProfileCard({
             onChange={handleChange}
           />
           <InputField
-            label="In Game Name"
-            id="gameName"
-            value={formData.gameName}
+            label="In-Game Name"
+            id="ign"
+            value={formData.ign} // Add this back with correct variable
             onChange={handleChange}
           />
           <div className="grid grid-cols-2 gap-4">

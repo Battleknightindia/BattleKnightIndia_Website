@@ -33,7 +33,7 @@ export default function NavBar() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isViewProfileOpen, setIsViewProfileOpen] = useState(false);
-  const { profile, loading } = useProfile();
+  const { profile, loading, refreshProfile } = useProfile();
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
   const [isCompletingProfileAfterLogin, setIsCompletingProfileAfterLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -140,15 +140,6 @@ export default function NavBar() {
     {id:"3", name:"Cosplay Gallery", link:"/cosplay"},
     { id:"4",name:"About", link:"/about"}
   ]
-
-  const sectionNav = [
-    { id: "home", label: "Home" },
-    { id: "featured", label: "Featured Tournament" },
-    { id: "northeastcup", label: "Past Work" },
-    { id: "cosplay", label: "Cosplay Gallery" },
-    { id: "about", label: "About" },
-    { id: "partners", label: "Sponsors" },
-  ];
 
   const handleNavItemClick = (id: string) => {
     if (pathname !== "/") {
@@ -322,24 +313,7 @@ export default function NavBar() {
         <div className="flex flex-col h-full pt-20 pb-6 px-6">
           {/* Mobile Navigation Links */}
           <nav className="flex flex-col space-y-4 mb-8">
-            {/* Section scroll nav for mobile */}
-            {sectionNav.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => {
-                  handleNavItemClick(section.id);
-                  setIsMenuOpen(false);
-                }}
-                className={cn(
-                  "py-3 px-4 text-lg font-medium rounded-md transition-colors",
-                  "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                )}
-                style={{ transition: "all 0.2s" }}
-              >
-                {section.label}
-              </button>
-            ))}
+            {}
           </nav>
 
           {/* Mobile Auth Buttons */}
@@ -424,7 +398,9 @@ export default function NavBar() {
           const newSearchParams = new URLSearchParams(window.location.search);
           newSearchParams.delete('loginSuccess');
           router.replace(`${pathname}?${newSearchParams.toString()}`);
-          // Assuming useProfile hook will refresh the profile data, or trigger a manual refresh if needed
+          if (refreshProfile) {
+            refreshProfile(); // Refresh profile data
+          }
         }}
       />
       <ProfileView

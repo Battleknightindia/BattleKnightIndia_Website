@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const editprofileSchema = z.object({
   fullName: z.string().min(1),
-  gameName: z.string().min(1),
+  ign: z.string().min(1),
   gameId: z.string().min(1),
   serverId: z.string().min(1),
   roles: z.string().min(1),

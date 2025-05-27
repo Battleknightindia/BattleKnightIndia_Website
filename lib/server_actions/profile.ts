@@ -34,7 +34,7 @@ export async function handleProfile(rawForm: unknown) {
 
   const profileData = {
     fullName: formData.fullName,
-    ign: formData.gameName,
+    ign: formData.ign,
     game_id: formData.gameId,
     server_id: formData.serverId,
     roles: rolesArray,
