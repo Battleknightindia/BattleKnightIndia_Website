@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { getInitials, getAvatarColor, getAvatarUrl } from "@/lib/profileData";
+import { getInitials, getAvatarColor, getAvatarUrl } from "@/lib/data/profile_data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User as UserIcon, LogOut, Settings, Diamond } from "lucide-react";
+import { User as UserIcon, LogOut, Settings, Diamond, User as Users } from "lucide-react";
 import { ProfileCard } from "./EditProfile";
 import { ProfileView } from "./ViewProfile";
 import { useProfile } from "@/hooks/useProfile";
-import { isVolunteer } from "@/utils/volunteer_helper";
+import { isAdmin, isVolunteer } from "@/utils/volunteer_helper";
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -129,6 +129,12 @@ export default function NavBar() {
       setIsMenuOpen(false);
     }
   };
+  const Nav = [
+    { id:"1",name:"Home", link:"/"},
+    { id:"2",name:"Tournament", link:"/tournaments"},
+    {id:"3", name:"Cosplay Gallery", link:"/cosplay"},
+    { id:"4",name:"About", link:"/about"}
+  ]
 
   const sectionNav = [
     { id: "home", label: "Home" },
@@ -176,20 +182,11 @@ export default function NavBar() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-          {/* Section scroll nav */}
-          {sectionNav.map((section) => (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => handleNavItemClick(section.id)}
-              className={cn(
+          {Nav.map((nav) =>(
+            <Link className={cn(
                 "px-3 py-2 text-sm lg:text-base font-medium rounded-md transition-colors",
                 "text-zinc-400 hover:text-white hover:bg-zinc-900"
-              )}
-              style={{ transition: "all 0.2s" }}
-            >
-              {section.label}
-            </button>
+              )} key={nav.id} href={nav.link}>{nav.name}</Link>
           ))}
         </nav>
 
@@ -237,6 +234,15 @@ export default function NavBar() {
                   >
                     <Diamond className="mr-2 h-4 w-4" />
                     Your Dashboard
+                  </DropdownMenuItem>
+                )}
+                {isAdmin(profile) && (
+                  <DropdownMenuItem
+                    onClick={() => router.push("/volunteers/dashboard")}
+                    className="cursor-pointer text-emerald-500 hover:bg-zinc-900"
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Admin Dashboard
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem

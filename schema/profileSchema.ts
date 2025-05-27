@@ -24,6 +24,7 @@ export const viewprofileSchema = z.object({
   avatar_url: z.string().url().optional().nullable(),
   // Add the is_volunteer field here
   is_volunteer: z.boolean().default(false), // Assuming it's a boolean, default to false if null/undefined
+  is_admin: z.boolean().default(false)
 });
 
 export type EditProfileFormState = z.infer<typeof editprofileSchema>;

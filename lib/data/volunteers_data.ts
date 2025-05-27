@@ -1,7 +1,5 @@
 // ./lib/volunteersData.ts
 
-"use client";
-
 import { createClient } from "@/utils/supabase/client";
 // *** CORRECTED IMPORT ***
 // Import the specific type name exported from volunteerSchema.ts

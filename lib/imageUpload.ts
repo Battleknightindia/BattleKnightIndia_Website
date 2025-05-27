@@ -19,7 +19,7 @@ interface UploadOptions {
  * Generic function to upload a File/Blob to Supabase Storage.
  * Generates a unique filename using identifier + timestamp.
  */
-async function _uploadImageFile({
+export async function _uploadImageFile({
   supabaseClient, // Type is now SupabaseClient via UploadOptions
   bucket,
   pathPrefix,
@@ -67,6 +67,26 @@ async function _uploadImageFile({
   return urlData?.publicUrl || null;
 }
 
+export async function uploadImageFile(
+  supabaseClient: SupabaseClient, // Changed any to SupabaseClient 
+  file: File | Blob,
+  bucket: string,
+  pathPrefix: string, // e.g., 'profiles/', 'registrations/university/uni_name/'
+  uniqueIdentifier: string, // e.g., userId, team_name
+  allowedMimeTypes?: Record<string, string>, // Optional: Enforce specific types { 'image/jpeg': 'jpg', ... }
+  upsert?: boolean // Default to true for overwriting existing files
+): Promise<string | null> {
+  return _uploadImageFile({
+    supabaseClient,
+    bucket,
+    pathPrefix,
+    uniqueIdentifier,
+    file,
+    allowedMimeTypes,
+    upsert
+  });
+}
+
 
 // --- Base64 Specific Upload ---
 
@@ -98,25 +118,32 @@ async function _uploadImageFromBase64({
   base64,
   upsert = true
 }: Base64UploadOptions): Promise<string | null> {
+  console.log("Uploading image from base64:", { bucket, pathPrefix, uniqueIdentifier });
   // Validate base64 format: data:<mimeType>;base64,<data>
   const parts = base64.match(/^data:(image\/\w+);base64,(.+)$/);
   if (!parts) {
     console.error("Invalid base64 string format.");
     return null;
   }
+  console.log("Base64 parts:", parts); // Debugging log
 
   const mimeType = parts[1];
   const base64Data = parts[2];
+
+  console.log("MIME type:", mimeType); // Debugging log
 
   const ext = defaultAllowedImageTypes[mimeType];
   if (!ext) {
     console.error(`Upload rejected: Base64 MIME type ${mimeType} not allowed.`);
     return null;
   }
+  console.log("File extension determined:", ext); // Debugging log
 
   try {
     const buffer = Buffer.from(base64Data, "base64");
     const blob = new Blob([buffer], { type: mimeType });
+
+    console.log("Blob created from base64 data:", blob); // Debugging log
 
     // Call the generic file uploader
     return await _uploadImageFile({
@@ -216,4 +243,21 @@ export async function updateAvatarUrl(supabaseClient: SupabaseClient, avatarUrl:
   }
 
   return true;
+}
+
+export async function uploadTournamentFromBase64(
+  supabaseClient: SupabaseClient, // Changed any to SupabaseClient
+  base64: string,
+  userId: string,
+  path: string
+): Promise<string | null> {
+  console.log("Uploading tournament image from base64:", { userId, path });
+  return _uploadImageFromBase64({
+    supabaseClient,
+    bucket: "tournaments", // Specific bucket for avatars
+    pathPrefix: path, // Specific path for avatars
+    uniqueIdentifier: userId,
+    base64: base64,
+    upsert: true // Overwrite existing avatar for the user
+  });
 }
