@@ -1,8 +1,9 @@
 import { getCosplayGallery } from "@/lib/data/homepage_data"
 import CosplayGallery from "./components/Gallery"
+import { CosplayItem } from "@/types/homepageType"
 
 export default async function CosplayPage() {
-  const cosplayData = await getCosplayGallery()
+  const cosplayData: CosplayItem[] = await getCosplayGallery()
 
   return (
     <div className="min-h-screen bg-[#18181B]">

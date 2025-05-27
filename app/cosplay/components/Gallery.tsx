@@ -6,11 +6,7 @@ import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-
-type CosplayItem = {
-  id: string
-  image: string
-}
+import { CosplayItem } from "@/types/homepageType"
 
 type Props = {
   cosplayData: CosplayItem[]
