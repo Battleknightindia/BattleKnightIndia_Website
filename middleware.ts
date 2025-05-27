@@ -15,8 +15,7 @@ export async function middleware(request: NextRequest) {
     '/login',
     '/register',
     '/signup',
-    '/auth/callback',
-    '/complete-profile', 
+    '/auth/callback', 
     '/api',             
     // Add any other public paths or paths handled differently
   ];
@@ -35,7 +34,7 @@ export async function middleware(request: NextRequest) {
       console.error('Middleware profile check error:', profileError);
     } else if (!profile) {
       console.log(`Middleware: User ${user.id} missing profile, redirecting to /complete-profile from ${pathname}`);
-      return NextResponse.redirect(new URL('/complete-profile', request.url))
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 
