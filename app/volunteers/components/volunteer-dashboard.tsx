@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { volunteerData, REFERRALTOAST} from "@/lib/constant/volunteers_page";
 import { useProfile } from "@/hooks/useProfile";
-import { getInitials, getAvatarColor} from "@/lib/profileData";
+import { getInitials, getAvatarColor} from "@/lib/data/profile_data";
 import { createClient } from "@/utils/supabase/client";
 import { useVolunteer } from "@/hooks/useVolunteer";
 
