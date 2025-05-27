@@ -29,6 +29,7 @@ export default function ClientHome({ user, featuredData, northeastcupData, cospl
    const { profile, loading } = useProfile();
    const [showForceProfile, setShowForceProfile] = useState(false);
    const [showForm, setShowForm] = useState(false);
+   const [ forceProfileKey, setForceProfileKey] = useState(false);
 
   // // Removed unused function: handleOpenForm
 
@@ -36,6 +37,7 @@ export default function ClientHome({ user, featuredData, northeastcupData, cospl
      async function checkUserProfile() {
        // Ensure supabase.auth is included in the dependency array as it's used here
        if (user && !loading && !profile) {
+        setForceProfileKey(true);
          setShowForceProfile(true);
        } else {
          setShowForceProfile(false);

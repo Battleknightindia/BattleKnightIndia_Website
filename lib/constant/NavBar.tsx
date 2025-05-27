@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User as UserIcon, LogOut, Settings, Diamond, User as Users } from "lucide-react";
+import { User as UserIcon, LogOut, Settings, Diamond } from "lucide-react";
 import { ProfileCard } from "./EditProfile";
 import { ProfileView } from "./ViewProfile";
 import { useProfile } from "@/hooks/useProfile";
-import { isAdmin, isVolunteer } from "@/utils/volunteer_helper";
+import { isVolunteer } from "@/utils/volunteer_helper";
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,21 +35,21 @@ export default function NavBar() {
   const [isViewProfileOpen, setIsViewProfileOpen] = useState(false);
   const { profile, loading } = useProfile();
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
-  const [isCompletingProfileAfterLogin, setIsCompletingProfileAfterLogin] = useState(false);
   const searchParams = useSearchParams();
   const loginSuccessParam = searchParams.get("loginSuccess");
   const pathname = usePathname();
 
+  // Effect to get the current user and their profile avatar data
   useEffect(() => {
     const getUser = async () => {
       const {
         data: { user },
         error,
       } = await supabase.auth.getUser();
-      if (error) console.error(error);
+      if (error) console.error("Error fetching user:", error);
       setUser(user);
 
-      // If user is logged in, fetch avatar data
+      // If user is logged in, fetch avatar data (initials, color, URL)
       if (user) {
         try {
           const userInitials = await getInitials();
@@ -67,7 +67,7 @@ export default function NavBar() {
 
     getUser();
 
-    // Close mobile menu when route changes
+    // Event listener to close the mobile menu when browser history changes (e.g., back/forward buttons)
     const handleRouteChange = () => {
       setIsMenuOpen(false);
     };
@@ -76,98 +76,97 @@ export default function NavBar() {
     return () => {
       window.removeEventListener("popstate", handleRouteChange);
     };
-  }, [supabase.auth]);
+  }, [supabase.auth]); // Re-run when Supabase auth state might change
 
+  // Effect to check profile completion after login and open edit profile if needed
   useEffect(() => {
-    if (!loading && !hasCheckedProfile) {
+    // Ensure profile data is loaded, we haven't already checked/processed this login success,
+    // AND the loginSuccessParam is actually present and true.
+    if (!loading && !hasCheckedProfile && loginSuccessParam === "true") {
       console.log(
-        "Checking profile status after load. Login success param:",
-        loginSuccessParam
+        "Processing login success. User:", user, "Profile IGN:", profile?.ign
       );
 
-      if (!profile?.ign && loginSuccessParam === "true") {
-        console.log("Profile incomplete after login, opening edit profile for forced completion.");
+      if (user && !profile?.ign) {
         setIsEditProfileOpen(true);
-        setIsCompletingProfileAfterLogin(true); // Mark that this opening is for forced completion
-      } else {
-        // If profile is complete or not a login redirect, ensure this flag is false
-        setIsCompletingProfileAfterLogin(false);
-        if (profile?.ign) {
-          console.log("Profile complete.");
-        } else {
-          console.log("Profile incomplete, but not a login redirect or already handled.");
-        }
+        console.log("Profile incomplete after login, opening edit profile modal.");
+      } else if (profile?.ign) {
+        console.log("Profile complete after login.");
+      } else if (!user) {
+        // This case might occur if the effect runs before the user state is updated from the getUser effect.
+        // It's less likely if `user` is in the dependency array and getUser updates user state promptly.
+        console.log("User object not available yet, though loginSuccessParam is true. Profile check will defer or rely on subsequent runs.");
       }
-      setHasCheckedProfile(true);
-    }
-  }, [loading, profile, hasCheckedProfile, loginSuccessParam]);
 
+      // IMPORTANT: Remove the loginSuccessParam from the URL to prevent this effect
+      // from re-triggering on subsequent navigations or if the user navigates back.
+      // We use router.replace to avoid adding a new entry to the history stack and to prevent scroll jumps.
+      // The current pathname is used to stay on the same page.
+      router.replace(pathname, { scroll: false });
+      console.log(`loginSuccessParam cleared from URL. Current path: ${pathname}`);
+
+      setHasCheckedProfile(true); // Mark that we've processed this login success.
+
+    } else if (!loading && !hasCheckedProfile && loginSuccessParam !== "true") {
+      // If it's not a login success (param is not 'true' or not present, or already cleared),
+      // still mark as checked if profile is loaded, to prevent repeated checks on other page loads.
+      // This ensures that hasCheckedProfile is set even if there was no loginSuccessParam.
+      setHasCheckedProfile(true);
+      console.log("Initial profile status check complete (not a loginSuccess redirect or param already cleared).");
+    }
+    // Dependencies: This effect should run when loading state changes, profile data changes,
+    // user state changes, the loginSuccessParam itself changes (e.g., cleared),
+    // or pathname/router instances change (though router instance is stable).
+    // hasCheckedProfile is included to ensure it respects its own stateful check.
+  }, [loading, profile, user, loginSuccessParam, pathname, router, hasCheckedProfile]);
+
+  // Effect to manage body overflow when modals/menus are open
   useEffect(() => {
     if (isMenuOpen || isEditProfileOpen || isViewProfileOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
     }
+    // Cleanup function to reset overflow when component unmounts or dependencies change
     return () => {
       document.body.style.overflow = "auto";
     };
   }, [isMenuOpen, isEditProfileOpen, isViewProfileOpen]);
 
+  // Toggles the mobile menu open/closed
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Handles user logout via Supabase and redirects to login page
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
+  // Opens the Edit Profile modal and closes the mobile menu if open
   const openEditProfileCard = () => {
     setIsEditProfileOpen(true);
     if (isMenuOpen) {
       setIsMenuOpen(false);
     }
   };
+
+  // Opens the View Profile modal and closes the mobile menu if open
   const openViewProfileCard = () => {
     setIsViewProfileOpen(true);
     if (isMenuOpen) {
       setIsMenuOpen(false);
     }
   };
-  const Nav = [
-    { id:"1",name:"Home", link:"/"},
-    { id:"2",name:"Tournament", link:"/tournaments"},
-    {id:"3", name:"Cosplay Gallery", link:"/cosplay"},
-    { id:"4",name:"About", link:"/about"}
-  ]
 
-  const sectionNav = [
-    { id: "home", label: "Home" },
-    { id: "featured", label: "Featured Tournament" },
-    { id: "northeastcup", label: "Past Work" },
-    { id: "cosplay", label: "Cosplay Gallery" },
-    { id: "about", label: "About" },
-    { id: "partners", label: "Sponsors" },
+  // Define your primary navigation items for desktop and mobile
+  // These links will now only be full page routes.
+  const navItems = [
+    { id:"1", name: "Home", link: "/" },
+    { id:"2", name: "Tournament", link: "/tournaments" },
+    { id:"3", name: "About", link:"/about"}
   ];
-
-  const handleNavItemClick = (id: string) => {
-    if (pathname !== "/") {
-      router.push("/");
-      setTimeout(() => {
-        scrollToSection(id);
-      }, 1005); // Adjust timeout as needed for navigation to complete
-    } else {
-      scrollToSection(id);
-    }
-  };
-
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-      setIsMenuOpen(false); // close mobile menu if open
-    }
-  };
 
   return (
     <>
@@ -186,28 +185,26 @@ export default function NavBar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-          {Nav.map((nav) =>(
-            <Link className={cn(
-                "px-3 py-2 text-sm lg:text-base font-medium rounded-md transition-colors",
-                "text-zinc-400 hover:text-white hover:bg-zinc-900"
-              )} key={nav.id} href={nav.link}>{nav.name}</Link>
+        <nav className="hidden md:flex md:gap-4 items-center space-x-1 lg:space-x-2">
+          {navItems.map((item) => (
+            <Link key={item.id} className="text-white border border-zinc-900 hover:bg-emerald-500 bg-zinc-950 p-2 px-3 rounded-full" href={item.link}>{item.name}</Link>
           ))}
         </nav>
 
         {/* User Actions - Auth or Profile */}
         <div className="flex items-center gap-2">
           {user ? (
+            // Dropdown menu for logged-in users
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 ring-emerald-500 transition rounded-full overflow-hidden bg-zinc-100">
                   <AvatarImage
-                    src={avatarUrl || undefined}
-                    alt={profile?.ign || "User"}
+                    src={avatarUrl || undefined} // Display user's avatar image if available
+                    alt={profile?.ign || "User"} // Alt text for accessibility
                     className="h-full w-full object-cover"
                   />
                   <AvatarFallback
-                    className={`text-zinc-950 text-xs bg-gradient-to-br ${avatarColor}`}
+                    className={`text-zinc-950 text-xs bg-gradient-to-br ${avatarColor}`} // Fallback with initials and dynamic background color
                   >
                     {initials}
                   </AvatarFallback>
@@ -215,44 +212,36 @@ export default function NavBar() {
               </DropdownMenuTrigger>
 
               <DropdownMenuContent
-                align="end"
-                className="w-48 mt-1 bg-zinc-950 border border-zinc-800 rounded-md shadow-lg"
+                align="end" // Aligns the dropdown to the end of the trigger
+                className="w-48 mt-1 bg-zinc-950 border border-zinc-800 rounded-md shadow-lg text-white"
               >
                 <DropdownMenuItem
                   onClick={openEditProfileCard}
-                  className="cursor-pointer text-white hover:bg-zinc-900"
+                  className="cursor-pointer hover:bg-zinc-900 focus:bg-zinc-900 focus:text-white"
                 >
                   <Settings className="mr-2 h-4 w-4" />
                   Edit Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={openViewProfileCard}
-                  className="cursor-pointer text-white hover:bg-zinc-900"
+                  className="cursor-pointer hover:bg-zinc-900 focus:bg-zinc-900 focus:text-white"
                 >
                   <UserIcon className="mr-2 h-4 w-4" />
                   View Profile
                 </DropdownMenuItem>
+                {/* Volunteer Dashboard link, only visible if the user is a volunteer */}
                 {isVolunteer(profile) && (
                   <DropdownMenuItem
                     onClick={() => router.push("/volunteers/dashboard")}
-                    className="cursor-pointer text-emerald-500 hover:bg-zinc-900"
+                    className="cursor-pointer text-emerald-500 hover:bg-zinc-900 focus:bg-zinc-900 focus:text-emerald-400"
                   >
                     <Diamond className="mr-2 h-4 w-4" />
                     Your Dashboard
                   </DropdownMenuItem>
                 )}
-                {isAdmin(profile) && (
-                  <DropdownMenuItem
-                    onClick={() => router.push("/volunteers/dashboard")}
-                    className="cursor-pointer text-emerald-500 hover:bg-zinc-900"
-                  >
-                    <Users className="mr-2 h-4 w-4" />
-                    Admin Dashboard
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="cursor-pointer text-red-500 hover:bg-zinc-900"
+                  className="cursor-pointer text-red-500 hover:bg-zinc-900 focus:bg-zinc-900 focus:text-red-400"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Log Out
@@ -260,6 +249,7 @@ export default function NavBar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
+            // Login button for unauthenticated users (desktop only)
             <div className="hidden md:flex items-center gap-2">
               <Link href="/login">
                 <Button
@@ -270,38 +260,29 @@ export default function NavBar() {
                   Login
                 </Button>
               </Link>
-              {/* <Link href="/signup">
-                <Button
-                  className="text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-black"
-                  size="sm"
-                >
-                  Sign Up
-                </Button>
-              </Link> */}
             </div>
           )}
 
+          {/* Mobile Menu Toggle Button (Hamburger Icon) */}
           <button
             className="md:hidden relative z-20 p-2 -mr-2 text-white"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
           >
             <div className="flex flex-col justify-center items-center w-7 h-7 relative">
-              {/* First bar */}
+              {/* Top bar of the hamburger icon */}
               <div
                 className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-300 ease-in-out ${
                   isMenuOpen ? "rotate-45" : "translate-y-[-6px]"
                 }`}
               />
-
-              {/* Middle bar */}
+              {/* Middle bar of the hamburger icon */}
               <div
                 className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-200 ease-in-out ${
                   isMenuOpen ? "opacity-0" : "opacity-100"
                 }`}
               />
-
-              {/* Last bar */}
+              {/* Bottom bar of the hamburger icon */}
               <div
                 className={`bg-white h-0.5 w-5.5 rounded-full absolute transition-all duration-300 ease-in-out ${
                   isMenuOpen ? "-rotate-45" : "translate-y-[6px]"
@@ -322,44 +303,40 @@ export default function NavBar() {
         <div className="flex flex-col h-full pt-20 pb-6 px-6">
           {/* Mobile Navigation Links */}
           <nav className="flex flex-col space-y-4 mb-8">
-            {/* Section scroll nav for mobile */}
-            {sectionNav.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => {
-                  handleNavItemClick(section.id);
-                  setIsMenuOpen(false);
-                }}
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.link}
+                onClick={toggleMenu} // Close menu when a link is clicked
                 className={cn(
                   "py-3 px-4 text-lg font-medium rounded-md transition-colors",
                   "text-zinc-300 hover:text-white hover:bg-zinc-900"
                 )}
                 style={{ transition: "all 0.2s" }}
               >
-                {section.label}
-              </button>
+                {item.name}
+              </Link>
             ))}
           </nav>
 
-          {/* Mobile Auth Buttons */}
+          {/* Mobile Auth Buttons (visible if not logged in) */}
           {!user && (
-            <Link href="/login" className="pt-10">
+            <Link href="/login" className="mt-auto"> {/* Use mt-auto to push to bottom */}
               <Button
                 variant="outline"
-                className="w-full p border-zinc-700 bg-emerald-500 text-white hover:bg-emerald-600"
+                className="w-full border-zinc-700 bg-emerald-500 text-white hover:bg-emerald-600"
                 onClick={toggleMenu}
               >
                 Login
               </Button>
             </Link>
           )}
-          {/* Mobile User Actions */}
+          {/* Mobile User Actions (visible if logged in) */}
           {user && (
             <div className="flex flex-col space-y-3 mt-auto">
               <Button
                 variant="outline"
-                className="w-full border-none bg-blue-500 text-white"
+                className="w-full border-none bg-blue-500 text-white hover:bg-blue-600"
                 onClick={() => {
                   openEditProfileCard();
                   toggleMenu();
@@ -370,7 +347,7 @@ export default function NavBar() {
               </Button>
               <Button
                 variant="outline"
-                className="w-full border-zinc-700 text-white bg-emerald-500 hover:bg-zinc-900"
+                className="w-full border-zinc-700 text-white bg-emerald-500 hover:bg-emerald-600"
                 onClick={() => {
                   openViewProfileCard();
                   toggleMenu();
@@ -401,7 +378,7 @@ export default function NavBar() {
                   toggleMenu();
                 }}
               >
-                <LogOut className="mr-2 h-4 w-4"/>
+                <LogOut className="mr-2 h-4 w-4" />
                 Log Out
               </Button>
             </div>
@@ -409,23 +386,11 @@ export default function NavBar() {
         </div>
       </div>
 
-      {/* Add the ProfileCard component */}
+      {/* ProfileCard and ProfileView components are rendered outside the main NavBar structure
+          but controlled by its state. */}
       <ProfileCard
         isOpen={isEditProfileOpen}
-        onClose={() => {
-          setIsEditProfileOpen(false);
-          setIsCompletingProfileAfterLogin(false); // Reset flag when closed
-        }}
-        forceCompletion={isCompletingProfileAfterLogin} // Pass the flag here
-        onProfileUpdate={() => {
-          setIsEditProfileOpen(false); // Close the modal
-          setIsCompletingProfileAfterLogin(false); // Reset flag
-          // Remove loginSuccess param from URL to prevent re-triggering
-          const newSearchParams = new URLSearchParams(window.location.search);
-          newSearchParams.delete('loginSuccess');
-          router.replace(`${pathname}?${newSearchParams.toString()}`);
-          // Assuming useProfile hook will refresh the profile data, or trigger a manual refresh if needed
-        }}
+        onClose={() => setIsEditProfileOpen(false)}
       />
       <ProfileView
         isOpen={isViewProfileOpen}
@@ -434,4 +399,3 @@ export default function NavBar() {
     </>
   );
 }
-
