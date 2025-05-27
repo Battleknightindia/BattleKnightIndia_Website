@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import PastTournamentCard from "@/app/tournaments/components/PastTournaments";
 import UpcomingTournamentCard from "@/app/tournaments/components/UpcomingTournaments";
 import LiveTournament from "./components/LiveTournament";
