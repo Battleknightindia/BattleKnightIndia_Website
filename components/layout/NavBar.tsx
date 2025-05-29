@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -18,8 +18,8 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User as UserIcon, LogOut, Settings, Diamond } from "lucide-react";
-import { ProfileCard } from "./EditProfile";
-import { ProfileView } from "./ViewProfile";
+import { ProfileCard } from "../profile/EditProfile";
+import { ProfileView } from "../profile/ViewProfile";
 import { useProfile } from "@/hooks/useProfile";
 import { isVolunteer } from "@/utils/volunteer_helper";
 
@@ -130,33 +130,12 @@ export default function NavBar() {
     }
   };
 
-  const sectionNav = [
-    { id: "home", label: "Home" },
-    { id: "featured", label: "Featured Tournament" },
-    { id: "northeastcup", label: "Past Work" },
-    { id: "cosplay", label: "Cosplay Gallery" },
-    { id: "about", label: "About" },
-    { id: "partners", label: "Sponsors" },
-  ];
-
-  const handleNavItemClick = (id: string) => {
-    if (pathname !== "/") {
-      router.push("/");
-      setTimeout(() => {
-        scrollToSection(id);
-      }, 1005); // Adjust timeout as needed for navigation to complete
-    } else {
-      scrollToSection(id);
-    }
-  };
-
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-      setIsMenuOpen(false); // close mobile menu if open
-    }
-  };
+  const Navitems = [
+    { id: "1", name:"Home", link:"/" },
+    { id: "2", name:"Tournament", link:"/tournaments" },
+    { id: "3", name:"Cosplay Gallery", link:"/cosplay" },
+    { id: "4", name:"About", link:"/about" },
+  ]
 
   return (
     <>
@@ -176,20 +155,13 @@ export default function NavBar() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-          {/* Section scroll nav */}
-          {sectionNav.map((section) => (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => handleNavItemClick(section.id)}
-              className={cn(
-                "px-3 py-2 text-sm lg:text-base font-medium rounded-md transition-colors",
-                "text-zinc-400 hover:text-white hover:bg-zinc-900"
-              )}
-              style={{ transition: "all 0.2s" }}
-            >
-              {section.label}
-            </button>
+          {Navitems.map((item) => (
+            <Link key={item.id} href={item.link} className={cn(
+              "px-3 py-2 text-sm lg:text-base font-medium rounded-md transition-colors",
+              "text-zinc-400 hover:text-white hover:bg-zinc-900"
+            )}>
+              {item.name}
+            </Link>
           ))}
         </nav>
 
@@ -311,23 +283,13 @@ export default function NavBar() {
         <div className="flex flex-col h-full pt-20 pb-6 px-6">
           {/* Mobile Navigation Links */}
           <nav className="flex flex-col space-y-4 mb-8">
-            {/* Section scroll nav for mobile */}
-            {sectionNav.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => {
-                  handleNavItemClick(section.id);
-                  setIsMenuOpen(false);
-                }}
-                className={cn(
-                  "py-3 px-4 text-lg font-medium rounded-md transition-colors",
-                  "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                )}
-                style={{ transition: "all 0.2s" }}
-              >
-                {section.label}
-              </button>
+            {Navitems.map((item) => (
+              <Link key={item.id} href={item.link}  className={cn(
+                "py-3 px-4 text-lg font-medium rounded-md transition-colors",
+                "text-zinc-300 hover:text-white hover:bg-zinc-900"
+              )}>
+                {item.name}
+              </Link>
             ))}
           </nav>
 

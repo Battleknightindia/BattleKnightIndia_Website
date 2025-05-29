@@ -65,59 +65,6 @@ export default function CosplaySection() {
     setCurrentIndex(prev => (prev - 1 + COSPLAY_DATA.length) % COSPLAY_DATA.length);
   };
 
-  // Add meta viewport tag to prevent zoom
-  useEffect(() => {
-    // Add meta viewport tag to prevent zooming
-    const metaTag = document.createElement('meta');
-    metaTag.name = 'viewport';
-    metaTag.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-    document.getElementsByTagName('head')[0].appendChild(metaTag);
-
-    return () => {
-      // Remove meta tag when component unmounts
-      const tag = document.querySelector('meta[name="viewport"]');
-      if (tag && tag.parentNode) {
-          tag.parentNode.removeChild(tag);
-      }
-    };
-  }, []);
-
-  // Prevent default touchmove to stop page scrolling during swipe
-  useEffect(() => {
-    const preventScroll = (e: TouchEvent) => {
-       // Only prevent scroll if a touch swipe might be in progress horizontally
-       if (touchStart !== null) {
-        const currentX = e.targetTouches[0]?.clientX || 0;
-        const distanceX = Math.abs(currentX - touchStart);
-        // Check if the primary scroll direction is horizontal
-         if (distanceX > 10 && distanceX > Math.abs((e.targetTouches[0]?.clientY || 0) - (e.targetTouches[0]?.clientY || 0))) { // Simplified check
-           e.preventDefault();
-         }
-       }
-    };
-
-    const preventZoom = (e: TouchEvent) => {
-      if (e.touches.length > 1) {
-        e.preventDefault();
-      }
-    };
-
-    const cardElement = document.getElementById('swipe-container');
-    if (cardElement) {
-      // Use passive: false to allow preventDefault
-      cardElement.addEventListener('touchmove', preventScroll, { passive: false });
-      // Prevent pinch zoom on the document itself
-      document.addEventListener('touchstart', preventZoom, { passive: false });
-    }
-
-    return () => {
-      if (cardElement) {
-        cardElement.removeEventListener('touchmove', preventScroll);
-      }
-      document.removeEventListener('touchstart', preventZoom);
-    };
-  }, [touchStart]); // Re-run effect if touchStart changes
-
 
   return (
     <section className="lg:px-50 w-full bg-[#18181B] py-8 lg:py-24 overflow-hidden text-white"> {/* Added text-white */}

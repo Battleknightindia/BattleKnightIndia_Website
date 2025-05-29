@@ -7,7 +7,7 @@ import { Calendar, MapPin, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import EventCarousel from "@/components/EventCardCarousel2";
+import EventCarousel from "@/components/homepage/content/EventCardCarousel2";
 import { FEATURED_EVENT } from "@/lib/constant/home_page";
 
 // Animation variants
