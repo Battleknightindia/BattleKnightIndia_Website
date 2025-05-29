@@ -117,6 +117,7 @@ export function TournamentForm({
             <textarea
               name="description"
               value={form.description || ""}
+              onChange={handleChange}
               rows={3}
               className="resize-none min-h-[3rem] max-h-60 w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               style={{ overflow: "hidden" }}
