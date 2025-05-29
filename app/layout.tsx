@@ -1,6 +1,6 @@
 // app/layout.tsx
 import "./globals.css";
-import LayoutWrapper from "@/components/LayoutWrapper";
+import LayoutWrapper from "@/components/layout/LayoutWrapper";
 import { fontClass } from "@/lib/constant/fonts";
 import { Suspense } from 'react'; // Import Suspense from react
 import { SpeedInsights } from "@vercel/speed-insights/next"
