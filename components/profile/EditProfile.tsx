@@ -10,9 +10,9 @@ import { Label } from "@/components/ui/label";
 import { availableRoles } from "@/lib/constant/profile"
 import { handleProfile } from "@/lib/server_actions/profile";
 import Image from "next/image"; // Import the Image component
-// Assuming you have a Profile type defined, import it here
-// import { Profile } from "@/types/profileTypes"; // Adjust the path if needed
-// For now, using a placeholder type if Profile type is not readily available
+import { ProfileFormSchema, ProfileFormType } from "@/schema/profileSchema";
+
+
 type Profile = {
   id?: string;
   fullName: string;
@@ -36,23 +36,10 @@ interface ProfileCardProps {
   onProfileUpdate?: (profile: Profile) => void;
 }
 
-// Zod schema for validation
-const ProfileFormSchema = z.object({
-  fullName: z.string().min(1, "Your name is required"),
-  gameName: z.string().min(1, "Game name is required"),
-  gameId: z.string().min(1, "Game ID is required"),
-  serverId: z.string().min(1, "Server ID is required"),
-  roles: z.string().min(1, "Select at least one role"), // comma-separated
-  state: z.string().optional(),
-  city: z.string().optional(),
-});
-
-type ProfileFormType = z.infer<typeof ProfileFormSchema>;
-
 export function ProfileCard({
   isOpen,
   onClose,
-  forceCompletion = false,
+  forceCompletion,
   onProfileUpdate,
 }: ProfileCardProps) {
   const [formData, setFormData] = useState<ProfileFormType>({
@@ -65,10 +52,13 @@ export function ProfileCard({
     city: "",
   });
 
-
-
   const selectedRoles = formData.roles ? formData.roles.split(",").filter(Boolean) : [];
   const [roleInput, setRoleInput] = useState("");
+  const [profilePreview, setProfilePreview] = useState<string | null>(null)
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [message, setMessage] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const addRole = (roles: string) => {
     if (!roles) return;
@@ -108,33 +98,21 @@ export function ProfileCard({
     addRole(roleValue);
   };
 
-
-
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
   // Handle text input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  // Role selection (deprecated, now using checkboxes)
-  // const handleRoleChange = (value: string) => {
-  //   setFormData((prev) => ({ ...prev, role: value }));
-  // };
-
-
   // Image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIsUploading(true);
+      setProfileImage(file)
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result as string);
+        setProfilePreview(reader.result as string);
         setIsUploading(false);
       };
       reader.readAsDataURL(file);
@@ -152,10 +130,7 @@ export function ProfileCard({
     }
 
     try {
-      const response = await handleProfile({
-        ...result.data,
-        profileImage: profileImage, // Include profileImage here
-      });
+      const response = await handleProfile(result.data, profileImage);
 
       if (response.success) {
         setMessage("Profile updated successfully!");
@@ -169,7 +144,7 @@ export function ProfileCard({
              // Construct a Profile object from available data
             const updatedProfile: Profile = {
               ...result.data,
-              avatar_url: profileImage, // Use profileImage as avatar_url
+              avatar_url: profilePreview, // Use profileImage as avatar_url
               // Add other default/placeholder fields if needed
             };
             onProfileUpdate(updatedProfile);
@@ -234,10 +209,10 @@ export function ProfileCard({
                 profileImage ? "p-0" : "p-2"
               )}
             >
-              {profileImage ? (
+              {profilePreview ? (
                 // Replaced <img> with <Image />
                 <Image
-                  src={profileImage}
+                  src={profilePreview}
                   alt="Profile"
                   width={96} // Set intrinsic width based on container size (h-24 w-24 = 96px)
                   height={96} // Set intrinsic height

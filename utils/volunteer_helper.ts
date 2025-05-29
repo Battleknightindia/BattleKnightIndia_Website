@@ -5,8 +5,3 @@ export function getVolunteerProfile(profile: any) {
   }
   return null;
 }
-
-// Returns true if the profile is a volunteer
-export function isVolunteer(profile: any): boolean {
-  return !!(profile && profile.is_volunteer);
-}

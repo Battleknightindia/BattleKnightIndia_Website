@@ -1,25 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
 import ReferredTeamsSection from "./referredteamlist";
-
-import { Copy, Diamond, ExternalLink, HelpCircle, Users} from "lucide-react";
-// Removed unused import: import { Search } from "lucide-react";
-
+import { Copy, Diamond, Users} from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-// Removed unused imports: import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import { volunteerData, REFERRALTOAST} from "@/lib/constant/volunteers_page";
+import { REFERRALTOAST} from "@/lib/constant/volunteers_page";
 import { useProfile } from "@/hooks/useProfile";
-import { getInitials, getAvatarColor} from "@/lib/profileData";
+import { getInitials, getAvatarColor} from "@/lib/client/profileData";
 import { createClient } from "@/utils/supabase/client";
 import { useVolunteer } from "@/hooks/useVolunteer";
 
@@ -44,15 +38,13 @@ export function Volunteer() {
       // If user is logged in, fetch avatar data
       if (user) {
         try {
-          const userInitials = await getInitials();
-          const userAvatarColor = await getAvatarColor();
-          // Removed setAvatarUrl as avatarUrl state is unused
-          // const userAvatarUrl = await getAvatarUrl();
+          if(profile){
+            const userInitials = await getInitials(profile.ign);
+            const userAvatarColor = await getAvatarColor(profile.ign);
 
           setInitials(userInitials);
           setAvatarColor(userAvatarColor);
-          // Removed setAvatarUrl as avatarUrl state is unused
-          // setAvatarUrl(userAvatarUrl);
+          }
         } catch (error) {
           console.error("Error fetching avatar data:", error);
         }
@@ -61,7 +53,7 @@ export function Volunteer() {
 
     getUser();
     // Added supabase.auth to the dependency array
-  }, [supabase.auth]); // Added supabase.auth here
+  }, [supabase.auth, profile]); // Added supabase.auth here
 
   const copyReferralCode = () => {
     navigator.clipboard.writeText(volunteer?.referral_code || "Not Registered");

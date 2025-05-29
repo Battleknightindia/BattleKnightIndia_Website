@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { editprofileSchema } from "@/schema/profileSchema";
-import { uploadAvatarFromBase64 } from "@/lib/imageUpload";
+import { uploadAvatar } from "../services/storageService";
 
-export async function handleProfile(rawForm: unknown) {
+export async function handleProfile(rawForm: unknown, image: File | null) {
   const supabase = await createClient();
   const parsed = editprofileSchema.safeParse(rawForm);
 
@@ -28,9 +28,7 @@ export async function handleProfile(rawForm: unknown) {
     return { success: false, error: "It seems you're not logged in. **Please log in to continue.**" };
   }
 
-  const avatarUrl = formData.profileImage
-    ? await uploadAvatarFromBase64(supabase, formData.profileImage, user.id)
-    : undefined;
+  const avatarUrl = uploadAvatar(image, user.id)
 
   const profileData = {
     fullName: formData.fullName,

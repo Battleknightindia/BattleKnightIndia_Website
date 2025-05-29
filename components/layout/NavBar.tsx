@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
-import { getInitials, getAvatarColor, getAvatarUrl } from "@/lib/profileData";
+import { getInitials, getAvatarColor } from "@/lib/client/profileData";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,53 +17,47 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User as UserIcon, LogOut, Settings, Diamond } from "lucide-react";
-import { ProfileCard } from "./EditProfile";
-import { ProfileView } from "./ViewProfile";
+import { ProfileCard } from "@/components/profile/EditProfile";
+import { ProfileView } from "@/components/profile/ViewProfile";
 import { useProfile } from "@/hooks/useProfile";
-import { isVolunteer } from "@/utils/volunteer_helper";
+import { User } from "@supabase/supabase-js";
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [isForceCompleteOpen, setIsForceCompleteOpen] = useState<boolean>(false)
   const supabase = createClient();
   const router = useRouter();
+  const [ isUser, setIsUser] = useState<User | null>(null)
   const [initials, setInitials] = useState<string>("??");
   const [avatarColor, setAvatarColor] = useState<string>("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isViewProfileOpen, setIsViewProfileOpen] = useState(false);
   const { profile, loading } = useProfile();
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
   const searchParams = useSearchParams();
   const loginSuccessParam = searchParams.get("loginSuccess");
-  const pathname = usePathname();
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) console.error(error);
-      setUser(user);
-
-      // If user is logged in, fetch avatar data
-      if (user) {
+    const getAvatar = async () => {
+      const supabase = await createClient();
+      const {data:{user} , error} = await supabase.auth.getUser();
+      if (isUser) {
+        setIsUser(user)
         try {
-          const userInitials = await getInitials();
-          const userAvatarColor = await getAvatarColor();
-          const userAvatarUrl = await getAvatarUrl();
+          if(profile){
+            const userInitials = await getInitials(profile?.ign);
+            const userAvatarColor = await getAvatarColor(profile?.ign);
 
-          setInitials(userInitials);
-          setAvatarColor(userAvatarColor);
-          setAvatarUrl(userAvatarUrl);
+            setInitials(userInitials);
+            setAvatarColor(userAvatarColor);
+          }
         } catch (error) {
           console.error("Error fetching avatar data:", error);
         }
       }
     };
 
-    getUser();
+    getAvatar();
 
     // Close mobile menu when route changes
     const handleRouteChange = () => {
@@ -75,7 +68,7 @@ export default function NavBar() {
     return () => {
       window.removeEventListener("popstate", handleRouteChange);
     };
-  }, [supabase.auth]);
+  }, [isUser, profile]);
 
   useEffect(() => {
     if (!loading && !hasCheckedProfile) {
@@ -86,6 +79,7 @@ export default function NavBar() {
 
       if (!profile?.ign && loginSuccessParam === "true") {
         setIsEditProfileOpen(true);
+        setIsForceCompleteOpen(true)
         console.log("Profile incomplete after login, opening edit profile.");
       } else if (profile?.ign) {
         console.log("Profile complete.");
@@ -130,33 +124,12 @@ export default function NavBar() {
     }
   };
 
-  const sectionNav = [
-    { id: "home", label: "Home" },
-    { id: "featured", label: "Featured Tournament" },
-    { id: "northeastcup", label: "Past Work" },
-    { id: "cosplay", label: "Cosplay Gallery" },
-    { id: "about", label: "About" },
-    { id: "partners", label: "Sponsors" },
+  const NavLink = [
+    { id: "1", label: "Home", link:"/" },
+    { id: "2", label: "Tournaments", link:"/tournaments" },
+    { id: "3", label: "Cosplay", link:"/cosplay" },
+    { id: "4", label: "About", link:"/about" },
   ];
-
-  const handleNavItemClick = (id: string) => {
-    if (pathname !== "/") {
-      router.push("/");
-      setTimeout(() => {
-        scrollToSection(id);
-      }, 1005); // Adjust timeout as needed for navigation to complete
-    } else {
-      scrollToSection(id);
-    }
-  };
-
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-      setIsMenuOpen(false); // close mobile menu if open
-    }
-  };
 
   return (
     <>
@@ -176,31 +149,22 @@ export default function NavBar() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-          {/* Section scroll nav */}
-          {sectionNav.map((section) => (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => handleNavItemClick(section.id)}
-              className={cn(
-                "px-3 py-2 text-sm lg:text-base font-medium rounded-md transition-colors",
-                "text-zinc-400 hover:text-white hover:bg-zinc-900"
-              )}
-              style={{ transition: "all 0.2s" }}
-            >
-              {section.label}
-            </button>
+          {NavLink.map((item) => (
+            <Link className={cn(
+              "px-3 py-2 text-sm lg:text-base font-medium rounded-md transition-colors",
+              "text-zinc-400 hover:text-white hover:bg-zinc-900"
+            )} key={item.id} href={item.link}>{item.label}</Link>
           ))}
         </nav>
 
         {/* User Actions - Auth or Profile */}
         <div className="flex items-center gap-2">
-          {user ? (
+          {isUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 ring-emerald-500 transition rounded-full overflow-hidden bg-zinc-100">
                   <AvatarImage
-                    src={avatarUrl || undefined}
+                    src={profile?.avatar_url || undefined}
                     alt={profile?.ign || "User"}
                     className="h-full w-full object-cover"
                   />
@@ -230,7 +194,7 @@ export default function NavBar() {
                   <UserIcon className="mr-2 h-4 w-4" />
                   View Profile
                 </DropdownMenuItem>
-                {isVolunteer(profile) && (
+                {profile?.is_volunteer && (
                   <DropdownMenuItem
                     onClick={() => router.push("/volunteers/dashboard")}
                     className="cursor-pointer text-emerald-500 hover:bg-zinc-900"
@@ -259,14 +223,6 @@ export default function NavBar() {
                   Login
                 </Button>
               </Link>
-              {/* <Link href="/signup">
-                <Button
-                  className="text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-black"
-                  size="sm"
-                >
-                  Sign Up
-                </Button>
-              </Link> */}
             </div>
           )}
 
@@ -311,28 +267,16 @@ export default function NavBar() {
         <div className="flex flex-col h-full pt-20 pb-6 px-6">
           {/* Mobile Navigation Links */}
           <nav className="flex flex-col space-y-4 mb-8">
-            {/* Section scroll nav for mobile */}
-            {sectionNav.map((section) => (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => {
-                  handleNavItemClick(section.id);
-                  setIsMenuOpen(false);
-                }}
-                className={cn(
-                  "py-3 px-4 text-lg font-medium rounded-md transition-colors",
-                  "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                )}
-                style={{ transition: "all 0.2s" }}
-              >
-                {section.label}
-              </button>
+            {NavLink.map((item) => (
+              <Link key={item.id} href={item.link} className={cn(
+                "py-3 px-4 text-lg font-medium rounded-md transition-colors",
+                "text-zinc-300 hover:text-white hover:bg-zinc-900"
+              )}>{item.label}</Link>
             ))}
           </nav>
 
           {/* Mobile Auth Buttons */}
-          {!user && (
+          {!isUser && (
             <Link href="/login" className="pt-10">
               <Button
                 variant="outline"
@@ -344,7 +288,7 @@ export default function NavBar() {
             </Link>
           )}
           {/* Mobile User Actions */}
-          {user && (
+          {isUser && (
             <div className="flex flex-col space-y-3 mt-auto">
               <Button
                 variant="outline"
@@ -369,7 +313,7 @@ export default function NavBar() {
                 View Profile
               </Button>
               {/* Volunteer Dashboard Button (Mobile) */}
-              {isVolunteer(profile) && (
+              {profile?.is_volunteer && (
                 <Button
                   variant="outline"
                   className="w-full border-zinc-700 text-emerald-500 hover:bg-zinc-900"
@@ -402,6 +346,7 @@ export default function NavBar() {
       <ProfileCard
         isOpen={isEditProfileOpen}
         onClose={() => setIsEditProfileOpen(false)}
+        forceCompletion={isForceCompleteOpen}
       />
       <ProfileView
         isOpen={isViewProfileOpen}

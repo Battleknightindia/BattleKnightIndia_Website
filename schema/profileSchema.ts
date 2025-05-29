@@ -26,6 +26,18 @@ export const viewprofileSchema = z.object({
   is_volunteer: z.boolean().default(false), // Assuming it's a boolean, default to false if null/undefined
 });
 
+// Zod schema for validation
+export const ProfileFormSchema = z.object({
+  fullName: z.string().min(1, "Your name is required"),
+  gameName: z.string().min(1, "Game name is required"),
+  gameId: z.string().min(1, "Game ID is required"),
+  serverId: z.string().min(1, "Server ID is required"),
+  roles: z.string().min(1, "Select at least one role"), // comma-separated
+  state: z.string().optional(),
+  city: z.string().optional(),
+});
+
+export type ProfileFormType = z.infer<typeof ProfileFormSchema>;
 export type EditProfileFormState = z.infer<typeof editprofileSchema>;
 export type ViewProfileFormType = z.infer<typeof viewprofileSchema>;
 
