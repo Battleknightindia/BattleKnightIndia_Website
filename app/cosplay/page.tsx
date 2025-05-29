@@ -1,6 +1,6 @@
 import { getCosplayGallery } from "@/lib/data/homepage_data"
 import CosplayGallery from "./components/Gallery"
-import { CosplayItem } from "@/types/homepageType"
+import { CosplayItem } from "@/types/homepageTypes"
 
 export default async function CosplayPage() {
   const cosplayData: CosplayItem[] = await getCosplayGallery()
