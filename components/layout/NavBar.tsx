@@ -77,7 +77,7 @@ export default function NavBar() {
         loginSuccessParam
       );
 
-      if (!profile?.ign && loginSuccessParam === "true") {
+      if (!profile?.ign && loginSuccessParam === "true" && isUser) {
         setIsEditProfileOpen(true);
         setIsForceCompleteOpen(true)
         console.log("Profile incomplete after login, opening edit profile.");

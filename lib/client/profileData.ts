@@ -21,8 +21,16 @@ export async function fetchProfile() {
     const result = viewprofileSchema.safeParse(profile);
     console.log(result);
     console.log(result.data);
+
     if (!result.success) {
-      console.error("Validation failed:", result.error);
+      console.error("Validation failed:", result.error.flatten());
+
+      const avatarUrlIssue = result.error.issues.find(
+        (issue) => issue.path.includes('avatar_url')
+      );
+      if (avatarUrlIssue && profile && 'avatar_url' in profile) {
+        console.error(`Problematic avatar_url from database: "${profile.avatar_url}"`);
+      }
       return null;
     }
   
