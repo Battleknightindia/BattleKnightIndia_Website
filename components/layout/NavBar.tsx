@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,9 +25,9 @@ import { User } from "@supabase/supabase-js";
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isForceCompleteOpen, setIsForceCompleteOpen] = useState<boolean>(false)
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []); // Memoize supabase client
   const router = useRouter();
-  const [ isUser, setIsUser] = useState<User | null>(null)
+  const [isUser, setIsUser] = useState<User | null>(null)
   const [initials, setInitials] = useState<string>("??");
   const [avatarColor, setAvatarColor] = useState<string>("");
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -38,26 +38,36 @@ export default function NavBar() {
   const loginSuccessParam = searchParams.get("loginSuccess");
 
   useEffect(() => {
-    const getAvatar = async () => {
-      const supabase = await createClient();
-      const {data:{user} , error} = await supabase.auth.getUser();
-      if (isUser) {
-        setIsUser(user)
-        try {
-          if(profile){
-            const userInitials = await getInitials(profile?.ign);
-            const userAvatarColor = await getAvatarColor(profile?.ign);
+    const fetchUserAndAvatar = async () => {
+      const { data: { user: fetchedUser }, error: authError } = await supabase.auth.getUser();
+      setIsUser(fetchedUser); // Correctly set isUser state
 
-            setInitials(userInitials);
-            setAvatarColor(userAvatarColor);
-          }
+      if (authError) {
+        console.error("Error fetching user:", authError.message);
+        setInitials("??");
+        setAvatarColor("");
+        return;
+      }
+
+      if (fetchedUser && profile?.ign) {
+        try {
+          const userInitials = await getInitials(profile.ign);
+          const userAvatarColor = await getAvatarColor(profile.ign);
+          setInitials(userInitials);
+          setAvatarColor(userAvatarColor);
         } catch (error) {
           console.error("Error fetching avatar data:", error);
+          setInitials("??"); // Reset on error
+          setAvatarColor("");
         }
+      } else if (!fetchedUser) {
+        // User is not logged in, ensure avatar details are reset
+        setInitials("??");
+        setAvatarColor("");
       }
     };
 
-    getAvatar();
+    fetchUserAndAvatar();
 
     // Close mobile menu when route changes
     const handleRouteChange = () => {
@@ -68,28 +78,35 @@ export default function NavBar() {
     return () => {
       window.removeEventListener("popstate", handleRouteChange);
     };
-  }, [isUser, profile]);
+  }, [profile, supabase]); // Dependencies: profile for avatar, supabase client instance
 
   useEffect(() => {
     if (!loading && !hasCheckedProfile) {
       console.log(
-        "Checking profile status after load. Login success param:",
-        loginSuccessParam
+        "Checking profile status. User logged in:", !!isUser,
+        "Profile IGN:", profile?.ign,
+        "Login success param:", loginSuccessParam
       );
 
-      if (!profile?.ign && loginSuccessParam === "true" && isUser) {
+      // Only force completion if user is logged in, profile is incomplete, AND it's a login success redirect
+      if (isUser && !profile?.ign && loginSuccessParam === "true") {
         setIsEditProfileOpen(true);
-        setIsForceCompleteOpen(true)
-        console.log("Profile incomplete after login, opening edit profile.");
-      } else if (profile?.ign) {
-        console.log("Profile complete.");
-      } else {
-        console.log("Profile incomplete, but not a login redirect.");
+        setIsForceCompleteOpen(true);
+        console.log("User logged in, profile incomplete after login, opening edit profile.");
+      } else if (isUser && profile?.ign) {
+        console.log("User logged in, profile complete.");
+      } else if (isUser && !profile?.ign) {
+        console.log("User logged in, profile incomplete, but not a login redirect.");
+      } else if (!isUser) {
+        console.log("User not logged in. Not checking for profile completion.");
+        // Explicitly ensure profile completion is not forced if user is not logged in
+        setIsEditProfileOpen(false); 
+        setIsForceCompleteOpen(false);
       }
 
       setHasCheckedProfile(true);
     }
-  }, [loading, profile, hasCheckedProfile, loginSuccessParam]);
+  }, [isUser, loading, profile, hasCheckedProfile, loginSuccessParam, router]);
 
   useEffect(() => {
     if (isMenuOpen || isEditProfileOpen || isViewProfileOpen) {
@@ -355,4 +372,3 @@ export default function NavBar() {
     </>
   );
 }
-
