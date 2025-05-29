@@ -2,10 +2,11 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { TeamListType } from "@/lib/data/stats_data"; // Assuming this path is correct using alias
+import { Team } from "@/types/teamTypes";
 
 interface UpdateResult {
   id: string;
-  data: any; // Consider defining a more specific type if possible
+  data: Team[] | null; // Consider defining a more specific type if possible
   error: string | null;
 }
 
@@ -53,8 +54,8 @@ export async function updateTeamsStatus(teams: TeamListType[]): Promise<ActionRe
     }
 
     return { success: true, results };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Unexpected error in updateTeamsStatus server action:", error);
-    return { success: false, error: error.message || "An unexpected server error occurred." };
+    return { success: false, error: error as string || "An unexpected server error occurred." };
   }
 }

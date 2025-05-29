@@ -48,7 +48,7 @@ import { TeamListType } from "@/lib/data/stats_data";
 
 type UpdateTournamentResult = {
   success: boolean;
-  error?: string;
+  error?: unknown;
 };
 
 interface AdminPanelProps {
@@ -377,7 +377,7 @@ export default function AdminPanel({ teams }: AdminPanelProps){
         const errorMsg = Result.error || "Unknown error";
         toast({
           title: "Error updating tournament",
-          description: errorMsg,
+          description: errorMsg as string,
           variant: "destructive",
         });
       }

@@ -110,9 +110,9 @@ export async function updateTournament({
       }
       dataToUpdate.image = publicUrl;
     }
-    catch(error: any) {
+    catch(error) {
       console.error("Error uploading image:", error);
-      return { success: false, error: error.message || "Tournament image upload failed unexpectedly." };
+      return { success: false, error: error || "Tournament image upload failed unexpectedly." };
     }
   }
   if (championLogoFile) {
@@ -123,9 +123,9 @@ export async function updateTournament({
       }
       dataToUpdate.champions_logo = publicUrl;
     }
-    catch(error: any) {
+    catch(error) {
       console.error("Error uploading image:", error);
-      return { success: false, error: error.message || "Champion logo upload failed unexpectedly." };
+      return { success: false, error: error || "Champion logo upload failed unexpectedly." };
     }
   }
 
