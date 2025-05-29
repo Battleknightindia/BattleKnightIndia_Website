@@ -8,7 +8,7 @@ import Image from 'next/image';
 
 // Import the data fetching function from your volunteersData.ts file
 // Adjust the import path as necessary based on your project structure
-import { fetchTeamsByReferralCodeAndCaptainData } from "@/lib/volunteersData"; // <<< ADJUST PATH
+import { fetchTeamsByReferralCodeAndCaptainData } from "@/lib/data/volunteers_data"; // <<< ADJUST PATH
 
 // getStatusBadge is defined and will be called in the JSX
 // Using the getStatusBadge implementation provided by the user

@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion} from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TOURNAMENT_DATA } from "@/lib/constant/home_page";
 import Image from "next/image";
+import { NorthEastCupItem } from "@/types/homepageTypes";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function HorizontalTournamentShowcase() {
+type Props = {
+  items: NorthEastCupItem[];
+};
+
+export default function HorizontalTournamentShowcase({ items }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const [userInteracted, setUserInteracted] = useState(false);
@@ -37,14 +42,14 @@ export default function HorizontalTournamentShowcase() {
   useEffect(() => {
     if (isAutoScrolling && !userInteracted) {
       const timer = setInterval(() => {
-        setActiveIndex((prev) => (prev + 1) % TOURNAMENT_DATA.length);
+        setActiveIndex((prev) => (prev + 1) % items.length);
       }, 5000);
 
       return () => clearInterval(timer);
     }
 
     return () => {};
-  }, [isAutoScrolling, userInteracted]);
+  }, [isAutoScrolling, userInteracted, items.length]);
 
   useEffect(() => {
     return () => {
@@ -54,91 +59,19 @@ export default function HorizontalTournamentShowcase() {
     };
   }, []);
 
-  useEffect(() => {
-    const carouselElement = carouselRef.current; // Capture ref value
+  const handlePrev = () => {
+    setActiveIndex((prev) => (prev - 1 + items.length) % items.length);
+    setUserInteracted(true);
+    lastInteractionTime.current = Date.now();
+    resetAutoScrollTimer();
+  };
 
-    const handleWheel = (e: WheelEvent) => {
-      if (carouselElement && carouselElement.contains(e.target as Node)) {
-        e.preventDefault();
-
-        if (e.deltaX > 0 || e.deltaY > 0) {
-          setActiveIndex((prev) => (prev + 1) % TOURNAMENT_DATA.length);
-        } else {
-          setActiveIndex(
-            (prev) =>
-              (prev - 1 + TOURNAMENT_DATA.length) % TOURNAMENT_DATA.length
-          );
-        }
-
-        setUserInteracted(true);
-        lastInteractionTime.current = Date.now();
-        resetAutoScrollTimer();
-      }
-    };
-
-    // Attach to window to capture wheel events over the element
-    window.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      window.removeEventListener("wheel", handleWheel);
-    };
-  }, [carouselRef]); // Removed TOURNAMENT_DATA.length
-
-  useEffect(() => {
-    const carouselElement = carouselRef.current; // Capture ref value
-    let startX = 0;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      startX = e.touches[0].clientX;
-      setUserInteracted(true);
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (carouselElement && carouselElement.contains(e.target as Node)) {
-        e.preventDefault();
-        const currentX = e.touches[0].clientX;
-        const diff = startX - currentX;
-
-        if (Math.abs(diff) > 50) {
-          if (diff > 0) {
-            setActiveIndex((prev) => (prev + 1) % TOURNAMENT_DATA.length);
-          } else {
-            setActiveIndex(
-              (prev) =>
-                (prev - 1 + TOURNAMENT_DATA.length) % TOURNAMENT_DATA.length
-            );
-          }
-          startX = currentX;
-          lastInteractionTime.current = Date.now();
-          resetAutoScrollTimer();
-        }
-      }
-    };
-
-    const handleTouchEnd = () => {
-      resetAutoScrollTimer();
-    };
-
-    if (carouselElement) {
-      carouselElement.addEventListener("touchstart", handleTouchStart, {
-        passive: false,
-      });
-      carouselElement.addEventListener("touchmove", handleTouchMove, {
-        passive: false,
-      });
-      carouselElement.addEventListener("touchend", handleTouchEnd, {
-        passive: false,
-      });
-    }
-
-    return () => {
-      if (carouselElement) {
-        carouselElement.removeEventListener("touchstart", handleTouchStart);
-        carouselElement.removeEventListener("touchmove", handleTouchMove);
-        carouselElement.removeEventListener("touchend", handleTouchEnd);
-      }
-    };
-  }, [carouselRef]); // Removed TOURNAMENT_DATA.length
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev + 1) % items.length);
+    setUserInteracted(true);
+    lastInteractionTime.current = Date.now();
+    resetAutoScrollTimer();
+  };
 
   const fadeInVariants = {
     hidden: { opacity: 0 },
@@ -170,14 +103,22 @@ export default function HorizontalTournamentShowcase() {
 
       <div
         ref={carouselRef}
-        className="relative h-[400px] md:h-[550px] w-full overflow-hidden mb-8 md:mb-12"
-        onMouseDown={() => setUserInteracted(true)}
+        className="relative h-[400px] md:h-[550px] w-full overflow-hidden mb-8 md:mb-12 flex items-center justify-center"
       >
+        {/* Left Arrow Button */}
+        <button
+          onClick={handlePrev}
+          className="absolute left-0 z-20 p-3 rounded-full bg-black/30 backdrop-blur-sm border-white/20 text-white hover:bg-black/50 hover:text-white"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+
         <div className="absolute inset-0 flex items-center justify-center">
-          {TOURNAMENT_DATA.map((item, index) => {
+          {items.map((item, index) => {
             const distance = Math.abs(activeIndex - index);
             const isActive = activeIndex === index;
-            const zIndex = TOURNAMENT_DATA.length - distance;
+            const zIndex = items.length - distance;
 
             let offset = 0;
             if (index < activeIndex) offset = -30 * (activeIndex - index);
@@ -217,10 +158,19 @@ export default function HorizontalTournamentShowcase() {
             );
           })}
         </div>
+
+        {/* Right Arrow Button */}
+        <button
+          onClick={handleNext}
+          className="absolute right-0 z-20 p-3 rounded-full bg-black/30 backdrop-blur-sm border-white/20 text-white hover:bg-black/50 hover:text-white"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
       </div>
       {/* Indicator Dots */}
       <div className="flex justify-center space-x-3 mb-5">
-        {TOURNAMENT_DATA.map((_, index) => (
+        {items.map((_, index) => (
           <button
             key={index}
             className={cn(
@@ -250,7 +200,7 @@ export default function HorizontalTournamentShowcase() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
             >
-              {TOURNAMENT_DATA[activeIndex].title}
+              {items[activeIndex].title}
             </motion.h2>
 
             <motion.p
@@ -259,7 +209,7 @@ export default function HorizontalTournamentShowcase() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              {TOURNAMENT_DATA[activeIndex].description}
+              {items[activeIndex].description}
             </motion.p>
           </div>
 
@@ -269,20 +219,18 @@ export default function HorizontalTournamentShowcase() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {TOURNAMENT_DATA[activeIndex].stats && (
+            {items[activeIndex].stats && (
               <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-4 md:gap-6">
-                {Object.entries(TOURNAMENT_DATA[activeIndex].stats).map(
+                {Object.entries(items[activeIndex].stats).map(
                   ([label, value], index, array) => {
                     const colorClass =
-                      TOURNAMENT_DATA[activeIndex].statColors?.[
-                        label as keyof (typeof TOURNAMENT_DATA)[number]["statColors"]
+                      items[activeIndex].statColors?.[
+                        label as keyof (typeof items)[number]["statColors"]
                       ] || "bg-blue-500";
 
-                    // Determine if the current panel is the third one when there are exactly three stats
                     const isThirdPanelWhenThreeStats =
                       array.length === 3 && index === 2;
 
-                    // Add col-span-2 class for desktop if it's the third panel and there are exactly three stats
                     const colSpanClass = isThirdPanelWhenThreeStats
                       ? "md:col-span-2"
                       : "";
@@ -290,7 +238,8 @@ export default function HorizontalTournamentShowcase() {
                     return (
                       <div
                         key={label}
-                        className={`${colorClass} p-5 rounded-lg text-white text-center flex flex-col items-center justify-center ${colSpanClass}`}
+                        style={{ backgroundColor: colorClass }}
+                        className={` p-5 rounded-lg text-white text-center flex flex-col items-center justify-center ${colSpanClass}`}
                       >
                         <p className="font-semibold text-base md:text-lg capitalize">
                           {label}

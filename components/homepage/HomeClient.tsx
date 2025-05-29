@@ -15,8 +15,16 @@ import { DiamondFab } from "@/components/homepage/volunteer/VolunteerJoin";
 import { isVolunteer } from "@/utils/volunteer_helper";
 import { SlideInNotification } from "@/components/homepage/volunteer/VolunteerNotification";
 import { User } from "@supabase/supabase-js";
+import { FeaturedItem, MediaItem, NorthEastCupItem, CosplayItem } from "@/types/homepageTypes";
 
-export default function HomeClient() {
+type Props = {
+  featuredData:FeaturedItem,
+  eventData: MediaItem[],
+  northeastData: NorthEastCupItem[],
+  cosplayData: CosplayItem[],
+}
+
+export default function HomeClient({featuredData, eventData, northeastData, cosplayData}: Props) {
   const supabase = createClient();
   const [refreshProfileKey, setRefreshProfileKey] = useState(0);
   const { profile, loading } = useProfile();
@@ -52,9 +60,9 @@ export default function HomeClient() {
       <NavBar key={refreshProfileKey} />
       <div className="flex flex-col min-h-screen bg-black text-white">
         <HeroSection/>
-        <FeaturedSection/>
-        <NorthEastCup/>
-        <CosplaySection/>
+        <FeaturedSection featuredData={featuredData} eventData={eventData}/>
+        <NorthEastCup items={northeastData}/>
+        <CosplaySection cosplayData={cosplayData}/>
         <AboutSection/>
         <Footer />
       </div>

@@ -86,12 +86,8 @@ const defaultAllowedImageTypes: Record<string, string> = {
   // Add other types as needed
 };
 
-/**
- * Handles uploading an image provided as a base64 string.
- * Decodes, validates, and calls the generic file uploader.
- */
 async function _uploadImageFromBase64({
-  supabaseClient, // Type is now SupabaseClient via Base64UploadOptions
+  supabaseClient, 
   bucket,
   pathPrefix,
   uniqueIdentifier,
@@ -125,7 +121,7 @@ async function _uploadImageFromBase64({
       pathPrefix,
       uniqueIdentifier,
       file: blob,
-      allowedMimeTypes: defaultAllowedImageTypes, // Use standard image types
+      allowedMimeTypes: defaultAllowedImageTypes, 
       upsert
     });
   } catch (error) {
@@ -135,14 +131,8 @@ async function _uploadImageFromBase64({
 }
 
 
-// --- Exported Functions ---
-
-/**
- * Uploads a user avatar from a base64 string.
- * Uses the 'avatars' bucket and 'profiles/' path prefix.
- */
 export async function uploadAvatarFromBase64(
-  supabaseClient: SupabaseClient, // Changed any to SupabaseClient
+  supabaseClient: SupabaseClient, 
   base64: string,
   userId: string
 ): Promise<string | null> {
@@ -152,32 +142,19 @@ export async function uploadAvatarFromBase64(
   }
   return _uploadImageFromBase64({
     supabaseClient,
-    bucket: "avatars", // Specific bucket for avatars
-    pathPrefix: "profiles/", // Specific path for avatars
+    bucket: "avatars", 
+    pathPrefix: "profiles/", 
     uniqueIdentifier: userId,
     base64: base64,
-    upsert: true // Overwrite existing avatar for the user
+    upsert: true 
   });
 }
 
-/**
- * Uploads a file related to the registration process.
- * Takes a File object directly.
- *
- * IMPORTANT: For players, pass identifier as `${teamName}/${role}` (e.g., IITB/captain, IITB/player-2, IITB/coach),
- * NOT a mutable/display name, to guarantee strict separation between teams and roles.
- *
- * @param supabaseClient - The Supabase client instance
- * @param file - The file to upload
- * @param category - 'university' | 'team' | 'players' | 'coach'
- * @param identifier - For players: `${teamName}/${role}` (e.g., IITB/captain, IITB/player-2)
- * @param type - 'logo' | 'picture' | 'student_id'
- */
 export async function uploadRegistrationFile(
-  supabaseClient: SupabaseClient, // Changed any to SupabaseClient
+  supabaseClient: SupabaseClient, 
   file: File,
   category: 'university' | 'team' | 'players' | 'coach',
-  identifier: string, // e.g., for players: `${teamName}/${role}`
+  identifier: string, 
   type: 'logo' | 'picture' | 'student_id'
 ): Promise<string | null> {
   if (!identifier || (category === 'players' && !/^([a-zA-Z0-9_-]+)\/(captain|player-\d+|substitute|coach)$/.test(identifier))) {
@@ -191,16 +168,14 @@ export async function uploadRegistrationFile(
 
   return await _uploadImageFile({
     supabaseClient,
-    bucket: "registrations", // Dedicated bucket for registration files
+    bucket: "registrations", 
     pathPrefix: pathPrefix,
-    uniqueIdentifier: safeIdentifier.replace('/', '_'), // Use both team and role for filename
+    uniqueIdentifier: safeIdentifier.replace('/', '_'), 
     file: file,
-    // No specific mime type restrictions here, relies on browser provided type
-    upsert: false // Generally don't upsert registration files unless intended
+    upsert: false 
   });
 }
 
-// Re-export the existing updateAvatarUrl function if it should remain here
 export async function updateAvatarUrl(supabaseClient: SupabaseClient, avatarUrl: string): Promise<boolean> { // Changed any to SupabaseClient
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) return false;

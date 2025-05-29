@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { editprofileSchema } from "@/schema/profileSchema";
-import { uploadAvatarFromBase64 } from "@/lib/imageUpload";
+import { uploadAvatarFromBase64 } from "@/lib/services/imageUpload";
 
 export async function handleProfile(rawForm: unknown) {
   const supabase = await createClient();

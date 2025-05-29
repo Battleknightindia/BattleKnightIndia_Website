@@ -7,8 +7,13 @@ import { Calendar, MapPin, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import EventCarousel from "@/components/homepage/content/EventCardCarousel2";
-import { FEATURED_EVENT } from "@/lib/constant/home_page";
+import EventCarousel from "@/components/homepage/content/EventCardCarousel";
+import { FeaturedItem, MediaItem } from "@/types/homepageTypes";
+
+type Props = {
+  featuredData:FeaturedItem,
+  eventData: MediaItem[]
+}
 
 // Animation variants
 const containerVariants = {
@@ -44,7 +49,7 @@ const fadeInVariants = {
   },
 };
 
-export default function FeaturedSection() {
+export default function FeaturedSection({featuredData, eventData}: Props) {
   // Removed useState here as well, aligning with the import removal
 
   return (
@@ -79,28 +84,28 @@ export default function FeaturedSection() {
             className="relative overflow-hidden md:rounded-2xl"
           >
             <Image
-              src={FEATURED_EVENT.bannerImage || "/placeholder.svg"}
-              alt={FEATURED_EVENT.title}
+              src={featuredData.bannerImage || "/placeholder.svg"}
+              alt={featuredData.title}
               width={1200}
               height={600}
               className="w-full h-[300px] md:h-[400px] object-contain md:object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
               <h3 className="text-2xl md:text-4xl font-bold mb-2">
-                {FEATURED_EVENT.title}
+                {featuredData.title}
               </h3>
               <div className="flex flex-wrap gap-4 text-sm">
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-1 text-emerald-500" />
-                  {FEATURED_EVENT.date}
+                  {featuredData.date}
                 </div>
                 <div className="flex items-center">
                   <MapPin className="w-4 h-4 mr-1 text-amber-600" />
-                  {FEATURED_EVENT.location}
+                  {featuredData.location}
                 </div>
                 <div className="flex items-center">
                   <Users className="w-4 h-4 mr-1 text-blue-500" />
-                  {FEATURED_EVENT.teamCount} Teams
+                  {featuredData.teamCount} Teams
                 </div>
               </div>
             </div>
@@ -134,13 +139,13 @@ export default function FeaturedSection() {
                     <div className="bg-zinc-800 p-4 rounded-lg">
                       <p className="text-sm text-zinc-400">Teams</p>
                       <p className="text-xl font-bold text-purple-400">
-                        {FEATURED_EVENT.teamCount}
+                        {featuredData.teamCount}
                       </p>
                     </div>
                     <div className="bg-zinc-800 p-4 rounded-lg">
                       <p className="text-sm text-zinc-400">Prize Pool</p>
                       <p className="text-xl font-bold text-amber-400">
-                        {FEATURED_EVENT.prizePool}
+                        {featuredData.prizePool}
                       </p>
                     </div>
                   </div>
@@ -151,7 +156,7 @@ export default function FeaturedSection() {
                     asChild
                     className="bg-emerald-500 text-white hover:bg-emerald-600 flex-1 hover:scale-105 transition-all duration-300"
                   >
-                    <Link href={FEATURED_EVENT.ticketsUrl}>
+                    <Link href={featuredData.ticketsUrl}>
                       Register with your team
                     </Link>
                   </Button>
@@ -160,7 +165,7 @@ export default function FeaturedSection() {
                     variant="outline"
                     className="border-white text-black hover:bg-amber-600 hover:text-white flex-1 hover:scale-105 transition-all duration-300"
                   >
-                    <Link href={FEATURED_EVENT.watchUrl}>
+                    <Link href={featuredData.watchUrl}>
                       Let&apos;s Watch Live
                     </Link>
                   </Button>
@@ -177,7 +182,7 @@ export default function FeaturedSection() {
           viewport={{ once: true }}
           variants={fadeInVariants}
         >
-          <EventCarousel /> {/* Check the implementation of EventCarousel */}
+          <EventCarousel items={eventData} /> {/* Check the implementation of EventCarousel */}
         </motion.div>
 
         {/* CTA Section */}
@@ -203,7 +208,7 @@ export default function FeaturedSection() {
                   size="lg"
                   className="bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-105 transition-all duration-300"
                 >
-                  <Link href={FEATURED_EVENT.ticketsUrl} className="font-bold">
+                  <Link href={featuredData.ticketsUrl} className="font-bold">
                     Register with your team
                   </Link>
                 </Button>

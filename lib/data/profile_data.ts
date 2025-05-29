@@ -1,8 +1,8 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
-import { viewprofileSchema } from "../schema/profileSchema";
-import { COLORS } from "./constant/profile";
+import { viewprofileSchema } from "@/schema/profileSchema";
+import { COLORS } from "@/lib/constant/profile";
 
 export async function fetchProfile() {
   const supabase = createClient();
