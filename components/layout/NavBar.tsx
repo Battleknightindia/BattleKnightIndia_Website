@@ -158,7 +158,7 @@ export default function NavBar() {
           {Navitems.map((item) => (
             <Link key={item.id} href={item.link} className={cn(
               "px-3 py-2 text-sm lg:text-base font-medium rounded-md transition-colors",
-              "text-zinc-400 hover:text-white hover:bg-zinc-900"
+              "text-zinc-400 hover:text-white hover:bg-emerald-500"
             )}>
               {item.name}
             </Link>
@@ -186,7 +186,7 @@ export default function NavBar() {
 
               <DropdownMenuContent
                 align="end"
-                className="w-48 mt-1 bg-zinc-950 border border-zinc-800 rounded-md shadow-lg"
+                className="hidden md:flex w-48 mt-1 bg-zinc-950 border border-zinc-800 rounded-md shadow-lg"
               >
                 <DropdownMenuItem
                   onClick={openEditProfileCard}
@@ -225,7 +225,7 @@ export default function NavBar() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="text-sm font-medium hover:bg-zinc-900 text-white hover:text-emerald-400"
+                  className="text-sm bg-emerald-500 hover:bg-emerald-600 text-white hover:text-white font-bold"
                   size="sm"
                 >
                   Login
