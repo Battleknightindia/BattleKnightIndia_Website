@@ -63,11 +63,11 @@ export default function CosplayGallery({ cosplayData }: Props) {
           viewport={{ once: true }}
           variants={fadeInVariants}
         >
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight pb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
             Cosplay Gallery
           </h1>
           <div className="w-32 h-1 bg-gradient-to-r from-amber-500 to-emerald-500 mx-auto mb-8"></div>
-          <p className="max-w-[800px] mx-auto text-gray-300 text-xl lg:text-2xl leading-relaxed">
+          <p className="max-w-[800px] mx-auto text-gray-300 text-lg md:text-2xl leading-relaxed">
             A curated collection showcasing the artistry and creativity of talented cosplayers.
           </p>
         </motion.div>

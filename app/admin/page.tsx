@@ -6,31 +6,31 @@ import { viewprofileSchema } from "@/schema/profileSchema";
 
 
 export default async function AdminPage() {
-  const supabase = await createClient();
+  // const supabase = await createClient();
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  // const {
+  //   data: { user },
+  //   error: userError,
+  // } = await supabase.auth.getUser();
 
-  if (userError || !user) {
-    return <AdminLock />;
-  }
+  // if (userError || !user) {
+  //   return <AdminLock />;
+  // }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+  // const { data: profile, error: profileError } = await supabase
+  //   .from("profiles")
+  //   .select("*")
+  //   .eq("user_id", user.id)
+  //   .single();
 
-  if (profileError || !profile) {
-    return <AdminLock />;
-  }
+  // if (profileError || !profile) {
+  //   return <AdminLock />;
+  // }
 
-  const result = viewprofileSchema.safeParse(profile);
-  if (!result.success || !result.data.is_admin) {
-    return <AdminLock />;
-  }
+  // const result = viewprofileSchema.safeParse(profile);
+  // if (!result.success || !result.data.is_admin) {
+  //   return <AdminLock />;
+  // }
 
   const teams = await fetchteams();
 

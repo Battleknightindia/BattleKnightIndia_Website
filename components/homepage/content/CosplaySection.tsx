@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link" // Import Link for the "View More" button
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { CosplayItem } from "@/types/homepageTypes"
+import { ChevronRight } from "lucide-react"
 
 type Props = {
   cosplayData: CosplayItem[]

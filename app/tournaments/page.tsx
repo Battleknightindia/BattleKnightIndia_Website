@@ -51,7 +51,7 @@ export default async function TournamentPage() {
         <h1 className="mb-4 text-center text-4xl font-extrabold tracking-tight text-white md:text-5xl lg:text-6xl">
           Tournament Hub
         </h1>
-        <p className="mx-auto mb-16 max-w-3xl text-center text-lg text-muted-foreground md:text-xl">
+        <p className="mx-auto mb-16 max-w-3xl text-center text-lg text-muted-foreground md:text-2xl">
           Your hub for all esports tournaments - watch live events, register for ongoing competitions, and stay updated
           on upcoming tournaments.
         </p>

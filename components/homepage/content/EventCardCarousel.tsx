@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react"
+import { Play, Pause } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { MediaItem } from "@/types/homepageTypes"
 
 type Props = {
@@ -75,20 +74,6 @@ export default function EventCarousel({ items }: Props) {
       }
     }
   }, [])
-
-  const nextSlide = () => {
-    setUserInteracted(true)
-    setIsAutoScrolling(false)
-    setActiveIndex((prev) => (prev + 1) % items.length)
-    resetAutoScrollTimer()
-  }
-
-  const prevSlide = () => {
-    setUserInteracted(true)
-    setIsAutoScrolling(false)
-    setActiveIndex((prev) => (prev - 1 + items.length) % items.length)
-    resetAutoScrollTimer()
-  }
 
   const toggleVideoPlay = (id: string) => {
     const video = videoRefs.current[id]
@@ -240,7 +225,7 @@ export default function EventCarousel({ items }: Props) {
         {/* Layer 2: Content overlay (title, description) - Non-interactive, sits above media */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pt-16 pb-6 px-6 text-white pointer-events-none z-20">
           <div className="max-w-3xl">
-            <div className="inline-block bg-emerald-500 text-white text-xs font-medium px-2 py-1 rounded mb-2">
+            <div className="absolute bottom-64 md:bottom-123 inline-block bg-emerald-500 text-white text-xs font-medium px-2 py-1 rounded mb-2">
               {activeItem.date}
             </div>
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2">{activeItem.title}</h2>
@@ -258,8 +243,8 @@ export default function EventCarousel({ items }: Props) {
                 "h-20 w-20 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 hover:scale-105 transition-all duration-200",
                 {
                   // Logic for Play/Pause button visibility
-                  "opacity-100 pointer-events-auto": !isPlaying[activeItem.id] || (isPlaying[activeItem.id] && isHovering),
-                  "opacity-0 pointer-events-none": isPlaying[activeItem.id] && !isHovering,
+                  "md:opacity-100 md:pointer-events-auto": !isPlaying[activeItem.id] || (isPlaying[activeItem.id] && isHovering),
+                  "md:opacity-0 md:pointer-events-none": isPlaying[activeItem.id] && !isHovering,
                 }
               )}
               onClick={(e) => {
@@ -276,40 +261,6 @@ export default function EventCarousel({ items }: Props) {
           </div>
         )}
       </div> {/* End carouselRef div */}
-
-      {/* NEW LOCATION FOR NAVIGATION BUTTONS - Sibling to carouselRef, positioned absolute relative to outer div */}
-      <div
-        className={cn(
-          "absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 transition-opacity duration-300 z-40",
-        )}
-        // Adjust these top/bottom values if you want them more precisely vertically centered on carousel height
-        style={{ top: 'calc(45% - 24px)', bottom: 'calc(55% - 24px)' }} // Roughly center vertically within the main carousel height
-        // OR simpler:
-        // style={{ top: '50%', transform: 'translateY(-50%)' }} // for vertical centering but you still need left/right
-      >
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-black/30 backdrop-blur-sm border-white/20 text-white hover:bg-black/50 hover:text-white"
-          onClick={prevSlide}
-          aria-label="Previous slide"
-        >
-          <ChevronLeft className="h-6 w-6" />
-          <span className="sr-only">Previous slide</span>
-        </Button>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-black/30 backdrop-blur-sm border-white/20 text-white hover:bg-black/50 hover:text-white"
-          onClick={nextSlide}
-          aria-label="Next slide"
-        >
-          <ChevronRight className="h-6 w-6" />
-          <span className="sr-only">Next slide</span>
-        </Button>
-      </div>
-
       <div className="flex justify-start md:justify-center space-x-2 md:space-x-4 mb-3 md:mb-5 overflow-x-auto py-2 px-2 md:px-4 scrollbar-hide">
         {items.map((item, index) => (
           <button

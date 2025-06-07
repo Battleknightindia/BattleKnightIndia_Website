@@ -6,7 +6,7 @@ export default async function CosplayPage() {
   const cosplayData: CosplayItem[] = await getCosplayGallery()
 
   return (
-    <div className="min-h-screen bg-[#18181B]">
+    <div className="min-h-screen pt-20 bg-[#18181B]">
       <CosplayGallery cosplayData={cosplayData} />
     </div>
   )

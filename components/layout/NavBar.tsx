@@ -284,7 +284,7 @@ export default function NavBar() {
           {/* Mobile Navigation Links */}
           <nav className="flex flex-col space-y-4 mb-8">
             {Navitems.map((item) => (
-              <Link key={item.id} href={item.link}  className={cn(
+              <Link onClick={toggleMenu} key={item.id} href={item.link}  className={cn(
                 "py-3 px-4 text-lg font-medium rounded-md transition-colors",
                 "text-zinc-300 hover:text-white hover:bg-zinc-900"
               )}>

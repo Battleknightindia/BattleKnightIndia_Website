@@ -1,40 +1,21 @@
-import { z } from "zod"
+// @/schema/volunteerSchema.ts
+import { z } from "zod";
 
 export const volunteersSchema = z.object({
-    email: z.string().min(1),
-    phone: z.string().min(1),
-    referral_code: z.string().min(1),
-    profile_id: z.string().min(1),
-    reward_points: z.string().optional().nullable(),
-    total_teams: z.string().optional().nullable(),
-    approved_teams: z.string().optional().nullable(),
-})
+  // Existing fields
+  profile_id: z.string().uuid(),
+  referral_code: z.string().min(1, "Referral code is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  joined_at: z.string(), // Timestamps are often parsed as strings initially
+  updated_at: z.string(),
+  volunteer_id: z.string().uuid(),
 
-export const teamSchema = z.object({
-  name: z.string().min(1),
-  referral_code: z.string().min(1),
-  logo: z.string().optional().nullable(),
-  id: z.string().optional().nullable(),
-  status: z.string().optional().nullable(),
-})
-
-export const captainSchema = z.object({
-  id: z.string().min(1),
-  team_id: z.string().min(1),
-  university_id: z.string().min(1),
-  created_at: z.string().min(1),
-  name: z.string().min(1),
-  ign: z.string().min(1),
-  role: z.enum(['captain', 'player', 'substitute', 'coach']),
-  game_id: z.string().min(1),
-  server_id: z.string().min(1),
-  email: z.string().min(1),
-  mobile: z.string().min(1),
-  city: z.string().optional().nullable(),
-  state: z.string().optional().nullable(),
-  device: z.string().optional().nullable(),
-  picture_url: z.string().optional().nullable(),
-  student_id_url: z.string().optional().nullable(),
-})
+  // NEW fields, now coming directly from the database
+  reward_points: z.string().default('0'), // Make sure this matches the DB type
+  teams_referred: z.string().default('0').optional(), // If you still use this, otherwise remove
+  approved_teams: z.string().default('0'), // Make sure this matches the DB type
+  total_teams: z.string().default('0'), // Make sure this matches the DB type
+});
 
 export type VolunteerFormState = z.infer<typeof volunteersSchema>;
