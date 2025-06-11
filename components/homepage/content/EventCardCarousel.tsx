@@ -189,7 +189,7 @@ export default function EventCarousel({ items }: Props) {
             {activeItem.type === "image" ? (
               <div className="relative w-full h-full">
                 <Image
-                  src={activeItem.src || "/placeholder.svg"}
+                  src={activeItem.image || "/placeholder.svg"}
                   alt={activeItem.title}
                   fill
                   className={cn(
@@ -205,7 +205,7 @@ export default function EventCarousel({ items }: Props) {
                 <video
                   id={activeItem.id}
                   ref={(el) => registerVideoRef(activeItem.id, el)}
-                  src={activeItem.src}
+                  src={activeItem.image}
                   className={cn(
                     "w-full h-full transition-all duration-500",
                     activeItem.aspectRatio === "portrait" ? "object-contain" : "object-cover",
@@ -274,7 +274,7 @@ export default function EventCarousel({ items }: Props) {
           >
             {item.type === "image" ? (
               <Image
-                src={item.src || "/placeholder.svg"}
+                src={item.image || "/placeholder.svg"}
                 alt={item.title}
                 fill
                 className="object-cover"

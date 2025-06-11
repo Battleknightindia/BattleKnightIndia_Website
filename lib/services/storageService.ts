@@ -1,6 +1,6 @@
-"use server";
+"use client";
 
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/client';
 
 export async function uploadAvatar(image: File | null, userId: string): Promise<string | null> {
   if (!userId || !image) {
@@ -9,7 +9,7 @@ export async function uploadAvatar(image: File | null, userId: string): Promise<
   }
   
   const filename = `profilesImages/${userId}/${image.name}`;
-  const supabase = await createClient();
+  const supabase = createClient();
 
   try {
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -33,12 +33,12 @@ export async function uploadAvatar(image: File | null, userId: string): Promise<
   }
 }
 
-export async function uploadHomepageImage(file: File, folder: string, uniqueId: string): Promise<string | null> {
+export async function uploadHomepageImage(file: File | null, folder: string, uniqueId?: string): Promise<string | null> {
   if (!file || !folder || !uniqueId) {
     console.error("File, folder, and uniqueId are required for homepage image upload.");
     return null;
   }
-  const supabase = await createClient(); 
+  const supabase = createClient(); 
   const fileName = `${folder}/${uniqueId}_${file.name}`; 
 
   try {
@@ -74,7 +74,7 @@ export async function uploadTournamentAsset(
     return null;
   }
 
-  const supabase = await createClient();
+  const supabase = createClient();
   const assetTypeFolder = assetType === 'logo' ? 'logo' : 'champion_team_logo';
   const actualFileName = fileNameOverride || file.name;
   const storagePath = `${tournamentName}/${assetTypeFolder}/${actualFileName}`;
@@ -98,6 +98,38 @@ export async function uploadTournamentAsset(
     return urlData.publicUrl;
   } catch (error) {
     console.error('An unexpected error occurred during tournament asset upload:', error);
+    return null;
+  }
+}
+
+export async function uploadHomepageVideo(file: File, folder: string, uniqueId: string): Promise<string | null> {
+  if (!file || !folder || !uniqueId) {
+    console.error("File, folder, and uniqueId are required for homepage video upload.");
+    return null;
+  }
+
+  const supabase = createClient();
+  const fileName = `${folder}/${uniqueId}_${file.name}`;
+
+  try {
+
+    const { error } = await supabase.storage
+      .from("home")
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: file.type,
+      });
+
+    if (error) {
+      console.error("Supabase Storage upload error for homepage video:", error);
+      return null;
+    }
+
+    const { data } = supabase.storage.from("home").getPublicUrl(fileName);
+    return data?.publicUrl || null;
+  } catch (error) {
+    console.error("An unexpected error occurred during homepage video upload:", error);
     return null;
   }
 }
