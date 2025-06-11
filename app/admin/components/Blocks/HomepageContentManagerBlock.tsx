@@ -101,7 +101,7 @@ const UploadProgressModal: React.FC<UploadProgressModalProps> = ({
           
           <div className="text-center bg-blue-50 p-3 rounded-lg">
             <p className="text-xs text-blue-700 font-medium">
-              Please don't close this window while uploading...
+              <p>Please do not close this window while uploading&hellip;</p>
             </p>
           </div>
           
@@ -398,7 +398,7 @@ export default function HomepageContentManagerBlock() {
           uploadFailed = true;
           break;
         }
-        item.src = url;
+        item.image = url;
         fileIndex++;
       }
       processedItems.push(item);
