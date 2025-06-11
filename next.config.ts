@@ -13,10 +13,14 @@ const nextConfig: NextConfig = {
       // Example: 'abcdef12345.supabase.co'
       'zuvpacjjywckyrgluxru.supabase.co', // Replace this placeholder!
       "placehold.co",
+      "picsum.photos",
       // Add any other external image domains you might use
     ],
   },
-  // ... rest of your nextConfig
+  webpack: (config) => {
+    config.experiments = { ...config.experiments, topLevelAwait: true };
+    return config;
+  },
 };
 
 export default nextConfig

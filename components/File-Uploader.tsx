@@ -21,7 +21,6 @@ export function FileUploader({
   onFileSelect,
   currentFile, // Data passed from parent (can be File, URL string, or null)
   helpText,
-  maxSize = 5 * 1024 * 1024, // 5MB default
 }: FileUploaderProps) {
   // Internal state to display file name, synchronized with currentFile prop via effect
   const [displayedFileName, setDisplayedFileName] = useState<string | null>(
@@ -92,17 +91,7 @@ export function FileUploader({
       return;
     }
 
-    // Check file size
-    if (file.size > maxSize) {
-      setError(`File size exceeds ${maxSize / (1024 * 1024)}MB limit.`); // USED
-      setDisplayedFileName(null); // Clear displayed name
-      onFileSelect(null); // Do not select the invalid file
-      // Reset the input value
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-      return;
-    }
+
 
     // File is valid
     setDisplayedFileName(file.name); // Display file name

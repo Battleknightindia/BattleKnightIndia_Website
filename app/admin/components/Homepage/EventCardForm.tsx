@@ -12,13 +12,11 @@ type EventCarouselAdminProps = {
   // Renamed prop for clarity
   onItemChange: (idx: number, val: MediaItem | null) => void;
   // New prop to communicate selected files and trigger save
-  onSave: (currentData: MediaItem[], files: (File | null)[]) => void;
 };
 
 export function EventCarouselAdmin({
   data,
   onItemChange,
-  onSave,
 }: EventCarouselAdminProps) {
   // State to store the actual File objects for upload
   const [selectedFiles, setSelectedFiles] = useState<(File | null)[]>(
@@ -235,13 +233,6 @@ export function EventCarouselAdmin({
           </Button>
         </div>
         <div className="flex gap-2 mt-6">
-          <Button
-            className="bg-blue-600 text-white"
-            onClick={() => onSave(data, selectedFiles)} // Pass data and selectedFiles
-            type="button"
-          >
-            Save Carousel
-          </Button>
         </div>
       </CardContent>
     </Card>

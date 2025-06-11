@@ -10,13 +10,11 @@ import { useState, useEffect } from "react";
 type NorthEastCupAdminProps = {
   data: NorthEastCupItem[];
   onItemChange: (idx: number, val: NorthEastCupItem | null) => void;
-  onSave: (currentData: NorthEastCupItem[], files: (File | null)[]) => void;
 };
 
 export function NorthEastCupAdmin({
   data,
   onItemChange,
-  onSave,
 }: NorthEastCupAdminProps) {
   console.log("NorthEastCupAdmin received data:", data);
   const [selectedFiles, setSelectedFiles] = useState<(File | null)[]>(
@@ -325,13 +323,6 @@ export function NorthEastCupAdmin({
           </Button>
         </div>
         <div className="flex gap-2 mt-6">
-          <Button
-            className="bg-blue-600 text-white"
-            onClick={() => onSave(data, selectedFiles)}
-            type="button"
-          >
-            Save NorthEast Cup
-          </Button>
         </div>
       </CardContent>
     </Card>

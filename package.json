@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
     "@hcaptcha/react-hcaptcha": "^1.12.0",
     "@hookform/resolvers": "^5.0.1",
+    "@imagekit/next": "^2.1.2",
     "@marsidev/react-turnstile": "^1.1.0",
     "@radix-ui/react-accordion": "^1.2.8",
     "@radix-ui/react-alert-dialog": "^1.1.11",
@@ -75,6 +77,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.4",
+    "@types/ffmpeg": "^1.0.7",
     "@types/node": "^20.17.30",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",

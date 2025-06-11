@@ -1,0 +1,6 @@
+image,title,description,stats,statColors,order_index,id
+"https://picsum.photos/seed/1/600/400","Highland Hawks","Top-performing team in Assam Cup.","{""Wins"": 8, ""Losses"": 2, ""Goals"": 25}","{""Wins"": ""#22c55e"", ""Losses"": ""#ef4444"", ""Goals"": ""#3b82f6""}",1,"a0a1a2a3-b4b5-c6c7-d8d9-e0e1e2e3e4e5"
+"https://picsum.photos/seed/2/600/400","Valley Vipers","Fierce competitors from the Brahmaputra belt.","{""Wins"": 6, ""Losses"": 4, ""Goals"": 19}","{""Wins"": ""#22c55e"", ""Losses"": ""#ef4444"", ""Goals"": ""#3b82f6""}",2,"b1b2b3b4-c5c6-d7d8-e9e0-f1f2f3f4f5f6"
+"https://picsum.photos/seed/3/600/400","Kaziranga Kings","Known for their strong defense.","{""Wins"": 7, ""Losses"": 3, ""Goals"": 17}","{""Wins"": ""#22c55e"", ""Losses"": ""#ef4444"", ""Goals"": ""#3b82f6""}",3,"c2c3c4c5-d6d7-e8e9-f0f1-a2a3a4a5a6a7"
+"https://picsum.photos/seed/4/600/400","Shillong Storm","Dominating team from Meghalaya.","{""Wins"": 9, ""Losses"": 1, ""Goals"": 28}","{""Wins"": ""#22c55e"", ""Losses"": ""#ef4444"", ""Goals"": ""#3b82f6""}",4,"d3d4d5d6-e7e8-f9f0-a1a2-b3b4b5b6b7"
+"https://picsum.photos/seed/5/600/400","Tawang Titans","A young and dynamic team.","{""Wins"": 5, ""Losses"": 5, ""Goals"": 21}","{""Wins"": ""#22c55e"", ""Losses"": ""#ef4444"", ""Goals"": ""#3b82f6""}",5,"e4e5e6e7-f8f9-a0a1-b2b3-c4c5c6c7c8"

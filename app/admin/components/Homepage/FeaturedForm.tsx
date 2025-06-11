@@ -10,15 +10,11 @@ import { useState, useEffect } from "react";
 type FeaturedSectionAdminProps = {
   data: FeaturedItem;
   onChange: (data: FeaturedItem) => void;
-  onSave: (updatedData: FeaturedItem, file: File | null) => void; 
-  onSeed?: () => void; 
 };
 
 export function FeaturedSectionAdmin({
   data,
   onChange,
-  onSave,
-  onSeed, 
 }: FeaturedSectionAdminProps) {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
@@ -133,13 +129,6 @@ export function FeaturedSectionAdmin({
           </div>
         </div>
         <div className="flex gap-2 mt-6">
-          <Button
-            className="bg-blue-600 text-white"
-            onClick={() => onSave(data, bannerFile)} 
-            type="button"
-          >
-            Save Featured Event
-          </Button>
         </div>
       </CardContent>
     </Card>
