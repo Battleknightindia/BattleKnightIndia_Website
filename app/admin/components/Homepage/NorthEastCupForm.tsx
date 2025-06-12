@@ -1,3 +1,4 @@
+// components/Homepage/NorthEastCupForm.tsx
 import { FileUploader } from "@/components/File-Uploader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,44 +10,111 @@ import { useState, useEffect } from "react";
 
 type NorthEastCupAdminProps = {
   data: NorthEastCupItem[];
-  onItemChange: (idx: number, val: NorthEastCupItem | null) => void;
+  // onItemChange now accepts a File | null for the associated file
+  onItemChange: (idx: number, val: NorthEastCupItem | null, file?: File | null) => void;
 };
 
 export function NorthEastCupAdmin({
   data,
   onItemChange,
 }: NorthEastCupAdminProps) {
-  console.log("NorthEastCupAdmin received data:", data);
-  const [selectedFiles, setSelectedFiles] = useState<(File | null)[]>(
-    data.map(() => null)
-  );
-  const [previewUrls, setPreviewUrls] = useState<(string | null)[]>(
-    data.map(() => null)
-  );
+  // We'll manage local preview URLs here, as `FileUploader` uses `currentFile`
+  // and we want immediate feedback for newly selected images.
+  const [localPreviewUrls, setLocalPreviewUrls] = useState<(string | null)[]>([]);
 
+  // Effect to update local preview URLs based on data changes or file selections.
   useEffect(() => {
-    const newPreviewUrls = data.map((item, idx) => {
-      const file = selectedFiles[idx];
-      if (file) {
-        return URL.createObjectURL(file);
-      }
-      return null;
+    setLocalPreviewUrls(prevUrls => {
+      const newUrls: (string | null)[] = new Array(data.length).fill(null);
+      data.forEach((item, idx) => {
+        // If the item has an existing image URL (from DB or a temporary URL from a previous onFileSelect call), use it.
+        // This is important to retain previews for newly added items before they are saved.
+        if (item.image) {
+          newUrls[idx] = item.image;
+        } else if (prevUrls[idx] && prevUrls[idx]?.startsWith("blob:")) {
+            // If the item doesn't have an image, but we had a temporary blob URL from a prior selection at this index,
+            // we'll keep it for continuity unless the data entry explicitly removed it.
+            newUrls[idx] = prevUrls[idx];
+        }
+      });
+      return newUrls;
     });
 
-    setPreviewUrls(newPreviewUrls);
-
+    // Cleanup function for object URLs when component unmounts or data changes significantly
     return () => {
-      newPreviewUrls.forEach((url) => {
-        if (url) URL.revokeObjectURL(url);
+      localPreviewUrls.forEach((url) => {
+        if (url && url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
       });
     };
-  }, [selectedFiles, data]);
+  }, [data]); // Depend on `data` to react to parent changes
 
   const handleFileSelect = (file: File | null, idx: number) => {
-    setSelectedFiles((prev) => {
-      const newFiles = [...prev];
-      newFiles[idx] = file;
-      return newFiles;
+    let tempUrl: string = "";
+    if (file) {
+      tempUrl = URL.createObjectURL(file);
+      // Update local preview state for immediate feedback
+      setLocalPreviewUrls((prev) => {
+        const newUrls = [...prev];
+        if (newUrls[idx] && newUrls[idx]?.startsWith("blob:")) {
+            URL.revokeObjectURL(newUrls[idx] as string); // Revoke old URL if it was a blob
+        }
+        newUrls[idx] = tempUrl;
+        return newUrls;
+      });
+    } else {
+        // If file is null (cleared selection), clear local preview and revoke URL
+        setLocalPreviewUrls((prev) => {
+            const newUrls = [...prev];
+            if (newUrls[idx] && newUrls[idx]?.startsWith("blob:")) {
+                URL.revokeObjectURL(newUrls[idx] as string);
+            }
+            newUrls[idx] = null;
+            return newUrls;
+        });
+    }
+
+    // Call parent's onItemChange with the updated item and the actual File object
+    // We pass the temporary URL for immediate display, but the parent uses the File object for upload.
+    onItemChange(
+      idx,
+      {
+        ...data[idx], // Spread existing item properties
+        image: tempUrl, // Set temporary local URL for immediate display
+      },
+      file // Pass the actual File object to the parent
+    );
+  };
+
+  const handleAddItem = () => {
+    // No need to generate an ID client-side; Supabase will handle it.
+    // Use `undefined` or `null` for `id` as it will be assigned by the DB.
+    const newItem: NorthEastCupItem = {
+      id: undefined as unknown as string, // Supabase generates this
+      image: "", // Will be updated by FileUploader's onFileSelect
+      title: "",
+      description: "",
+      stats: {}, // Initialize with empty objects
+      statColors: {}, // Initialize with empty objects
+      order_index: data.length + 1, // Assign a temporary order_index
+    };
+    // Pass null for the file since no file is selected yet for this new item.
+    onItemChange(data.length, newItem, null);
+  };
+
+  const handleDeleteItem = (idx: number) => {
+    // Inform parent to remove item from its data array
+    onItemChange(idx, null, null); // Pass null for item and file to signal deletion
+
+    // Cleanup local preview URL if it was a blob and remove from array
+    setLocalPreviewUrls((prev) => {
+        const newUrls = [...prev];
+        if (newUrls[idx] && newUrls[idx]?.startsWith("blob:")) {
+            URL.revokeObjectURL(newUrls[idx] as string);
+        }
+        newUrls.splice(idx, 1);
+        return newUrls;
     });
   };
 
@@ -61,7 +129,7 @@ export function NorthEastCupAdmin({
   }) {
     return (
       <span
-        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mr-2 mb-2 whitespace-nowrap" // Added whitespace-nowrap
+        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mr-2 mb-2 whitespace-nowrap"
         style={{
           background: color,
           color: "#fff",
@@ -72,35 +140,6 @@ export function NorthEastCupAdmin({
       </span>
     );
   }
-
-  const handleAddItem = () => {
-    const newItem: NorthEastCupItem = {
-      id: Date.now(),
-      image: "",
-      title: "",
-      description: "",
-      stats: {},
-      statColors: {},
-    };
-    onItemChange(data.length, newItem);
-    setSelectedFiles((prev) => [...prev, null]);
-    setPreviewUrls((prev) => [...prev, null]);
-  };
-
-  const handleDeleteItem = (idx: number) => {
-    onItemChange(idx, null);
-    setSelectedFiles((prev) => {
-      const newFiles = [...prev];
-      newFiles.splice(idx, 1);
-      return newFiles;
-    });
-    setPreviewUrls((prev) => {
-      const newPreviews = [...prev];
-      if (newPreviews[idx]) URL.revokeObjectURL(newPreviews[idx] as string);
-      newPreviews.splice(idx, 1);
-      return newPreviews;
-    });
-  };
 
   return (
     <Card className="mb-8">
@@ -114,29 +153,29 @@ export function NorthEastCupAdmin({
               ([name, value]) => ({
                 name,
                 value: String(value),
-                color: (item.statColors)?.[name] || "#",
+                color: (item.statColors)?.[name] || "#000000", // Fallback to black for display if undefined
               })
             );
             return (
               <div
-                key={item.id}
+                key={item.id || `temp-${idx}`} // Use real ID if available, else temporary based on index
                 className="border rounded-lg p-4 flex flex-col md:flex-row gap-4 items-center relative"
               >
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full"> {/* Added w-full */}
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                   <div>
                     <Input
                       value={item.title}
                       onChange={(e) =>
-                        onItemChange(idx, { ...item, title: e.target.value })
+                        onItemChange(idx, { ...item, title: e.target.value }, null) // Pass null for file as title is not file-related
                       }
                       placeholder="Title"
-                      className="mb-2" // Added margin-bottom
+                      className="mb-2"
                     />
                     <textarea
                       className="w-full rounded border p-2 text-zinc-900 resize-none min-h-[3rem] max-h-60"
                       value={item.description}
                       onChange={(e) =>
-                        onItemChange(idx, { ...item, description: e.target.value })
+                        onItemChange(idx, { ...item, description: e.target.value }, null) // Pass null for file
                       }
                       rows={3}
                       style={{ overflow: "hidden" }}
@@ -147,8 +186,8 @@ export function NorthEastCupAdmin({
                       }}
                     />
                     {/* Stat pills display area with horizontal scroll */}
-                    <div className="mt-4 overflow-x-auto pb-2 custom-scrollbar"> {/* Added custom-scrollbar for styling */}
-                      <div className=""> {/* Changed to flex-nowrap and added gap */}
+                    <div className="mt-4 overflow-x-auto pb-2 custom-scrollbar">
+                      <div className="flex flex-nowrap gap-2"> {/* Changed to flex-nowrap and added gap */}
                         {statsArr.map((stat) => (
                           <StatPill
                             key={stat.name}
@@ -161,15 +200,15 @@ export function NorthEastCupAdmin({
                     </div>
 
                     {/* Stat editor section */}
-                    <div className="mt-4 border-t pt-4"> {/* Added border-top and padding-top */}
+                    <div className="mt-4 border-t pt-4">
                       <h4 className="text-sm font-semibold mb-2">Edit Stats:</h4>
                       {statsArr.map((stat) => (
                         <div
                           key={stat.name}
-                          className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-3 p-2 border rounded" // Adjusted for better stacking on mobile
+                          className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-3 p-2 border rounded"
                         >
                           <Input
-                            className="flex-1 min-w-[100px]" // Allow inputs to shrink
+                            className="flex-1 min-w-[100px]"
                             value={stat.name}
                             onChange={(e) => {
                               const newName = e.target.value;
@@ -183,19 +222,19 @@ export function NorthEastCupAdmin({
                                 ...item,
                                 stats: newStats,
                                 statColors: newColors,
-                              });
+                              }, null); // Pass null for file
                             }}
                             placeholder="Stat Name"
                           />
                           <Input
-                            className="flex-1 min-w-[100px]" // Allow inputs to shrink
+                            className="flex-1 min-w-[100px]"
                             value={stat.value}
                             onChange={(e) => {
                               const newStats = {
                                 ...item.stats,
                                 [stat.name]: e.target.value,
                               };
-                              onItemChange(idx, { ...item, stats: newStats });
+                              onItemChange(idx, { ...item, stats: newStats }, null); // Pass null for file
                             }}
                             placeholder="Stat Value"
                           />
@@ -203,7 +242,7 @@ export function NorthEastCupAdmin({
                             <input
                               type="color"
                               value={
-                                /^#/.test(stat.color) ? stat.color : "#000000" // Fallback to black for color picker
+                                /^#/.test(stat.color) ? stat.color : "#000000"
                               }
                               onChange={(e) => {
                                 const newColors = {
@@ -213,13 +252,13 @@ export function NorthEastCupAdmin({
                                 onItemChange(idx, {
                                   ...item,
                                   statColors: newColors,
-                                });
+                                }, null); // Pass null for file
                               }}
                               title="Hex color picker"
-                              className="h-9 w-9 p-0 border border-input rounded-md cursor-pointer" // Styled color input
+                              className="h-9 w-9 p-0 border border-input rounded-md cursor-pointer"
                             />
                             <Input
-                              className="w-full sm:w-36" // Adjusted width for responsiveness
+                              className="w-full sm:w-36"
                               placeholder="e.g. rgba(255, 0, 0, 0.5)"
                               value={stat.color}
                               onChange={(e) => {
@@ -231,7 +270,7 @@ export function NorthEastCupAdmin({
                                 onItemChange(idx, {
                                   ...item,
                                   statColors: newColors,
-                                });
+                                }, null); // Pass null for file
                               }}
                               title="Accepts hex, rgb, rgba, etc."
                             />
@@ -248,10 +287,10 @@ export function NorthEastCupAdmin({
                                 ...item,
                                 stats: newStats,
                                 statColors: newColors,
-                              });
+                              }, null); // Pass null for file
                             }}
                             type="button"
-                            className="shrink-0" // Prevent button from shrinking
+                            className="shrink-0"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -275,7 +314,7 @@ export function NorthEastCupAdmin({
                             ...item,
                             stats: newStats,
                             statColors: newColors,
-                          });
+                          }, null); // Pass null for file
                         }}
                         type="button"
                       >
@@ -288,11 +327,11 @@ export function NorthEastCupAdmin({
                       id={`necup-image-${idx}`}
                       accept="image/*"
                       onFileSelect={(file) => handleFileSelect(file, idx)}
-                      currentFile={previewUrls[idx] || item.image}
+                      currentFile={localPreviewUrls[idx] || item.image} // Use localPreviewUrls for immediate feedback
                     />
-                    {(previewUrls[idx] || item.image) && (
+                    {(localPreviewUrls[idx] || item.image) && (
                       <Image
-                        src={previewUrls[idx] || item.image}
+                        src={localPreviewUrls[idx] || item.image}
                         alt="Cup"
                         width={200}
                         height={200}
@@ -322,8 +361,7 @@ export function NorthEastCupAdmin({
             + Add Cup Card
           </Button>
         </div>
-        <div className="flex gap-2 mt-6">
-        </div>
+        <div className="flex gap-2 mt-6"></div>
       </CardContent>
     </Card>
   );

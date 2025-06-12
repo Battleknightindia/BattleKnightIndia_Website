@@ -169,7 +169,7 @@ export async function saveEventCarouselData(
 
   // Process items: assign order_index and separate for insert/update
   const finalEventCarouselItems = eventCarouselPayload.map((item, i) => {
-    const mutableItem = { ...item, order_index: i + 1, id: String(item.id) }; // Ensure id is a string and order_index is sequential
+    const mutableItem = { ...item, order_index: i + 1 }; // Ensure order_index is sequential
     if (mutableItem.id) {
       itemsToUpdate.push(mutableItem);
       existingItemIdsInPayload.add(mutableItem.id);

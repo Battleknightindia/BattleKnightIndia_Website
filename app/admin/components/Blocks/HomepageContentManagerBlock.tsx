@@ -101,7 +101,8 @@ const UploadProgressModal: React.FC<UploadProgressModalProps> = ({
           
           <div className="text-center bg-blue-50 p-3 rounded-lg">
             <p className="text-xs text-blue-700 font-medium">
-              <p>Please do not close this window while uploading&hellip;</p>
+              {/* FIX: Removed nested <p> tag */}
+              Please do not close this window while uploading&hellip;
             </p>
           </div>
           
@@ -121,11 +122,12 @@ const UploadProgressModal: React.FC<UploadProgressModalProps> = ({
 };
 
 // Enhanced upload function with progress tracking
+// IMPORTANT: This 'uploadWithProgress' now expects 'uploadFunction' to NOT take a 'bucket' parameter
 const uploadWithProgress = async (
   file: File,
-  bucket: string,
-  path: string,
-  uploadFunction: (file: File, bucket: string, path: string) => Promise<string | null>,
+  // Removed 'bucket' parameter as it will be hardcoded in the specific upload functions (e.g., uploadHomepageImage)
+  path: string,   // This will be the full path including the folder (e.g., "event-carousel/...")
+  uploadFunction: (file: File, path: string) => Promise<string | null>, // Updated type signature for uploadFunction
   onProgress: (progress: number) => void
 ): Promise<string | null> => {
   // Simulate progress since we can't get real progress from uploadFunction
@@ -147,7 +149,8 @@ const uploadWithProgress = async (
   const progressInterval = simulateProgress();
   
   try {
-    const result = await uploadFunction(file, bucket, path);
+    // Removed 'bucket' from the call to uploadFunction
+    const result = await uploadFunction(file, path); 
     clearInterval(progressInterval);
     onProgress(100);
     return result;
@@ -180,8 +183,6 @@ export default function HomepageContentManagerBlock() {
     totalFiles: 0,
     currentFileIndex: 0,
   });
-
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     async function fetchHomepageContent() {
@@ -306,10 +307,9 @@ export default function HomepageContentManagerBlock() {
         currentFileIndex: 0,
       });
 
-      const storage_path = `banner/${file.name}`;
+      const storage_path = `featured-event/banner/${file.name}`;
       const url = await uploadWithProgress(
         file,
-        "featured-event",
         storage_path,
         uploadHomepageImage,
         (progress) => setUploadProgress(prev => ({ ...prev, progress }))
@@ -336,12 +336,19 @@ export default function HomepageContentManagerBlock() {
     }
   }
 
-  async function handleSaveEventCarousel(currentData: MediaItem[], selectedFiles: (File | null)[]) {
+  async function handleSaveEventCarousel() { // Removed parameters here
     setSaving((s) => ({ ...s, carousel: true }));
+    console.group("handleSaveEventCarousel START");
+    console.log("Current carouselSelectedFiles (from state):", carouselSelectedFiles.map(f => f ? f.name : 'null'));
+    
     const processedItems: MediaItem[] = [];
     let uploadFailed = false;
 
-    const filesToUpload = selectedFiles.filter(file => file !== null) as File[];
+    // Filter only the files that actually need uploading
+    const filesToUpload = carouselSelectedFiles.filter(file => file !== null) as File[]; // Use state directly
+    console.log("Files actually needing upload (filesToUpload):", filesToUpload.map(f => f.name));
+    console.log("Total files to upload (filesToUpload.length):", filesToUpload.length);
+
     if (filesToUpload.length > 0) {
       setUploadProgress({
         isUploading: true,
@@ -350,65 +357,86 @@ export default function HomepageContentManagerBlock() {
         totalFiles: filesToUpload.length,
         currentFileIndex: 0,
       });
+      console.log("Upload progress modal initialized with totalFiles:", filesToUpload.length);
     }
 
-    let fileIndex = 0;
-    for (let i = 0; i < currentData.length; i++) {
-      const item = { ...currentData[i] };
-      const file = selectedFiles[i];
+    let fileIndex = 0; // This index tracks the count of files *being uploaded*
+    for (let i = 0; i < carouselData.length; i++) { // Loop through all carousel items, use carouselData from state
+      const item = { ...carouselData[i] }; // Make a shallow copy to modify
+      const file = carouselSelectedFiles[i]; // Get the file associated with this specific carousel item index
 
-      if (file) {
+      console.group(`Processing Carousel Item Index: ${i}`);
+      console.log("Item data at current index:", item);
+      console.log("File found for this item (selectedFiles[i]):", file ? file.name : "null (no new file for this item)");
+
+      if (file) { // Only attempt upload if a new file exists for this item
+        // Update progress for the current file being processed
         setUploadProgress(prev => ({
           ...prev,
           currentFile: file.name,
-          currentFileIndex: fileIndex,
+          currentFileIndex: fileIndex, // This refers to the index within `filesToUpload`
           progress: 0,
         }));
+        console.log(`Setting upload progress for file ${fileIndex + 1} of ${filesToUpload.length}: ${file.name}`);
 
         const uniqueId = item.id || `carousel-${Date.now()}-${i}`;
-        const storage_path = `${item.type}-items/${uniqueId}_${file.name}`;
+        const storage_path = `event-carousel/${item.type}-items/${uniqueId}_${file.name}`;
+
+        console.log("Attempting upload to storagePath:", storage_path);
 
         let url: string | null;
-        if (item.type === "image") {
-          url = await uploadWithProgress(
-            file,
-            "event-carousel",
-            storage_path,
-            uploadHomepageImage,
-            (progress) => setUploadProgress(prev => ({ ...prev, progress }))
-          );
-        } else if (item.type === "video") {
-          url = await uploadWithProgress(
-            file,
-            "event-carousel",
-            storage_path,
-            uploadHomepageVideo,
-            (progress) => setUploadProgress(prev => ({ ...prev, progress }))
-          );
-        } else {
-          url = null;
+        try {
+            if (item.type === "image") {
+                url = await uploadWithProgress(
+                    file,
+                    storage_path,
+                    uploadHomepageImage,
+                    (progress) => setUploadProgress(prev => ({ ...prev, progress }))
+                );
+            } else if (item.type === "video") {
+                url = await uploadWithProgress(
+                    file,
+                    storage_path,
+                    uploadHomepageVideo,
+                    (progress) => setUploadProgress(prev => ({ ...prev, progress }))
+                );
+            } else {
+                url = null; // Should not happen if item.type is strictly 'image' or 'video'
+            }
+        } catch (uploadErr) {
+            console.error(`Error during upload for ${file.name}:`, uploadErr);
+            url = null; // Ensure url is null if an unexpected error occurs during upload
         }
+        
+        console.log("URL *RETURNED* from uploadWithProgress:", url);
 
         if (!url) {
           toast({
             title: "Error",
-            description: `Failed to upload media for carousel item ${item.title || i + 1}.`,
+            description: `Failed to upload media for carousel item ${item.title || i + 1}: ${file.name}.`,
             variant: "destructive",
           });
           uploadFailed = true;
-          break;
+          console.error(`Upload failed for item ${i}. Retaining original image path: ${item.image}`);
         }
-        item.image = url;
-        fileIndex++;
+        item.image = url || item.image; // If upload fails (url is null), keep the original image path
+        console.log("item.image *AFTER* potential update:", item.image);
+
+        fileIndex++; // Increment fileIndex ONLY for files that were *attempted* to be uploaded
+      } else {
+          console.log("No new file to upload for this item. Keeping existing image URL:", item.image);
       }
       processedItems.push(item);
+      console.groupEnd(); // End console group for current item
     }
+
+    console.log("Final processedItems array before saving to DB:", processedItems.map(item => ({ id: item.id, image: item.image, title: item.title })));
+    console.groupEnd();
 
     setUploadProgress(prev => ({ ...prev, isUploading: false }));
 
     if (uploadFailed) {
       setSaving((s) => ({ ...s, carousel: false }));
-      return;
     }
 
     const { data, error } = await saveEventCarouselData(processedItems);
@@ -418,57 +446,83 @@ export default function HomepageContentManagerBlock() {
       toast({ title: "Error", description: error, variant: "destructive" });
     } else if (data) {
       setCarouselData(data);
-      setCarouselSelectedFiles(data.map(() => null));
+      setCarouselSelectedFiles(data.map(() => null)); // Reset selected files after successful save
       toast({ title: "Event Carousel updated!" });
     }
   }
 
-  const handleCarouselItemChange = (idx: number, newItem: MediaItem | null) => {
-    setCarouselData((prev) => {
-      const newData = [...prev];
+  // Refactored to remove setTimeout(0)
+  const handleCarouselItemChange = (idx: number, newItem: MediaItem | null, newFile?: File | null) => {
+    console.log(`[handleCarouselItemChange] Called for index ${idx}. New Item:`, newItem, `New File:`, newFile);
+
+    // Update carouselData
+    setCarouselData((prevData) => {
+        const newData = [...prevData];
+        if (newItem === null) {
+            newData.splice(idx, 1);
+        } else {
+            if (idx === newData.length) {
+                newData.push(newItem);
+            } else {
+                newData[idx] = newItem;
+            }
+        }
+        return newData;
+    });
+
+    // Update carouselSelectedFiles (now directly in the function, not nested)
+    setCarouselSelectedFiles((prevFiles) => {
+        console.log("[handleCarouselItemChange] setCarouselSelectedFiles - Previous files (direct update):", prevFiles.map(f => f ? f.name : 'null'));
+        const newFiles = [...prevFiles];
+
+        if (newItem === null) { // If item was removed
+            newFiles.splice(idx, 1);
+        } else { // If item was added or updated
+            if (idx === newFiles.length) { // Adding a new item
+                newFiles.push(newFile || null);
+            } else { // Updating an existing item
+                newFiles[idx] = newFile || null;
+            }
+        }
+        console.log("[handleCarouselItemChange] setCarouselSelectedFiles - Updated files (direct update):", newFiles.map(f => f ? f.name : 'null'));
+        return newFiles;
+    });
+  };
+
+  const handleNorthEastCupItemChange = (idx: number, newItem: NorthEastCupItem | null, newFile?: File | null) => {
+    setNorthEastCupData((prevData) => {
+      const newData = [...prevData];
       if (newItem === null) {
         newData.splice(idx, 1);
-        setCarouselSelectedFiles((prevFiles) => { 
-          const newFiles = [...prevFiles]; 
-          newFiles.splice(idx, 1); 
-          return newFiles; 
-        });
       } else {
         if (idx === newData.length) {
           newData.push(newItem);
-          setCarouselSelectedFiles((prevFiles) => [...prevFiles, null]);
         } else newData[idx] = newItem;
       }
       return newData;
     });
-  };
 
-  const handleNorthEastCupItemChange = (idx: number, newItem: NorthEastCupItem | null) => {
-    setNorthEastCupData((prev) => {
-      const newData = [...prev];
+    setNorthEastCupSelectedFiles((prevFiles) => { 
+      const newFiles = [...prevFiles]; 
       if (newItem === null) {
-        newData.splice(idx, 1);
-        setNorthEastCupSelectedFiles((prevFiles) => { 
-          const newFiles = [...prevFiles]; 
-          newFiles.splice(idx, 1); 
-          return newFiles; 
-        });
+        newFiles.splice(idx, 1); 
       } else {
-        if (idx === newData.length) {
-          newData.push(newItem);
-          setNorthEastCupSelectedFiles((prevFiles) => [...prevFiles, null]);
-        } else newData[idx] = newItem;
+        if (idx === newFiles.length) {
+          newFiles.push(newFile || null); // Push new file if adding
+        } else {
+          newFiles[idx] = newFile || null; // Update file if modifying existing
+        }
       }
-      return newData;
+      return newFiles; 
     });
   };
 
-  async function handleSaveNorthEastCup(currentData: NorthEastCupItem[], selectedFiles: (File | null)[]) {
+  async function handleSaveNorthEastCup() { // Removed parameters here
     setSaving((s) => ({ ...s, necup: true }));
     const processedItems: NorthEastCupItem[] = [];
     let uploadFailed = false;
 
-    const filesToUpload = selectedFiles.filter(file => file !== null) as File[];
+    const filesToUpload = northEastCupSelectedFiles.filter(file => file !== null) as File[]; // Use state directly
     if (filesToUpload.length > 0) {
       setUploadProgress({
         isUploading: true,
@@ -480,9 +534,9 @@ export default function HomepageContentManagerBlock() {
     }
 
     let fileIndex = 0;
-    for (let i = 0; i < currentData.length; i++) {
-      const item = { ...currentData[i] };
-      const file = selectedFiles[i];
+    for (let i = 0; i < northEastCupData.length; i++) { // Use state directly
+      const item = { ...northEastCupData[i] }; // Make a shallow copy
+      const file = northEastCupSelectedFiles[i]; // Use state directly
 
       if (file) {
         setUploadProgress(prev => ({
@@ -493,11 +547,10 @@ export default function HomepageContentManagerBlock() {
         }));
 
         const uniqueId = item.id || `necup-${Date.now()}-${i}`;
-        const storage_path = `team-images/${uniqueId}_${file.name}`;
+        const storage_path = `northeast-cup/team-images/${uniqueId}_${file.name}`;
 
         const url = await uploadWithProgress(
           file,
-          "northeast-cup",
           storage_path,
           uploadHomepageImage,
           (progress) => setUploadProgress(prev => ({ ...prev, progress }))
@@ -537,93 +590,88 @@ export default function HomepageContentManagerBlock() {
     }
   }
 
+  // Refactored to remove setTimeout(0) and use useCallback correctly for state updates
   const handleCosplayGalleryItemChange = useCallback(
     (idx: number, newItem: CosplayItem | null, newFile?: File | null) => {
-      console.log(`[handleCosplayGalleryItemChange] Initial Call - Index: ${idx}, New Item: ${newItem ? 'Provided' : 'Null'}, New File: ${newFile ? newFile.name : 'None'}`);
+      console.log(`[handleCosplayGalleryItemChange] Called for index ${idx}. New Item:`, newItem, `New File:`, newFile);
 
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        console.log(`[handleCosplayGalleryItemChange] Cleared existing timeout.`);
-      }
+      // Directly update state without setTimeout
+      console.group(`[handleCosplayGalleryItemChange] Direct Execution (Index: ${idx})`); // Changed log to reflect direct execution
+      console.log(`   Processed New Item:`, newItem);
+      console.log(`   Processed New File:`, newFile ? `Name: ${newFile.name}, Size: ${newFile.size}, Type: ${newFile.type}` : 'None');
 
-      timeoutRef.current = setTimeout(() => {
-        console.group(`[handleCosplayGalleryItemChange] Debounced Execution (Index: ${idx})`);
-        console.log(`  Processed New Item:`, newItem);
-        console.log(`  Processed New File:`, newFile ? `Name: ${newFile.name}, Size: ${newFile.size}, Type: ${newFile.type}` : 'None');
+      setCosplayGallery((prevGalleryItems) => {
+        console.log(`   [setCosplayGallery] Previous State:`, prevGalleryItems.map(item => item.image));
+        const updatedGalleryItems = [...prevGalleryItems];
 
-        setCosplayGallery((prevGalleryItems) => {
-          console.log(`  [setCosplayGallery] Previous State:`, prevGalleryItems.map(item => item.image));
-          const updatedGalleryItems = [...prevGalleryItems];
-
-          if (newItem === null) {
-            console.log(`  [setCosplayGallery] Action: Removing item at index ${idx}`);
-            updatedGalleryItems.splice(idx, 1);
+        if (newItem === null) {
+          console.log(`   [setCosplayGallery] Action: Removing item at index ${idx}`);
+          updatedGalleryItems.splice(idx, 1);
+        } else {
+          if (idx === prevGalleryItems.length) {
+            console.log(`   [setCosplayGallery] Action: Adding new item at index ${idx}`);
+            updatedGalleryItems.push(newItem);
           } else {
-            if (idx === prevGalleryItems.length) {
-              console.log(`  [setCosplayGallery] Action: Adding new item at index ${idx}`);
-              updatedGalleryItems.push(newItem);
+            console.log(`   [setCosplayGallery] Action: Updating item at index ${idx}`);
+            updatedGalleryItems[idx] = newItem;
+          }
+        }
+
+        const finalGalleryState = updatedGalleryItems.map((item, i) => ({
+          ...item,
+          order_index: i + 1,
+        }));
+        console.log(`   [setCosplayGallery] Final State Returned:`, finalGalleryState.map(item => item.image));
+        return finalGalleryState;
+      });
+
+      setCosplayGallerySelectedFiles((prevFiles) => {
+        console.log(`   [setCosplayGallerySelectedFiles] Previous State:`, prevFiles.map(f => f ? f.name : 'null'));
+        const updatedFiles = [...prevFiles];
+
+        if (newItem === null) {
+          console.log(`   [setCosplayGallerySelectedFiles] Action: Removing file at index ${idx}`);
+          updatedFiles.splice(idx, 1);
+        } else {
+          if (idx === prevFiles.length) {
+            const isAlreadyAdded = prevFiles.some(
+              (existingFile) =>
+                existingFile && newFile &&
+                existingFile.name === newFile.name &&
+                existingFile.size === newFile.size &&
+                existingFile.type === newFile.type
+            );
+
+            if (!isAlreadyAdded) {
+              console.log(`   [setCosplayGallerySelectedFiles] Action: Adding new file "${newFile?.name}" at index ${idx}`);
+              updatedFiles.push(newFile || null);
             } else {
-              console.log(`  [setCosplayGallery] Action: Updating item at index ${idx}`);
-              updatedGalleryItems[idx] = newItem;
+              console.log(`   [setCosplayGallerySelectedFiles] Skipped adding duplicate file: "${newFile?.name}"`);
+            }
+          } else {
+            if (newFile !== undefined) {
+              console.log(`   [setCosplayGallerySelectedFiles] Action: Updating file at index ${idx} with "${newFile?.name}"`);
+              updatedFiles[idx] = newFile;
+            } else {
+              console.log(`   [setCosplayGallerySelectedFiles] Action: No new file provided for update at index ${idx}.`);
             }
           }
+        }
+        console.log(`   [setCosplayGallerySelectedFiles] Final State Returned:`, updatedFiles.map(f => f ? f.name : 'null'));
+        return updatedFiles;
+      });
 
-          const finalGalleryState = updatedGalleryItems.map((item, i) => ({
-            ...item,
-            order_index: i + 1,
-          }));
-          console.log(`  [setCosplayGallery] Final State Returned:`, finalGalleryState.map(item => item.image));
-          return finalGalleryState;
-        });
-
-        setCosplayGallerySelectedFiles((prevFiles) => {
-          console.log(`  [setCosplayGallerySelectedFiles] Previous State:`, prevFiles.map(f => f ? f.name : 'null'));
-          const updatedFiles = [...prevFiles];
-
-          if (newItem === null) {
-            console.log(`  [setCosplayGallerySelectedFiles] Action: Removing file at index ${idx}`);
-            updatedFiles.splice(idx, 1);
-          } else {
-            if (idx === prevFiles.length) {
-              const isAlreadyAdded = prevFiles.some(
-                (existingFile) =>
-                  existingFile && newFile &&
-                  existingFile.name === newFile.name &&
-                  existingFile.size === newFile.size &&
-                  existingFile.type === newFile.type
-              );
-
-              if (!isAlreadyAdded) {
-                console.log(`  [setCosplayGallerySelectedFiles] Action: Adding new file "${newFile?.name}" at index ${idx}`);
-                updatedFiles.push(newFile || null);
-              } else {
-                console.log(`  [setCosplayGallerySelectedFiles] Skipped adding duplicate file: "${newFile?.name}"`);
-              }
-            } else {
-              if (newFile !== undefined) {
-                console.log(`  [setCosplayGallerySelectedFiles] Action: Updating file at index ${idx} with "${newFile?.name}"`);
-                updatedFiles[idx] = newFile;
-              } else {
-                console.log(`  [setCosplayGallerySelectedFiles] Action: No new file provided for update at index ${idx}.`);
-              }
-            }
-          }
-          console.log(`  [setCosplayGallerySelectedFiles] Final State Returned:`, updatedFiles.map(f => f ? f.name : 'null'));
-          return updatedFiles;
-        });
-
-        console.groupEnd();
-      }, 0);
+      console.groupEnd();
     },
     []
   );
 
-  async function handleSaveCosplayGallery() {
+  async function handleSaveCosplayGallery() { // Removed parameters here
     setSaving((s) => ({ ...s, cosplay: true }));
     const processedItems: CosplayItem[] = [];
     let uploadFailed = false;
 
-    const filesToUpload = cosplayGallerySelectedFiles.filter(file => file !== null) as File[];
+    const filesToUpload = cosplayGallerySelectedFiles.filter(file => file !== null) as File[]; // Use state directly
     if (filesToUpload.length > 0) {
       setUploadProgress({
         isUploading: true,
@@ -635,9 +683,9 @@ export default function HomepageContentManagerBlock() {
     }
 
     let fileIndex = 0;
-    for (let i = 0; i < cosplayGallery.length; i++) {
+    for (let i = 0; i < cosplayGallery.length; i++) { // Use state directly
       const item = { ...cosplayGallery[i] };
-      const file = cosplayGallerySelectedFiles[i];
+      const file = cosplayGallerySelectedFiles[i]; // Use state directly
 
       if (file) {
         setUploadProgress(prev => ({
@@ -647,10 +695,10 @@ export default function HomepageContentManagerBlock() {
           progress: 0,
         }));
 
-        const storage_path = `cosplay-items/${item.order_index}_${file.name}`;
+        // Corrected storage_path for cosplay-gallery folder within 'home' bucket
+        const storage_path = `cosplay-gallery/cosplay-items/${item.order_index}_${file.name}`;
         const url = await uploadWithProgress(
           file,
-          "cosplay-gallery",
           storage_path,
           uploadHomepageImage,
           (progress) => setUploadProgress(prev => ({ ...prev, progress }))
@@ -745,7 +793,7 @@ export default function HomepageContentManagerBlock() {
               />
               <Button 
                 className="mt-6 bg-blue-600 text-white" 
-                onClick={() => handleSaveEventCarousel(carouselData, carouselSelectedFiles)} 
+                onClick={() => handleSaveEventCarousel()} // Changed call to no arguments
                 disabled={saving.carousel}
               >
                 <Plus className="mr-2 h-4 w-4" /> 
@@ -759,7 +807,7 @@ export default function HomepageContentManagerBlock() {
               />
               <Button 
                 className="mt-6 bg-blue-600 text-white" 
-                onClick={() => handleSaveNorthEastCup(northEastCupData, northEastCupSelectedFiles)} 
+                onClick={() => handleSaveNorthEastCup()} // Changed call to no arguments
                 disabled={saving.necup}
               >
                 <Plus className="mr-2 h-4 w-4" /> 
@@ -773,7 +821,7 @@ export default function HomepageContentManagerBlock() {
               />
               <Button 
                 className="mt-6 bg-blue-600 text-white" 
-                onClick={handleSaveCosplayGallery} 
+                onClick={handleSaveCosplayGallery} // Already no arguments
                 disabled={saving.cosplay}
               >
                 <Plus className="mr-2 h-4 w-4" /> 

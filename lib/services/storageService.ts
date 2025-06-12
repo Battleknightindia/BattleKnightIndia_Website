@@ -33,30 +33,39 @@ export async function uploadAvatar(image: File | null, userId: string): Promise<
   }
 }
 
-export async function uploadHomepageImage(file: File | null, folder: string, uniqueId?: string): Promise<string | null> {
-  if (!file || !folder || !uniqueId) {
-    console.error("File, folder, and uniqueId are required for homepage image upload.");
+
+
+export async function uploadHomepageImage(file: File, storagePath: string): Promise<string | null> {
+  if (!file || !storagePath) {
+    console.error("File, bucketName, and storagePath are required for homepage image upload.");
     return null;
   }
-  const supabase = createClient(); 
-  const fileName = `${folder}/${uniqueId}_${file.name}`; 
+
+  const supabase = createClient();
 
   try {
-    const { error } = await supabase.storage
-      .from("home")
-      .upload(fileName, file, {
+    const { error: uploadError } = await supabase.storage
+      .from("home") // Use the dynamic bucketName here
+      .upload(storagePath, file, { // Use the storagePath directly as the file's path
         cacheControl: "3600",
         upsert: true,
         contentType: file.type,
       });
 
-    if (error) {
-      console.error("Supabase Storage upload error for homepage image:", error);
+    if (uploadError) {
+      console.error(`Supabase Storage upload error for bucket home at path '${storagePath}':`, uploadError);
       return null;
     }
 
-    const { data } = supabase.storage.from("home").getPublicUrl(fileName);
-    return data?.publicUrl || null;
+    // Get the public URL using the SAME bucketName and storagePath
+    const { data: publicUrlData } = supabase.storage.from("home").getPublicUrl(storagePath);
+    
+    if (!publicUrlData || !publicUrlData.publicUrl) {
+        console.error(`Failed to get public URL for bucket home at path '${storagePath}'.`);
+        return null;
+    }
+
+    return publicUrlData.publicUrl; // This is the full public URL from Supabase
   } catch (error) {
     console.error('An unexpected error occurred during homepage image upload:', error);
     return null;
@@ -102,34 +111,40 @@ export async function uploadTournamentAsset(
   }
 }
 
-export async function uploadHomepageVideo(file: File, folder: string, uniqueId: string): Promise<string | null> {
-  if (!file || !folder || !uniqueId) {
-    console.error("File, folder, and uniqueId are required for homepage video upload.");
+// Ensure you have a similar correction for uploadHomepageVideo
+export async function uploadHomepageVideo(file: File, storagePath: string): Promise<string | null> {
+  if (!file || !storagePath) {
+    console.error("File, bucketName, and storagePath are required for homepage video upload.");
     return null;
   }
 
   const supabase = createClient();
-  const fileName = `${folder}/${uniqueId}_${file.name}`;
 
   try {
-
-    const { error } = await supabase.storage
-      .from("home")
-      .upload(fileName, file, {
+    const { error: uploadError } = await supabase.storage
+      .from("home") // Use the dynamic bucketName here
+      .upload(storagePath, file, { // Use the storagePath directly as the file's path
         cacheControl: "3600",
         upsert: true,
         contentType: file.type,
       });
 
-    if (error) {
-      console.error("Supabase Storage upload error for homepage video:", error);
+    if (uploadError) {
+      console.error(`Supabase Storage upload error for bucket home at path '${storagePath}':`, uploadError);
       return null;
     }
 
-    const { data } = supabase.storage.from("home").getPublicUrl(fileName);
-    return data?.publicUrl || null;
+    // Get the public URL using the SAME bucketName and storagePath
+    const { data: publicUrlData } = supabase.storage.from("home").getPublicUrl(storagePath);
+    
+    if (!publicUrlData || !publicUrlData.publicUrl) {
+        console.error(`Failed to get public URL for bucket home at path '${storagePath}'.`);
+        return null;
+    }
+
+    return publicUrlData.publicUrl; // This is the full public URL from Supabase
   } catch (error) {
-    console.error("An unexpected error occurred during homepage video upload:", error);
+    console.error('An unexpected error occurred during homepage video upload:', error);
     return null;
   }
 }
