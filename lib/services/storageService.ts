@@ -2,6 +2,59 @@
 
 import { createClient } from '@/utils/supabase/client';
 
+// app/admin/components/Blocks/HomepageContentManagerBlock.tsx
+// Or in a separate file like src/lib/utils/uploadUtils.ts and import it
+
+export async function runPromisesInParallel<T>(
+  promises: (() => Promise<T | null>)[], // Array of functions that return a promise
+  concurrencyLimit: number,
+  // These callbacks are less critical for this specific modal,
+  // as individual promises update their own progress state,
+  // but kept for generality if more sophisticated overall progress is needed.
+  onFileProgress?: (fileIndex: number, progress: number) => void,
+  onFileStart?: (fileIndex: number, fileName: string) => void
+): Promise<{ result: T | null; index: number }[]> {
+  const results: { result: T | null; index: number }[] = Array(promises.length).fill(null);
+  const inProgress: Promise<any>[] = [];
+  let currentIndex = 0; // Tracks which promise function to start next
+
+  return new Promise(resolve => {
+    const enqueue = async () => {
+      // If all promises have been started and all inProgress promises have finished
+      if (currentIndex === promises.length && inProgress.length === 0) {
+        resolve(results);
+        return;
+      }
+
+      // Start new promises until the concurrency limit is met or all promises are started
+      while (currentIndex < promises.length && inProgress.length < concurrencyLimit) {
+        const fileUploadFn = promises[currentIndex];
+        const fileIdxForCallback = currentIndex; // Capture index for callback closure
+
+        const promise = fileUploadFn().then(res => {
+          results[fileIdxForCallback] = { result: res, index: fileIdxForCallback };
+          return { status: 'fulfilled', value: res, index: fileIdxForCallback };
+        }).catch(err => {
+          results[fileIdxForCallback] = { result: null, index: fileIdxForCallback };
+          return { status: 'rejected', reason: err, index: fileIdxForCallback };
+        }).finally(() => {
+          // Remove the promise from the inProgress array once it settles
+          const indexToRemove = inProgress.indexOf(promise);
+          if (indexToRemove > -1) {
+            inProgress.splice(indexToRemove, 1);
+          }
+          enqueue(); // Try to enqueue another as soon as one finishes
+        });
+
+        inProgress.push(promise);
+        currentIndex++;
+      }
+    };
+
+    enqueue(); // Start the process
+  });
+}
+
 export async function uploadAvatar(image: File | null, userId: string): Promise<string | null> {
   if (!userId || !image) {
     console.error("User ID and image are required for avatar upload.");

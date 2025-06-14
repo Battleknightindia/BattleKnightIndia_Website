@@ -1,3 +1,4 @@
+// components/homepage/content/HorizontalTournamentShowcase.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -6,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { NorthEastCupItem } from "@/types/homepageTypes";
+import { NorthEastCupItem } from "@/types/homepageTypes"; // Ensure this import is correct
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type Props = {
@@ -219,14 +220,11 @@ export default function HorizontalTournamentShowcase({ items }: Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            {items[activeIndex].stats && (
+            {items[activeIndex].stats && Array.isArray(items[activeIndex].stats) && (
               <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-4 md:gap-6">
-                {Object.entries(items[activeIndex].stats).map(
-                  ([label, value], index, array) => {
-                    const colorClass =
-                      items[activeIndex].statColors?.[
-                        label as keyof (typeof items)[number]["statColors"]
-                      ] || "bg-blue-500";
+                {items[activeIndex].stats.map(
+                  (statItem, index, array) => { // statItem is now the actual stat object: {id, name, color, value}
+                    const colorStyle = { backgroundColor: statItem.color };
 
                     const isThirdPanelWhenThreeStats =
                       array.length === 3 && index === 2;
@@ -237,15 +235,15 @@ export default function HorizontalTournamentShowcase({ items }: Props) {
 
                     return (
                       <div
-                        key={label}
-                        style={{ backgroundColor: colorClass }}
+                        key={statItem.id || index}
+                        style={colorStyle}
                         className={` p-5 rounded-lg text-white text-center flex flex-col items-center justify-center ${colSpanClass}`}
                       >
                         <p className="font-semibold text-base md:text-lg capitalize">
-                          {label}
+                          {statItem.name}
                         </p>
                         <p className="text-2xl md:text-3xl font-bold">
-                          {value}
+                          {statItem.value}
                         </p>
                       </div>
                     );

@@ -1,12 +1,21 @@
+// types/homepageTypes.ts
+
+export type NorthEastCupStat = {
+  id: string; // Unique ID for each stat (important for keys and manipulation)
+  name: string;
+  value: string;
+  color: string; // Can be hex, rgba, etc.
+};
+
 export type NorthEastCupItem = {
-    id: string;
-    image: string;
-    title: string;
-    description: string;
-    stats: Record<string, string>;
-    statColors: Record<string, string>;
-    order_index: number; // Added for sorting purposes
-  };
+  id: string | undefined; // Optional for new items before they get a DB ID
+  image: string; // URL for the image
+  title: string;
+  description: string;
+  stats: NorthEastCupStat[]; // Crucially, ensure this is always an array
+  "statColors": { [key: string]: string }; // Matches the database column name, for storing name-to-color mapping
+  order_index: number;
+};
   
   
   export type MediaItem = {

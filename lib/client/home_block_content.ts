@@ -265,10 +265,16 @@ export async function saveNorthEastCupData(
   const itemsToUpdate: NorthEastCupItem[] = [];
   const existingItemIdsInPayload = new Set<string>();
 
-  // Process items: assign order_index and separate for insert/update
+  // Corrected logic: Process items for insertion/update
   const finalNorthEastCupItems = northEastCupPayload.map((item, i) => {
     const mutableItem = { ...item, order_index: i + 1 }; // Ensure order_index is sequential
-    existingItemIdsInPayload.add(String(mutableItem.id)); // Convert id to string only when adding to the Set
+    if (mutableItem.id) { // Check if item has an ID (existing item)
+      itemsToUpdate.push(mutableItem);
+      existingItemIdsInPayload.add(String(mutableItem.id));
+    } else { // No ID (new item)
+      const { id, ...newItem } = mutableItem; // Omit id and created_at for new inserts
+      itemsToInsert.push(newItem);
+    }
     return mutableItem; // Return the item for consistent state
   });
 

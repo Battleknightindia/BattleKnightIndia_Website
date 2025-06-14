@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       'zuvpacjjywckyrgluxru.supabase.co', // Replace this placeholder!
       "placehold.co",
       "picsum.photos",
+      "source.unsplash.com",
       // Add any other external image domains you might use
     ],
   },

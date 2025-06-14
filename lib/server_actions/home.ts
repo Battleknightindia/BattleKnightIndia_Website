@@ -9,10 +9,9 @@ export async function handleBannerImageUpload(bannerImageFile: File | null) {
   }
 
   const folder = "featured"; 
-  const uniqueId = bannerImageFile.name; 
 
   try {
-    const publicUrl = await uploadHomepageImage(bannerImageFile, folder, uniqueId);
+    const publicUrl = await uploadHomepageImage(bannerImageFile, folder);
 
     if (!publicUrl) {
       console.error("Error uploading banner image via storageService.");
