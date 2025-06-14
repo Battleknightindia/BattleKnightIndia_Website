@@ -44,19 +44,21 @@ interface ReferredTeam {
     status: string | null; // Corresponds to 'team_status' (text null)
 }
 
+type ReferralTeams = {
+  referralCode: string | null
+}
 
 // Define the React component
-const ReferredTeamsSection: React.FC = () => {
+interface ReferredTeamsSectionProps {
+  referralCode: string | null;
+}
+
+const ReferredTeamsSection: React.FC<ReferredTeamsSectionProps> = ({ referralCode }) => {
   const [teams, setTeams] = useState<ReferredTeam[]>([]); // State to hold all fetched teams
   const [filteredTeams, setFilteredTeams] = useState<ReferredTeam[]>([]); // State for filtered teams (used for display)
   const [searchQuery, setSearchQuery] = useState<string>(""); // State for the search input
   const [loading, setLoading] = useState<boolean>(true); // State to indicate loading status
   const [error, setError] = useState<string | null>(null); // State to hold any error messages
-
-  // Assume the referral_code is available here, e.g., from context, props, or a constant
-  // As per your instruction, we assume referralCode is available in this scope.
-  // Replace "YOUR_STATIC_REFERRAL_CODE" with how you obtain the referral code if it's not a constant
-  const referralCode = "YOUR_STATIC_REFERRAL_CODE"; // <<< IMPORTANT: Ensure this variable holds the correct referral code
 
   // useEffect to fetch data when the component mounts or referralCode changes
   useEffect(() => {
@@ -65,7 +67,7 @@ const ReferredTeamsSection: React.FC = () => {
       setError(null);
       try {
         // Call the imported data fetching function
-        const fetchedTeams = await fetchTeamsByReferralCodeAndCaptainData();
+        const fetchedTeams = await fetchTeamsByReferralCodeAndCaptainData(referralCode as string);
         setTeams(fetchedTeams); // Store all fetched teams
         setFilteredTeams(fetchedTeams); // Initially, filtered teams are all fetched teams
       } catch (err: unknown) { // Use 'any' or a more specific error type if known

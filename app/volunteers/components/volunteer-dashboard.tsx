@@ -232,7 +232,7 @@ export function Volunteer() {
           </Card>
         </div>
 
-        <ReferredTeamsSection />
+        <ReferredTeamsSection referralCode={volunteer?.referral_code ?? null}/>
       </div>
     </div>
   );
