@@ -31,8 +31,8 @@ export default function Step3({ data, onDataChange }: Step3Props) { // Remove te
   const pathname = usePathname();
 
   useEffect(() => {
-    const section = searchParams.get('section');
-    const indexParam = searchParams.get('index');
+    const section = searchParams?.get('section');
+    const indexParam = searchParams?.get('index');
 
     // Check if the search params indicate a specific player edit request
     if (section === 'player' && indexParam) {
@@ -51,7 +51,7 @@ export default function Step3({ data, onDataChange }: Step3Props) { // Remove te
       // Clean up the search parameters after reading them
       // This prevents the state from being re-set if user navigates back/forward
       // and also keeps the URL clean.
-      const currentParams = new URLSearchParams(searchParams.toString());
+      const currentParams = new URLSearchParams((searchParams?.toString() ?? ""));
       currentParams.delete('section');
       currentParams.delete('index');
       // Use replace instead of push to avoid adding the cleanup URL to history
