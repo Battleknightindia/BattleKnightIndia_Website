@@ -54,7 +54,7 @@ export function NorthEastCupAdmin({
         }
       });
     };
-  }, [data]); // Depend on data to re-evaluate preview URLs when data changes
+  }, [data, localPreviewUrls]); // Depend on data to re-evaluate preview URLs when data changes
 
   const handleFileSelect = (file: File | null, idx: number) => {
     const currentBlobUrl = localPreviewUrls[idx];
@@ -127,7 +127,7 @@ export function NorthEastCupAdmin({
     );
 
     // If the color of a stat is changed, also update the statColors map
-    let newStatColors = { ...currentItem.statColors };
+    const newStatColors = { ...currentItem.statColors };
     if (field === 'color') {
         const statName = currentStats.find(s => s.id === statId)?.name;
         if (statName) {
@@ -177,7 +177,7 @@ export function NorthEastCupAdmin({
     const newStats = currentStats.filter((s) => s.id !== statId);
 
     // Optionally remove the stat from statColors if it's no longer present in stats array
-    let newStatColors = { ...currentItem.statColors };
+    const newStatColors = { ...currentItem.statColors };
     if (statToDelete && newStatColors[statToDelete.name]) {
         // Only delete if no other stat uses this name (less common, but good for cleanliness)
         const nameStillExists = newStats.some(s => s.name === statToDelete.name);

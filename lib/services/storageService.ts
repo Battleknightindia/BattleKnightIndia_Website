@@ -15,7 +15,7 @@ export async function runPromisesInParallel<T>(
   onFileStart?: (fileIndex: number, fileName: string) => void
 ): Promise<{ result: T | null; index: number }[]> {
   const results: { result: T | null; index: number }[] = Array(promises.length).fill(null);
-  const inProgress: Promise<any>[] = [];
+  const inProgress: Promise<unknown>[] = [];
   let currentIndex = 0; // Tracks which promise function to start next
 
   return new Promise(resolve => {
