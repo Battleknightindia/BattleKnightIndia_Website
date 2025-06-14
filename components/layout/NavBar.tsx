@@ -36,7 +36,7 @@ export default function NavBar() {
   const { profile, loading } = useProfile();
   const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
   const searchParams = useSearchParams();
-  const loginSuccessParam = searchParams.get("loginSuccess");
+  const loginSuccessParam = searchParams?.get("loginSuccess");
   const pathname = usePathname();
 
   useEffect(() => {
