@@ -672,7 +672,7 @@ const FormContent = ({}: Record<string, never>): React.ReactElement => {
         } else {
           console.error("Invalid player index provided for edit:", index);
           setActiveStep(3); // Default to player step if index is bad
-          router.push(pathname);
+          router.push(pathname ?? "/register");
         }
         break;
       default:
