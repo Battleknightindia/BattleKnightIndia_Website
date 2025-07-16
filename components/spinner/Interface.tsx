@@ -1,3 +1,4 @@
+// Interface.tsx
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -27,6 +28,7 @@ const Interface = () => {
   // Entry wheel auto-spin state
   const [entryAutoSpin, setEntryAutoSpin] = useState(false);
   const [entryWheelSpinning, setEntryWheelSpinning] = useState(false);
+  const [isFirstEntrySpin, setIsFirstEntrySpin] = useState(true); // New state for first spin
 
   // Separate flags for each wheel with better state management
   const [finalistWheelState, setFinalistWheelState] = useState<'idle' | 'spinning' | 'completed'>('idle');
@@ -58,20 +60,24 @@ const Interface = () => {
     setNames([]);
   };
 
-
   const handleWinnerSelected = (winner: string) => {
-    setWinners(prev => [...prev, winner]);
-    setEntryWheelSpinning(false); // Mark wheel as not spinning
-    // After each spin, remove only the winning name
-    setTimeout(() => {
+    setWinners(prev => {
+      const newWinners = [...prev, winner];
       setNames(prevNames => prevNames.filter(name => name !== winner));
-      // If less than 5 winners, auto-spin again (no timer)
-      if (winners.length + 1 < 5 && phase === 'entry') {
-        setEntryAutoSpin(true);
+      setEntryWheelSpinning(false);
+      setIsFirstEntrySpin(false); // Mark that the first spin has occurred
+
+      // Decide if next auto-spin or phase transition
+      if (newWinners.length < 5 && phase === 'entry') {
+        // Schedule the next auto-spin with delay
+        setTimeout(() => {
+          setEntryAutoSpin(true);
+        }, 8000);
       } else {
-        setEntryAutoSpin(false);
+        setEntryAutoSpin(false); // Stop auto-spinning if 5 winners are selected or phase changes
       }
-    }, 2000); // Show winner for 2 seconds
+      return newWinners;
+    });
   };
 
   const handleFinalistSelected = (selected: string) => {
@@ -79,11 +85,10 @@ const Interface = () => {
     if (finalistWheelState === 'spinning') {
       setFinalist(selected);
       setFinalistWheelState('completed');
-      
-      // Move to reward phase after showing finalist
+      // Move to reward phase after showing finalist (10s delay)
       setTimeout(() => {
         setPhase('reward');
-      }, 3000);
+      }, 10000);
     }
   };
 
@@ -104,12 +109,14 @@ const Interface = () => {
   const handleTimeUp = () => {
     if (names.length > 0 && winners.length < 5) {
       setEntryAutoSpin(true); // Start the first auto-spin after timer
+      setIsFirstEntrySpin(true); // Ensure this is treated as the immediate first spin
     }
   };
 
   // Handler for manual spin button (first spin only)
   const handleManualSpin = () => {
     setEntryAutoSpin(true); // Start auto-spin sequence
+    setIsFirstEntrySpin(true); // Ensure this is treated as the immediate first spin
   };
 
 
@@ -120,10 +127,11 @@ const Interface = () => {
     setWinners([]);
     setFinalist('');
     setReward(0);
-    setTimerKey(prev => prev + 1);
+    setTimerKey(prev => prev + 2); // Increment key more to force remount of Timer
     setShowTransition(false);
     setEntryAutoSpin(false);
     setEntryWheelSpinning(false);
+    setIsFirstEntrySpin(true); // Reset for a new round
     // Reset wheel states
     setFinalistWheelState('idle');
     setRewardWheelState('idle');
@@ -135,17 +143,21 @@ const Interface = () => {
   // Effect to handle transition from entry to finalist phase
   useEffect(() => {
     if (winners.length === 5 && phase === 'entry') {
-      setShowTransition(true);
-      
-      const transitionTimer = setTimeout(() => {
-        setPhase('finalist');
-        setShowTransition(false);
-        // Reset finalist state and prepare for spinning
-        setFinalistWheelState('idle');
-        finalistSpinTriggered.current = false;
-      }, 400);
+      // First, let the current state with 5 winners be visible for 8 seconds
+      const holdTimer = setTimeout(() => {
+        setShowTransition(true); // Now trigger the slide animation
+        // After the slide animation starts, typically it takes some time (e.g., 500ms for your transition-all duration-500)
+        const transitionTimer = setTimeout(() => {
+          setPhase('finalist');
+          setShowTransition(false); // Reset for next use
+          setFinalistWheelState('idle');
+          finalistSpinTriggered.current = false;
+        }, 500); // This duration should match your CSS transition duration
 
-      return () => clearTimeout(transitionTimer);
+        return () => clearTimeout(transitionTimer); // Cleanup for the inner timer
+      }, 8000); // This is the 8-second delay before the animation starts
+
+      return () => clearTimeout(holdTimer); // Cleanup for the outer timer
     }
   }, [winners.length, phase]);
 
@@ -182,9 +194,6 @@ const Interface = () => {
       return () => clearTimeout(spinTimer);
     }
   }, [phase, rewardWheelState, finalist]);
-
-  // Auto-trigger for entry wheel (when names reach 100)
-  
 
   // Timer visibility
   const shouldShowTimer = phase === 'entry' && names.length > 0 && winners.length < 5 && !entryAutoSpin;
@@ -241,6 +250,7 @@ const Interface = () => {
                 items={names || []}
                 onSpin={handleWinnerSelected}
                 autoSpin={entryAutoSpin}
+                autoSpinDelay={isFirstEntrySpin ? 0 : 8000} // Pass delay here
                 disabled={names.length === 0 || entryWheelSpinning || winners.length >= 5}
                 wheelType='entry'
                 logoSrc='/ncc_logo.png'

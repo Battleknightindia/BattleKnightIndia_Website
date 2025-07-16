@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react'; // Import useCallback
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -8,6 +8,7 @@ interface SpinWheelProps {
   items: string[];
   onSpin?: (winner: string) => void;
   autoSpin?: boolean;
+  autoSpinDelay?: number; // New prop for delay
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
@@ -19,6 +20,7 @@ export const SpinWheel = ({
   items,
   onSpin,
   autoSpin = false,
+  autoSpinDelay = 0, // Default to 0 delay if not provided
   className,
   size = 'lg',
   disabled = false,
@@ -53,7 +55,6 @@ export const SpinWheel = ({
   ];
 
   // Wrap the spin function in useCallback
-
   const spin = useCallback(() => {
     if (isSpinning || disabled || items.length === 0) return;
 
@@ -71,7 +72,7 @@ export const SpinWheel = ({
       // You can adjust these weights as needed for your actual rewards list
       let weights: number[];
       if (numItems === 9) {
-        weights = [30, 20, 15, 10, 7, 4, 2, 1, 1];
+        weights = [40, 30, 25, 20, 15, 4, 2, 1, 1];
       } else {
         // fallback: decreasing weights
         weights = Array.from({length: numItems}, (_, i) => Math.max(1, 20 - i * 2));
@@ -157,11 +158,11 @@ export const SpinWheel = ({
 
       const spinDelay = setTimeout(() => {
         spin();
-      }, 500);
+      }, autoSpinDelay); // Use the new autoSpinDelay prop here
 
       return () => clearTimeout(spinDelay);
     }
-  }, [autoSpin, spin, items.length, isSpinning]); // 'spin' is now a stable reference due to useCallback
+  }, [autoSpin, autoSpinDelay, spin, items.length, isSpinning]); // 'spin' is now a stable reference due to useCallback
 
   // Reset auto-spin flag when autoSpin becomes false
   useEffect(() => {
