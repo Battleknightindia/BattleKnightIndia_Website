@@ -14,6 +14,7 @@ type Phase = 'entry' | 'finalist' | 'reward' | 'congrats';
 
 const REWARDS = [99,199,299,399,499,599,699,799,899];
 
+
 const Interface = () => {
   const [phase, setPhase] = useState<Phase>('entry');
   const [names, setNames] = useState<string[]>([]);
@@ -22,6 +23,10 @@ const Interface = () => {
   const [reward, setReward] = useState<number>(0);
   const [timerKey, setTimerKey] = useState(0);
   const [showTransition, setShowTransition] = useState(false);
+
+  // Entry wheel auto-spin state
+  const [entryAutoSpin, setEntryAutoSpin] = useState(false);
+  const [entryWheelSpinning, setEntryWheelSpinning] = useState(false);
 
   // Separate flags for each wheel with better state management
   const [finalistWheelState, setFinalistWheelState] = useState<'idle' | 'spinning' | 'completed'>('idle');
@@ -53,12 +58,19 @@ const Interface = () => {
     setNames([]);
   };
 
+
   const handleWinnerSelected = (winner: string) => {
     setWinners(prev => [...prev, winner]);
-    // After each spin, clear all names and reset timer (for the entry phase)
+    setEntryWheelSpinning(false); // Mark wheel as not spinning
+    // After each spin, remove only the winning name
     setTimeout(() => {
-      setNames([]);
-      setTimerKey(prev => prev + 1); // Reset timer for the next 60s window
+      setNames(prevNames => prevNames.filter(name => name !== winner));
+      // If less than 5 winners, auto-spin again (no timer)
+      if (winners.length + 1 < 5 && phase === 'entry') {
+        setEntryAutoSpin(true);
+      } else {
+        setEntryAutoSpin(false);
+      }
     }, 2000); // Show winner for 2 seconds
   };
 
@@ -88,13 +100,18 @@ const Interface = () => {
     }
   };
 
+
   const handleTimeUp = () => {
-    if (names.length > 0) {
-      // Auto-select a random winner when time is up
-      const randomWinner = names[Math.floor(Math.random() * names.length)];
-      handleWinnerSelected(randomWinner);
+    if (names.length > 0 && winners.length < 5) {
+      setEntryAutoSpin(true); // Start the first auto-spin after timer
     }
   };
+
+  // Handler for manual spin button (first spin only)
+  const handleManualSpin = () => {
+    setEntryAutoSpin(true); // Start auto-spin sequence
+  };
+
 
   const handleNextRound = () => {
     // Reset all state for new round
@@ -105,11 +122,11 @@ const Interface = () => {
     setReward(0);
     setTimerKey(prev => prev + 1);
     setShowTransition(false);
-    
+    setEntryAutoSpin(false);
+    setEntryWheelSpinning(false);
     // Reset wheel states
     setFinalistWheelState('idle');
     setRewardWheelState('idle');
-    
     // Reset refs
     finalistSpinTriggered.current = false;
     rewardSpinTriggered.current = false;
@@ -167,10 +184,10 @@ const Interface = () => {
   }, [phase, rewardWheelState, finalist]);
 
   // Auto-trigger for entry wheel (when names reach 100)
-  const shouldAutoSpinEntry = phase === 'entry' && names.length === 100;
   
+
   // Timer visibility
-  const shouldShowTimer = phase === 'entry' && names.length > 0 && winners.length < 5;
+  const shouldShowTimer = phase === 'entry' && names.length > 0 && winners.length < 5 && !entryAutoSpin;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
@@ -223,25 +240,39 @@ const Interface = () => {
               <SpinWheel
                 items={names || []}
                 onSpin={handleWinnerSelected}
-                autoSpin={shouldAutoSpinEntry}
-                disabled={names.length === 0}
+                autoSpin={entryAutoSpin}
+                disabled={names.length === 0 || entryWheelSpinning || winners.length >= 5}
                 wheelType='entry'
                 logoSrc='/ncc_logo.png'
               />
 
-              {/* Timer */}
+              {/* Timer and Manual Spin Button only before first spin */}
               {shouldShowTimer && (
-                <Card className="p-4 fixed right-10 bottom-3">
-                  <CardContent className="flex flex-col items-center space-y-2">
-                    <p className="text-sm text-muted-foreground">Time remaining</p>
-                    <Timer
-                      key={timerKey}
-                      initialSeconds={60}
-                      onComplete={handleTimeUp}
-                      autoStart={true}
-                    />
-                  </CardContent>
-                </Card>
+                <>
+                  <Card className="p-4 fixed right-10 bottom-3">
+                    <CardContent className="flex flex-col items-center space-y-2">
+                      <p className="text-sm text-muted-foreground">Time remaining</p>
+                      <Timer
+                        key={timerKey}
+                        initialSeconds={60}
+                        onComplete={handleTimeUp}
+                        autoStart={true}
+                      />
+                    </CardContent>
+                  </Card>
+                  {/* Manual Spin Button (only before first spin) */}
+                  <button
+                    onClick={handleManualSpin}
+                    disabled={names.length === 0 || entryAutoSpin || winners.length >= 5}
+                    className={cn(
+                      'mt-6 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold shadow-soft transition-all duration-200',
+                      'hover:bg-primary/90 hover:shadow-medium active:scale-95',
+                      'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary'
+                    )}
+                  >
+                    Spin Wheel
+                  </button>
+                </>
               )}
             </div>
 

@@ -28,6 +28,7 @@ export const SpinWheel = ({
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [winner, setWinner] = useState<string | null>(null);
+  const [lastWinnerIndex, setLastWinnerIndex] = useState<number | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
   const autoSpinTriggered = useRef(false);
   const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -52,6 +53,7 @@ export const SpinWheel = ({
   ];
 
   // Wrap the spin function in useCallback
+
   const spin = useCallback(() => {
     if (isSpinning || disabled || items.length === 0) return;
 
@@ -64,9 +66,17 @@ export const SpinWheel = ({
     let selectedWinnerIndex: number;
 
     if (wheelType === 'reward') {
-      // Weighted probability for reward wheel
-      const weights = [10, 8, 8, 7, 6, 5, 4, 3, 2, 2, 2, 1];
-      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      // Weighted probability for reward wheel (higher reward = lower chance, much stricter for 599+)
+      // Example for 9 rewards: [99,199,299,399,499,599,699,799,899]
+      // You can adjust these weights as needed for your actual rewards list
+      let weights: number[];
+      if (numItems === 9) {
+        weights = [30, 20, 15, 10, 7, 4, 2, 1, 1];
+      } else {
+        // fallback: decreasing weights
+        weights = Array.from({length: numItems}, (_, i) => Math.max(1, 20 - i * 2));
+      }
+      const totalWeight = weights.slice(0, numItems).reduce((a, b) => a + b, 0);
       let rand = Math.random() * totalWeight;
       selectedWinnerIndex = -1;
       for (let i = 0; i < weights.length && i < numItems; i++) {
@@ -77,6 +87,27 @@ export const SpinWheel = ({
         }
       }
       if (selectedWinnerIndex === -1) selectedWinnerIndex = numItems - 1;
+    } else if (wheelType === 'entry' && numItems > 1) {
+      // Gap variation for entry wheel
+      const minGap = Math.max(1, Math.floor(numItems / 8)); // e.g. 1/8th of the list
+      let possibleIndexes: number[] = [];
+      if (lastWinnerIndex === null) {
+        // First spin, pick any
+        possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
+      } else {
+        for (let i = 0; i < numItems; i++) {
+          const gap = Math.abs(i - lastWinnerIndex);
+          const wrapGap = Math.min(gap, numItems - gap); // handle circular gap
+          if (wrapGap >= minGap) {
+            possibleIndexes.push(i);
+          }
+        }
+        // If all are too close (shouldn't happen unless list is tiny), fallback to all
+        if (possibleIndexes.length === 0) {
+          possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
+        }
+      }
+      selectedWinnerIndex = possibleIndexes[Math.floor(Math.random() * possibleIndexes.length)];
     } else {
       selectedWinnerIndex = Math.floor(Math.random() * numItems);
     }
@@ -109,10 +140,11 @@ export const SpinWheel = ({
       setIsSpinning(false);
       const winningItem = items[selectedWinnerIndex];
       setWinner(winningItem);
+      if (wheelType === 'entry') setLastWinnerIndex(selectedWinnerIndex);
       onSpin?.(winningItem);
       autoSpinTriggered.current = false; // Reset auto-spin flag after completion
     }, animationDuration);
-  }, [isSpinning, disabled, items, rotation, onSpin, wheelType, animationDuration]); // Dependencies for useCallback
+  }, [isSpinning, disabled, items, rotation, onSpin, wheelType, animationDuration, lastWinnerIndex]);
 
   // Auto-spin effect with proper cleanup and guards
   useEffect(() => {
@@ -294,21 +326,6 @@ export const SpinWheel = ({
             {wheelType === 'reward' ? `$${winner}` : winner}
           </p>
         </div>
-      )}
-
-      {/* Manual Spin Button */}
-      {!autoSpin && wheelType === 'entry' && (
-        <button
-          onClick={spin}
-          disabled={isSpinning || disabled || items.length === 0}
-          className={cn(
-            'mt-6 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold shadow-soft transition-all duration-200',
-            'hover:bg-primary/90 hover:shadow-medium active:scale-95',
-            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary'
-          )}
-        >
-          {isSpinning ? 'Spinning...' : 'Spin Wheel'}
-        </button>
       )}
     </div>
   );
