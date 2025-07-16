@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react'; // Import useCallback
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -51,7 +51,8 @@ export const SpinWheel = ({
     'wheel-slice-8'
   ];
 
-  const spin = () => {
+  // Wrap the spin function in useCallback
+  const spin = useCallback(() => {
     if (isSpinning || disabled || items.length === 0) return;
 
     setIsSpinning(true);
@@ -111,7 +112,7 @@ export const SpinWheel = ({
       onSpin?.(winningItem);
       autoSpinTriggered.current = false; // Reset auto-spin flag after completion
     }, animationDuration);
-  };
+  }, [isSpinning, disabled, items, rotation, onSpin, wheelType, animationDuration]); // Dependencies for useCallback
 
   // Auto-spin effect with proper cleanup and guards
   useEffect(() => {
@@ -128,7 +129,7 @@ export const SpinWheel = ({
 
       return () => clearTimeout(spinDelay);
     }
-  }, [autoSpin, spin, items.length, isSpinning]);
+  }, [autoSpin, spin, items.length, isSpinning]); // 'spin' is now a stable reference due to useCallback
 
   // Reset auto-spin flag when autoSpin becomes false
   useEffect(() => {
