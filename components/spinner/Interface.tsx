@@ -155,7 +155,7 @@ const Interface = () => {
         }, 500); // This duration should match your CSS transition duration
 
         return () => clearTimeout(transitionTimer); // Cleanup for the inner timer
-      }, 8000); // This is the 8-second delay before the animation starts
+      }, 11000); // This is the 11-second delay before the animation starts
 
       return () => clearTimeout(holdTimer); // Cleanup for the outer timer
     }
@@ -250,7 +250,7 @@ const Interface = () => {
                 items={names || []}
                 onSpin={handleWinnerSelected}
                 autoSpin={entryAutoSpin}
-                autoSpinDelay={isFirstEntrySpin ? 0 : 8000} // Pass delay here
+                autoSpinDelay={isFirstEntrySpin ? 0 : 7000} // Pass delay here
                 disabled={names.length === 0 || entryWheelSpinning || winners.length >= 5}
                 wheelType='entry'
                 logoSrc='/ncc_logo.png'
