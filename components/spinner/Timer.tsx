@@ -158,7 +158,7 @@ export const Timer = ({
       {/* Status */}
       {isComplete && (
         <div className="text-sm text-destructive font-medium animate-bounce-in">
-          Time's up!
+          Time`s up!
         </div>
       )}
     </div>

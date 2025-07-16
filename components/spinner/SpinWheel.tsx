@@ -128,7 +128,7 @@ export const SpinWheel = ({
 
       return () => clearTimeout(spinDelay);
     }
-  }, [autoSpin, items.length, isSpinning]);
+  }, [autoSpin, spin, items.length, isSpinning]);
 
   // Reset auto-spin flag when autoSpin becomes false
   useEffect(() => {
