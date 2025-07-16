@@ -186,7 +186,7 @@ export default function NavBar() {
 
               <DropdownMenuContent
                 align="end"
-                className="hidden md:flex w-48 mt-1 bg-zinc-950 border border-zinc-800 rounded-md shadow-lg"
+                className="hidden md:block w-48 mt-1 bg-zinc-950 border border-zinc-800 rounded-md shadow-lg"
               >
                 <DropdownMenuItem
                   onClick={openEditProfileCard}
