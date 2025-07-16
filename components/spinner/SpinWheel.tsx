@@ -1,0 +1,314 @@
+"use client";
+
+import { useState, useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
+
+interface SpinWheelProps {
+  items: string[];
+  onSpin?: (winner: string) => void;
+  autoSpin?: boolean;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  logoSrc?: string;
+  wheelType?: 'reward' | 'finalist' | 'entry';
+}
+
+export const SpinWheel = ({
+  items,
+  onSpin,
+  autoSpin = false,
+  className,
+  size = 'lg',
+  disabled = false,
+  logoSrc,
+  wheelType = 'entry'
+}: SpinWheelProps) => {
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const [winner, setWinner] = useState<string | null>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
+  const autoSpinTriggered = useRef(false);
+  const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const animationDuration = 3000; // 3 seconds for spin animation
+
+  const sizeClasses = {
+    sm: 'w-48 h-48',
+    md: 'w-[24rem] h-[24rem]',
+    lg: 'w-[30rem] h-[30rem]'
+  };
+
+  const colors = [
+    'wheel-slice-1',
+    'wheel-slice-2',
+    'wheel-slice-3',
+    'wheel-slice-3',
+    'wheel-slice-4',
+    'wheel-slice-5',
+    'wheel-slice-6',
+    'wheel-slice-7',
+    'wheel-slice-8'
+  ];
+
+  const spin = () => {
+    if (isSpinning || disabled || items.length === 0) return;
+
+    setIsSpinning(true);
+    setWinner(null);
+
+    const numItems = items.length;
+    const segmentAngle = 360 / numItems;
+
+    let selectedWinnerIndex: number;
+
+    if (wheelType === 'reward') {
+      // Weighted probability for reward wheel
+      const weights = [10, 8, 8, 7, 6, 5, 4, 3, 2, 2, 2, 1];
+      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      let rand = Math.random() * totalWeight;
+      selectedWinnerIndex = -1;
+      for (let i = 0; i < weights.length && i < numItems; i++) {
+        rand -= weights[i];
+        if (rand <= 0) {
+          selectedWinnerIndex = i;
+          break;
+        }
+      }
+      if (selectedWinnerIndex === -1) selectedWinnerIndex = numItems - 1;
+    } else {
+      selectedWinnerIndex = Math.floor(Math.random() * numItems);
+    }
+
+    const sliceCenterAngle = selectedWinnerIndex * segmentAngle + segmentAngle / 2;
+    let desiredStopAngle = 270 - sliceCenterAngle;
+    desiredStopAngle = (desiredStopAngle % 360 + 360) % 360;
+
+    const minRevolutions = 5;
+    const additionalRandomRevolutions = Math.floor(Math.random() * 5);
+    const totalRevolutions = minRevolutions + additionalRandomRevolutions;
+
+    const currentNormalizedRotation = rotation % 360;
+    let deltaRotation = desiredStopAngle - currentNormalizedRotation;
+
+    if (deltaRotation < 0) {
+      deltaRotation += 360;
+    }
+
+    const newRotation = rotation + (totalRevolutions * 360) + deltaRotation;
+    setRotation(newRotation);
+
+    // Clear any existing timeout
+    if (spinTimeoutRef.current) {
+      clearTimeout(spinTimeoutRef.current);
+    }
+
+    // Set new timeout for spin completion
+    spinTimeoutRef.current = setTimeout(() => {
+      setIsSpinning(false);
+      const winningItem = items[selectedWinnerIndex];
+      setWinner(winningItem);
+      onSpin?.(winningItem);
+      autoSpinTriggered.current = false; // Reset auto-spin flag after completion
+    }, animationDuration);
+  };
+
+  // Auto-spin effect with proper cleanup and guards
+  useEffect(() => {
+    if (autoSpin &&
+        items.length > 0 &&
+        !isSpinning &&
+        !autoSpinTriggered.current) {
+
+      autoSpinTriggered.current = true;
+
+      const spinDelay = setTimeout(() => {
+        spin();
+      }, 500);
+
+      return () => clearTimeout(spinDelay);
+    }
+  }, [autoSpin, items.length, isSpinning]);
+
+  // Reset auto-spin flag when autoSpin becomes false
+  useEffect(() => {
+    if (!autoSpin) {
+      autoSpinTriggered.current = false;
+    }
+  }, [autoSpin]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (spinTimeoutRef.current) {
+        clearTimeout(spinTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const createWheelSlices = () => {
+    if (items.length === 0) return null;
+
+    const segmentAngle = 360 / items.length;
+    const radius = 150;
+
+    return (
+      <svg className="w-full h-full absolute inset-0" viewBox="0 0 300 300">
+        {items.map((item, index) => {
+          const startAngle = (index * segmentAngle);
+          const endAngle = ((index + 1) * segmentAngle);
+
+          const x1 = 150 + radius * Math.cos(startAngle * Math.PI / 180);
+          const y1 = 150 + radius * Math.sin(startAngle * Math.PI / 180);
+          const x2 = 150 + radius * Math.cos(endAngle * Math.PI / 180);
+          const y2 = 150 + radius * Math.sin(endAngle * Math.PI / 180);
+
+          const largeArcFlag = segmentAngle > 180 ? 1 : 0;
+
+          const pathData = [
+            `M 150 150`,
+            `L ${x1} ${y1}`,
+            `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+            `Z`
+          ].join(' ');
+
+          const textAngleRad = (index * segmentAngle + segmentAngle / 2) * (Math.PI / 180);
+          // Move text closer to inner circle
+          const textRadius = radius * 0.45;
+          const textX = 150 + textRadius * Math.cos(textAngleRad);
+          const textY = 150 + textRadius * Math.sin(textAngleRad);
+
+          // Position diamond at outer edge
+          const diamondRadius = radius * 0.85;
+          const diamondX = 150 + diamondRadius * Math.cos(textAngleRad);
+          const diamondY = 150 + diamondRadius * Math.sin(textAngleRad);
+
+          const colorClass = colors[index % colors.length];
+
+          const colorValues = {
+            'wheel-slice-1': 'hsl(262, 83%, 58%)',
+            'wheel-slice-2': 'hsl(224, 71%, 60%)',
+            'wheel-slice-3': 'hsl(186, 91%, 56%)',
+            'wheel-slice-4': 'hsl(142, 76%, 57%)',
+            'wheel-slice-5': 'hsl(47, 96%, 56%)',
+            'wheel-slice-6': 'hsl(21, 90%, 56%)',
+            'wheel-slice-7': 'hsl(340, 82%, 62%)',
+            'wheel-slice-8': 'hsl(291, 84%, 61%)'
+          };
+
+          // Generate dynamic image path based on reward value
+          const getDiamondImage = (rewardValue: string) => {
+            return `/diamonds/${rewardValue}.png`;
+          };
+
+          return (
+            <g key={index}>
+              <path
+                d={pathData}
+                fill={colorValues[colorClass as keyof typeof colorValues]}
+                stroke="white"
+                strokeWidth="2"
+              />
+              <text
+                x={textX}
+                y={textY}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-white font-semibold text-xs"
+                transform={`rotate(${textAngleRad * 180 / Math.PI + 180}, ${textX}, ${textY})`}
+              >
+                {item.length > 12 ? item.substring(0, 10) + '...' : item}
+              </text>
+              {wheelType === 'reward' && (
+                <image
+                  href={getDiamondImage(item)}
+                  x={diamondX - 20}
+                  y={diamondY - 20}
+                  width="40"
+                  height="40"
+                  style={{ pointerEvents: 'none' }}
+                />
+              )}
+            </g>
+          );
+        })}
+      </svg>
+    );
+  };
+
+  return (
+    <div className={cn('relative flex flex-col items-center', className)}>
+      {/* Pointer - fixed at the top */}
+      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="w-0 h-0 border-l-6 border-r-6 border-t-12 border-l-transparent border-r-transparent border-t-primary drop-shadow-lg" />
+      </div>
+
+      {/* Wheel Container */}
+      <div className="relative">
+        <div
+          ref={wheelRef}
+          className={cn(
+            'relative rounded-full border-4 border-white shadow-strong overflow-hidden',
+            sizeClasses[size],
+            isSpinning && 'pointer-events-none' // Prevent interactions during spin
+          )}
+          style={{
+            transform: `rotate(${rotation}deg)`,
+            transition: isSpinning ? `transform ${animationDuration / 1000}s cubic-bezier(0.25, 0.46, 0.45, 0.94)` : 'none'
+          }}
+        >
+          {items.length > 0 ? (
+            createWheelSlices()
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
+              <span className="text-sm">No items</span>
+            </div>
+          )}
+        </div>
+        {/* Stationary Center Circle / Logo - Moved outside the rotating wheelRef */}
+        {logoSrc ? (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[100px] h-[100px] rounded-full overflow-hidden z-10 flex items-center justify-center">
+            <Image
+              src={logoSrc}
+              width={100}
+              height={100}
+              alt="Logo"
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ) : (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-15 h-15 bg-white rounded-full shadow-md border-2 border-gray-200 z-10 flex items-center justify-center">
+            {/* This div remains if no logoSrc is provided, providing the default white circle */}
+          </div>
+        )}
+      </div>
+
+      {/* Winner Display - Only show when not spinning and winner exists */}
+      {winner && !isSpinning && (
+        <div className="mt-6 p-4 bg-white rounded-lg shadow-medium border animate-bounce-in">
+          <p className="text-sm font-medium text-muted-foreground">
+            {wheelType === 'reward' ? 'Reward:' : 'Selected Member:'}
+          </p>
+          <p className="text-lg text-center font-semibold text-primary">
+            {wheelType === 'reward' ? `$${winner}` : winner}
+          </p>
+        </div>
+      )}
+
+      {/* Manual Spin Button */}
+      {!autoSpin && wheelType === 'entry' && (
+        <button
+          onClick={spin}
+          disabled={isSpinning || disabled || items.length === 0}
+          className={cn(
+            'mt-6 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold shadow-soft transition-all duration-200',
+            'hover:bg-primary/90 hover:shadow-medium active:scale-95',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary'
+          )}
+        >
+          {isSpinning ? 'Spinning...' : 'Spin Wheel'}
+        </button>
+      )}
+    </div>
+  );
+};

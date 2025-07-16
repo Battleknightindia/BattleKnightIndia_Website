@@ -3,11 +3,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Inter', sans-serif;
   --font-mono: var(--font-geist-mono);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -37,10 +39,84 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --gradient-wheel: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
+
+  --shadow-soft: 0 4px 20px -2px hsl(var(--primary) / 0.1);
+  --shadow-medium: 0 8px 30px -4px hsl(var(--primary) / 0.15);
+  --shadow-strong: 0 20px 40px -12px hsl(var(--primary) / 0.25);
+
+  --animation-spin: spin 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --animation-bounce: bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  --wheel-slice-1: 262 83% 58%;
+  --wheel-slice-2: 224 71% 60%;
+  --wheel-slice-3: 186 91% 56%;
+  --wheel-slice-4: 142 76% 57%;
+  --wheel-slice-5: 47 96% 56%;
+  --wheel-slice-6: 21 90% 56%;
+  --wheel-slice-7: 340 82% 62%;
+  --wheel-slice-8: 291 84% 61%;
+
+  /* Keyframes directly in CSS */
+  --animation-confetti-slow: animation-name confetti-slow;
+  --animation-confetti-medium: animation-name confetti-medium;
+  --animation-confetti-fast: animation-name confetti-fast;
+  --animation-checkmark: animation-name checkmark;
+
+  /* Animation durations/timing/fill-mode */
+  --animation-confetti-slow-duration: 2.25s;
+  --animation-confetti-medium-duration: 1.75s;
+  --animation-confetti-fast-duration: 1.25s;
+  --animation-checkmark-duration: 3s;
+  --animation-checkmark-delay: 100ms;
+
+
+  /* If you were customizing colors, etc., they'd go here too */
+  --color-primary-teal: #00C09D;
+  --color-primary-dark-teal: #00ab8c;
+  --color-secondary-teal: #2ca893;
+
+  /* Animation Names (referencing the @keyframes below) */
+  --animation-confetti-slow: animation-name confetti-slow;
+  --animation-confetti-medium: animation-name confetti-medium;
+  --animation-confetti-fast: animation-name confetti-fast;
+  --animation-checkmark: animation-name checkmark;
+
+  /* Animation Durations, Timing Functions, and Delays */
+  --animation-confetti-slow-duration: 2.25s;
+  --animation-confetti-slow-timing-function: linear;
+  --animation-confetti-slow-fill-mode: forwards;
+
+  --animation-confetti-medium-duration: 1.75s;
+  --animation-confetti-medium-timing-function: linear;
+  --animation-confetti-medium-fill-mode: forwards;
+
+  --animation-confetti-fast-duration: 1.25s;
+  --animation-confetti-fast-timing-function: linear;
+  --animation-confetti-fast-fill-mode: forwards;
+
+  --animation-checkmark-duration: 3s;
+  --animation-checkmark-timing-function: ease;
+  --animation-checkmark-delay: 100ms;
+  --animation-checkmark-fill-mode: forwards;
+
+  /* Custom Colors (optional, but good practice for consistency) */
+  --color-brand-teal: #00C09D;
+  --color-brand-dark-teal: #00ab8c;
+  --color-brand-hover-teal: #2ca893;
+  --color-confetti-pink: #EF2964;
+  --color-confetti-blue: #2D87B0;
+  --color-confetti-gray: #48485E;
+  --color-confetti-yellow: #EFFF1D;
 }
 
 :root {
@@ -110,6 +186,14 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  --wheel-slice-1: 262 83% 58%;
+  --wheel-slice-2: 224 71% 60%;
+  --wheel-slice-3: 186 91% 56%;
+  --wheel-slice-4: 142 76% 57%;
+  --wheel-slice-5: 47 96% 56%;
+  --wheel-slice-6: 21 90% 56%;
+  --wheel-slice-7: 340 82% 62%;
+  --wheel-slice-8: 291 84% 61%;
 }
 
 @keyframes inputFocus {
@@ -127,33 +211,267 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
-@tailwind utilities;
+@layer utilities {
+  .bg-wheel-slice-1 { background-color: hsl(var(--wheel-slice-1)); }
+  .bg-wheel-slice-2 { background-color: hsl(var(--wheel-slice-2)); }
+  .bg-wheel-slice-3 { background-color: hsl(var(--wheel-slice-3)); }
+  .bg-wheel-slice-4 { background-color: hsl(var(--wheel-slice-4)); }
+  .bg-wheel-slice-5 { background-color: hsl(var(--wheel-slice-5)); }
+  .bg-wheel-slice-6 { background-color: hsl(var(--wheel-slice-6)); }
+  .bg-wheel-slice-7 { background-color: hsl(var(--wheel-slice-7)); }
+  .bg-wheel-slice-8 { background-color: hsl(var(--wheel-slice-8)); }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgb(var(--background-end-rgb))
-  ) rgb(var(--background-start-rgb));
-}
+  .transition-smooth { transition: var(--transition-smooth); }
+  .transition-spring { transition: var(--transition-spring); }
 
-/* Custom utility to hide scrollbars */
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Spin Wheel Animation */
+  @keyframes spin-wheel {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .animate-spin-wheel {
+    animation: spin-wheel 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+}
+
+/* Keyframe for the winner slice scaling/pulsing animation */
+@keyframes scaleAnimation {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); } /* Slightly larger pop */
+  100% { transform: scale(1); }
+}
+
+/* Keyframe for the winner display bouncing in */
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Keyframe for phase transition: slide left */
+@keyframes slide-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+/* Keyframe for phase transition: slide in from right */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Apply animations */
+.animate-scaleAnimation {
+  animation: scaleAnimation 1s ease-in-out infinite;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+.animate-slide-left {
+  animation: slide-left 0.5s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.5s ease-out forwards;
+}
+
+/* Tailwind CSS custom properties (ensure these are defined or replace with direct colors) */
+:root {
+  --primary: hsl(222.2 47.4% 11.2%); /* Example primary color */
+  --primary-foreground: hsl(210 40% 98%); /* Example primary foreground color */
+  --muted: hsl(210 40% 96.1%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222.2 47.4% 11.2%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2 47.4% 11.2%);
+}
+
+/* Example Tailwind utility classes for colors if not using custom properties */
+.bg-primary { background-color: var(--primary); }
+.text-primary-foreground { color: var(--primary-foreground); }
+.bg-muted { background-color: var(--muted); }
+.text-muted-foreground { color: var(--muted-foreground); }
+.text-foreground { color: var(--foreground); }
+.border { border-color: var(--border); }
+.bg-card { background-color: var(--card); }
+.text-primary { color: var(--primary); } /* Assuming you have a primary color for text */
+
+/* Shadow classes - these are examples, adjust to your actual Tailwind config */
+.shadow-strong { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+.shadow-medium { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+.shadow-soft { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+
+/* Pointer styles */
+.border-t-primary { border-top-color: var(--primary); }
+.border-l-6 { border-left-width: 6px; }
+.border-r-6 { border-right-width: 6px; }
+.border-t-12 { border-top-width: 12px; }
+.drop-shadow-lg { filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1)); }
+
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-in forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.7s ease-out forwards;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.5s ease-out forwards;
+}
+
+/* Define the actual @keyframes rules */
+@keyframes confetti-slow {
+  0% { transform: translate3d(0, 0, 0) rotateX(0) rotateY(0); }
+  100% { transform: translate3d(25px, 105vh, 0) rotateX(360deg) rotateY(180deg); }
+}
+
+@keyframes confetti-medium {
+  0% { transform: translate3d(0, 0, 0) rotateX(0) rotateY(0); }
+  100% { transform: translate3d(100px, 105vh, 0) rotateX(100deg) rotateY(360deg); }
+}
+
+@keyframes confetti-fast {
+  0% { transform: translate3d(-50px, 105vh, 0) rotateX(10deg) rotateY(250deg); }
+  100% { transform: translate3d(-50px, 105vh, 0) rotateX(10deg) rotateY(250deg); }
+}
+
+@keyframes checkmark {
+  0% { height: 0; width: 0; opacity: 1; }
+  20% { height: 0; width: 37.5px; opacity: 1; }
+  40% { height: 75px; width: 37.5px; opacity: 1; }
+  100% { height: 75px; width: 37.5px; opacity: 1; }
 }
