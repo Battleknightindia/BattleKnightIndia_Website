@@ -58,18 +58,14 @@ const Interface = () => {
   const handleFinalistSelected = (selected: string) => {
     setTimeout(() => {
       setFinalist(selected);
-      setTimeout(() => {
-        setPhase('reward');
-      }, 10000);
+      setPhase('reward');
     }, 2000);
   };
 
   const handleRewardSelected = (selectedReward: string) => {
     setTimeout(() => {
       setReward(parseInt(selectedReward));
-      setTimeout(() => {
-        setPhase('congrats');
-      }, 5000);
+      setPhase('congrats');
     }, 2000);
   };
 

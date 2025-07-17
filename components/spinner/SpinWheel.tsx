@@ -63,14 +63,10 @@ const SpinWheel = forwardRef<
     let selectedWinnerIndex: number;
 
     if (wheelType === 'reward') {
-      // Weighted probability for reward wheel (higher reward = lower chance, much stricter for 599+)
-      // Example for 9 rewards: [99,199,299,399,499,599,699,799,899]
-      // You can adjust these weights as needed for your actual rewards list
       let weights: number[];
       if (numItems === 9) {
         weights = [40, 30, 25, 20, 15, 4, 2, 1, 1];
       } else {
-        // fallback: decreasing weights
         weights = Array.from({length: numItems}, (_, i) => Math.max(1, 20 - i * 2));
       }
       const totalWeight = weights.slice(0, numItems).reduce((a, b) => a + b, 0);
@@ -85,21 +81,18 @@ const SpinWheel = forwardRef<
       }
       if (selectedWinnerIndex === -1) selectedWinnerIndex = numItems - 1;
     } else if (wheelType === 'entry' && numItems > 1) {
-      // Gap variation for entry wheel
-      const minGap = Math.max(1, Math.floor(numItems / 8)); // e.g. 1/8th of the list
+      const minGap = Math.max(1, Math.floor(numItems / 8));
       let possibleIndexes: number[] = [];
       if (lastWinnerIndex === null) {
-        // First spin, pick any
         possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
       } else {
         for (let i = 0; i < numItems; i++) {
           const gap = Math.abs(i - lastWinnerIndex);
-          const wrapGap = Math.min(gap, numItems - gap); // handle circular gap
+          const wrapGap = Math.min(gap, numItems - gap);
           if (wrapGap >= minGap) {
             possibleIndexes.push(i);
           }
         }
-        // If all are too close (shouldn't happen unless list is tiny), fallback to all
         if (possibleIndexes.length === 0) {
           possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
         }
@@ -127,12 +120,10 @@ const SpinWheel = forwardRef<
     const newRotation = rotation + (totalRevolutions * 360) + deltaRotation;
     setRotation(newRotation);
 
-    // Clear any existing timeout
     if (spinTimeoutRef.current) {
       clearTimeout(spinTimeoutRef.current);
     }
 
-    // Set new timeout for spin completion
     spinTimeoutRef.current = setTimeout(() => {
       setIsSpinning(false);
       const winningItem = items[selectedWinnerIndex];
@@ -140,14 +131,12 @@ const SpinWheel = forwardRef<
       if (wheelType === 'entry') setLastWinnerIndex(selectedWinnerIndex);
       onSpin?.(winningItem);
 
-      // Wait for reset (e.g. after winner is removed from entry list)
-      // For entry wheel, expect parent to remove winner after 4s
-      // For other wheels, just re-enable after 4s
       setTimeout(() => {
         setIsReady(true);
       }, wheelType === 'entry' ? 4000 : 2000);
     }, animationDuration);
-  }, [isSpinning, disabled, items, rotation, onSpin, wheelType, animationDuration, lastWinnerIndex]);
+  }, [isReady, isSpinning, disabled, items, rotation, onSpin, wheelType, animationDuration, lastWinnerIndex]);
+
 
   // Remove auto-spin effect
 
@@ -298,7 +287,21 @@ const SpinWheel = forwardRef<
       </div>
 
       {/* Manual Spin Button */}
-      <button
+      {(wheelType === 'finalist' || wheelType === 'reward') && isReady && !isSpinning && !winner && (
+        <button
+          onClick={spin}
+          className={cn(
+            'mt-6 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold shadow-soft transition-all duration-200',
+            'hover:bg-primary/90 hover:shadow-medium active:scale-95',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary'
+          )}
+        >
+          Spin Wheel
+        </button>
+      )}
+      {/* Manual Spin Button */}
+      {(wheelType === 'entry') && (
+        <button
         onClick={spin}
         disabled={!isReady || isSpinning || disabled || items.length === 0}
         className={cn(
@@ -309,6 +312,7 @@ const SpinWheel = forwardRef<
       >
         Spin Wheel
       </button>
+      )}
 
       {/* Winner Display - Only show when not spinning and winner exists */}
       {winner && !isSpinning && wheelType != "entry" && (
@@ -324,4 +328,5 @@ const SpinWheel = forwardRef<
     </div>
   );
 });
+SpinWheel.displayName = "SpinWheel";
 export { SpinWheel };
