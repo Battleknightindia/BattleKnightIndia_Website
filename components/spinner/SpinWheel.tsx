@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 interface SpinWheelProps {
   items: string[];
   onSpin?: (winner: string) => void;
-  autoSpin?: boolean;
-  autoSpinDelay?: number; // New prop for delay
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
@@ -16,30 +14,23 @@ interface SpinWheelProps {
   wheelType?: 'reward' | 'finalist' | 'entry';
 }
 
-export const SpinWheel = ({
-  items,
-  onSpin,
-  autoSpin = false,
-  autoSpinDelay = 0, // Default to 0 delay if not provided
-  className,
-  size = 'lg',
-  disabled = false,
-  logoSrc,
-  wheelType = 'entry'
-}: SpinWheelProps) => {
+const SpinWheel = forwardRef<
+  { spin: () => void },
+  SpinWheelProps
+>(({ items, onSpin, className, size = 'lg', disabled = false, logoSrc, wheelType = 'entry' }, ref) => {
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isReady, setIsReady] = useState(true);
   const [rotation, setRotation] = useState(0);
   const [winner, setWinner] = useState<string | null>(null);
   const [lastWinnerIndex, setLastWinnerIndex] = useState<number | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
-  const autoSpinTriggered = useRef(false);
   const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationDuration = 3000; // 3 seconds for spin animation
 
   const sizeClasses = {
     sm: 'w-48 h-48',
     md: 'w-[24rem] h-[24rem]',
-    lg: 'w-[30rem] h-[30rem]'
+    lg: 'w-[35rem] h-[35rem]'
   };
 
   const colors = [
@@ -54,11 +45,16 @@ export const SpinWheel = ({
     'wheel-slice-8'
   ];
 
-  // Wrap the spin function in useCallback
+  // Expose spin method via ref
+  useImperativeHandle(ref, () => ({
+    spin,
+  }));
+
   const spin = useCallback(() => {
-    if (isSpinning || disabled || items.length === 0) return;
+    if (!isReady || isSpinning || disabled || items.length === 0) return;
 
     setIsSpinning(true);
+    setIsReady(false);
     setWinner(null);
 
     const numItems = items.length;
@@ -143,33 +139,17 @@ export const SpinWheel = ({
       setWinner(winningItem);
       if (wheelType === 'entry') setLastWinnerIndex(selectedWinnerIndex);
       onSpin?.(winningItem);
-      autoSpinTriggered.current = false; // Reset auto-spin flag after completion
+
+      // Wait for reset (e.g. after winner is removed from entry list)
+      // For entry wheel, expect parent to remove winner after 4s
+      // For other wheels, just re-enable after 4s
+      setTimeout(() => {
+        setIsReady(true);
+      }, wheelType === 'entry' ? 4000 : 2000);
     }, animationDuration);
   }, [isSpinning, disabled, items, rotation, onSpin, wheelType, animationDuration, lastWinnerIndex]);
 
-  // Auto-spin effect with proper cleanup and guards
-  useEffect(() => {
-    if (autoSpin &&
-        items.length > 0 &&
-        !isSpinning &&
-        !autoSpinTriggered.current) {
-
-      autoSpinTriggered.current = true;
-
-      const spinDelay = setTimeout(() => {
-        spin();
-      }, autoSpinDelay); // Use the new autoSpinDelay prop here
-
-      return () => clearTimeout(spinDelay);
-    }
-  }, [autoSpin, autoSpinDelay, spin, items.length, isSpinning]); // 'spin' is now a stable reference due to useCallback
-
-  // Reset auto-spin flag when autoSpin becomes false
-  useEffect(() => {
-    if (!autoSpin) {
-      autoSpinTriggered.current = false;
-    }
-  }, [autoSpin]);
+  // Remove auto-spin effect
 
   // Cleanup on unmount
   useEffect(() => {
@@ -317,9 +297,22 @@ export const SpinWheel = ({
         )}
       </div>
 
+      {/* Manual Spin Button */}
+      <button
+        onClick={spin}
+        disabled={!isReady || isSpinning || disabled || items.length === 0}
+        className={cn(
+          'mt-6 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold shadow-soft transition-all duration-200',
+          'hover:bg-primary/90 hover:shadow-medium active:scale-95',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary'
+        )}
+      >
+        Spin Wheel
+      </button>
+
       {/* Winner Display - Only show when not spinning and winner exists */}
-      {winner && !isSpinning && (
-        <div className="mt-6 p-4 bg-white rounded-lg shadow-medium border animate-bounce-in">
+      {winner && !isSpinning && wheelType != "entry" && (
+        <div className=" mt-2 w-40 h-20 flex-col flex justify-center items-center bg-white rounded-lg shadow-medium border animate-bounce-in">
           <p className="text-sm font-medium text-muted-foreground">
             {wheelType === 'reward' ? 'Reward:' : 'Selected Member:'}
           </p>
@@ -330,4 +323,5 @@ export const SpinWheel = ({
       )}
     </div>
   );
-};
+});
+export { SpinWheel };
