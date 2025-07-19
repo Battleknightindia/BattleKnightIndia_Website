@@ -2,22 +2,24 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Star, Users } from 'lucide-react';
+import { Trophy, Star, Users, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { Button } from '../ui/button';
 
 interface WinnerDisplayProps {
   winners: string[];
   className?: string;
   title?: string;
   maxDisplay?: number;
+  handleModel?: () => void;
 }
 
 export const WinnerDisplay = ({
   winners,
   className,
   title = "Selected Winners",
-  maxDisplay = 5
+  maxDisplay = 5,
+  handleModel
 }: WinnerDisplayProps) => {
   const displayedWinners = winners.slice(0, maxDisplay);
   const remainingCount = winners.length - maxDisplay;
@@ -71,6 +73,9 @@ export const WinnerDisplay = ({
               )}
             </>
           )}
+        </div>
+        <div className="flex justify-center">
+          <Button onClick={handleModel} size={"sm"} className='mt-5'><Plus className="w-4 h-4" /></Button>
         </div>
       </CardContent>
     </Card>

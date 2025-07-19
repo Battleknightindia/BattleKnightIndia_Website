@@ -25,9 +25,10 @@ const Interface = () => {
   const [finalist, setFinalist] = useState<string>("");
   const [reward, setReward] = useState<number>(0);
   const [showTransition, setShowTransition] = useState(false);
-  const [maxFinalist, setMaxFinalist] = useState<number>(0);
+  const [maxFinalist, setMaxFinalist] = useState<number>(1);
   const [InputValue, setInputVaule] = useState<number>(0);
   const [spinable, setSpinable] = useState<boolean>(false); // Changed initial value to false
+  const [openModel, setOpenModel] = useState<boolean>(false);
 
   // Handler for bulk name entry
   const handleAddBulkNames = (bulkNames: string[]) => {
@@ -98,6 +99,10 @@ const Interface = () => {
     }, 500); // Match animation duration
   };
 
+  const handleModel = () => {
+    setOpenModel(true);
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
@@ -144,6 +149,18 @@ const Interface = () => {
                 onClearAll={handleClearNames}
                 onAddBulkNames={handleAddBulkNames}
               />
+              {/* Manual transition button to next phase */}
+              {winners.length === maxFinalist && maxFinalist != 0 && (
+                <button
+                  onClick={handleManualTransition}
+                  className={cn(
+                    "mt-8 px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold shadow-soft transition-all duration-200",
+                    "hover:bg-primary/90 hover:shadow-medium active:scale-95"
+                  )}
+                >
+                  Proceed to Finalist Selection
+                </button>
+              )}
             </div>
 
             {/* Center Panel - Spin Wheel */}
@@ -159,11 +176,12 @@ const Interface = () => {
 
             {/* Right Panel - Winners */}
             <div className="lg:col-span-1 ml-15">
-              {maxFinalist != 0 ? (
+              {!openModel ? (
                 <WinnerDisplay
                   winners={winners}
                   title="Selected Members"
-                  maxDisplay={7}
+                  maxDisplay={maxFinalist}
+                  handleModel={handleModel}
                 />
               ) : (
                 <Card className="w-full max-w-sm">
@@ -180,29 +198,18 @@ const Interface = () => {
                           (e) => {
                             if (e.key === 'Enter') {
                               setMaxFinalist(InputValue)
+                              setOpenModel(false)
                               setSpinable(true); // Changed to true to enable spinning
                             }
                           }
                         }
                         className="ring-0 focus-visible:ring-blue-500"
                       />
-                      <Button onClick={()=>{setMaxFinalist(InputValue); setSpinable(true)}} className="px-3"><Plus className="w-4 h-4" /></Button> 
+                      <Button onClick={()=>{setMaxFinalist(InputValue); setSpinable(true); setOpenModel(false)}} className="px-3"><Plus className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              )}
-              {/* Manual transition button to next phase */}
-              {winners.length === maxFinalist && maxFinalist != 0 && (
-                <button
-                  onClick={handleManualTransition}
-                  className={cn(
-                    "mt-8 px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold shadow-soft transition-all duration-200",
-                    "hover:bg-primary/90 hover:shadow-medium active:scale-95"
-                  )}
-                >
-                  Proceed to Finalist Selection
-                </button>
               )}
             </div>
           </div>
