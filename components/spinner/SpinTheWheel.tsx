@@ -14,7 +14,7 @@ export default function SpinTheWheel() {
       </div>
 
       {/* Mobile View: Show the enhanced message and button */}
-      <div className="md:hidden w-90 bg-gray-800 rounded-lg shadow-xl mt-50 ml-4 p-6 text-center border border-gray-700 animate-fade-in">
+      <div className="md:hidden w-90 bg-gray-800 rounded-lg shadow-xl p-6 text-center border border-gray-700 animate-fade-in">
         <div className="mb-6">
           {/* Warning Icon (using Lucide-React if available, otherwise a simple text/emoji) */}
           {/* Assuming you have 'lucide-react' installed, otherwise use a warning emoji ⚠️ */}

@@ -27,7 +27,7 @@ export const WinnerDisplay = ({
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <Trophy className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-lg">{title}</span>
+          <span className="font-semibold text-[15px]">{title}</span>
           <Badge variant="secondary" className="ml-auto">
             {winners.length}
           </Badge>

@@ -30,7 +30,7 @@ const SpinWheel = forwardRef<
   const sizeClasses = {
     sm: 'w-48 h-48',
     md: 'w-[24rem] h-[24rem]',
-    lg: 'w-[35rem] h-[35rem]'
+    lg: 'w-[25rem] h-[25rem]'
   };
 
   const colors = [
@@ -133,7 +133,7 @@ const SpinWheel = forwardRef<
 
       setTimeout(() => {
         setIsReady(true);
-      }, wheelType === 'entry' ? 4000 : 2000);
+      }, wheelType === 'entry' ? 1000 : 2000);
     }, animationDuration);
   }, [isReady, isSpinning, disabled, items, rotation, onSpin, wheelType, animationDuration, lastWinnerIndex]);
 
@@ -251,7 +251,7 @@ const SpinWheel = forwardRef<
         <div
           ref={wheelRef}
           className={cn(
-            'relative rounded-full border-4 border-white shadow-strong overflow-hidden',
+            'relative  rounded-full border-4 border-white shadow-strong overflow-hidden',
             sizeClasses[size],
             isSpinning && 'pointer-events-none' // Prevent interactions during spin
           )}

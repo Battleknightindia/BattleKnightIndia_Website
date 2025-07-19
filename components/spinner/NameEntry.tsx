@@ -72,7 +72,7 @@ export const NameEntry = ({
   };
 
   return (
-    <Card className={cn('w-full max-w-sm', className)}>
+    <Card className={cn('lg:w-70 lg:max-w-sm', className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Users className="w-5 h-5" />
@@ -93,25 +93,25 @@ export const NameEntry = ({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 ">
         {/* Toggle Buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 mr-10">
           <Button
             variant={!showBulkInput ? "default" : "outline"}
             size="sm"
             onClick={() => setShowBulkInput(false)}
-            className="flex-1"
+            className="w-30"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4" />
             Single Entry
           </Button>
           <Button
             variant={showBulkInput ? "default" : "outline"}
             size="sm"
             onClick={() => setShowBulkInput(true)}
-            className="flex-1"
+            className="w-30"
           >
-            <FileText className="w-4 h-4 mr-2" />
+            <FileText className="w-4 h-4" />
             Bulk Entry
           </Button>
         </div>
