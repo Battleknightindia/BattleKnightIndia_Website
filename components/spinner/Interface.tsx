@@ -108,7 +108,7 @@ const Interface = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
+          <h1 className="text-4xl font-bold text-foreground mt-15 mb-2">
             NCC Spin Wheel Giveaway
           </h1>
           <p className="text-muted-foreground">

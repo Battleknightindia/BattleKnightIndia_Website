@@ -17,12 +17,6 @@ export const CongratsDisplay = ({
 }: CongratsDisplayProps) => {
   return (
     <div className={cn("relative flex flex-col items-center text-center space-y-6", className)}>
-      
-      {/* Confetti animation */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="confetti"></div>
-      </div>
-
       <div className="z-10 animate-bounce-in">
         <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4 drop-shadow-lg" />
 
