@@ -201,7 +201,7 @@ const SpinWheel = forwardRef<
 
           // Generate dynamic image path based on reward value
           const getDiamondImage = (rewardValue: string) => {
-            return `/diamonds/${rewardValue}.png`;
+            return `/diamonds/${rewardValue}.webp`;
           };
 
           return (
@@ -251,7 +251,7 @@ const SpinWheel = forwardRef<
         <div
           ref={wheelRef}
           className={cn(
-            'relative  rounded-full border-4 border-white shadow-strong overflow-hidden',
+            'relative  rounded-full border-4 border-white overflow-hidden',
             sizeClasses[size],
             isSpinning && 'pointer-events-none' // Prevent interactions during spin
           )}

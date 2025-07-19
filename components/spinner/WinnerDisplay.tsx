@@ -31,11 +31,14 @@ export const WinnerDisplay = ({
           <Trophy className="w-5 h-5 text-primary" />
           <span className="font-semibold text-[15px]">{title}</span>
           <Badge variant="secondary" className="ml-auto">
+            Total: {maxDisplay}
+          </Badge>
+          <Badge variant="secondary" className="ml-auto">
             {winners.length}
           </Badge>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 overflow-auto max-h-68">
           {winners.length === 0 ? (
             <div className="text-center text-muted-foreground py-6">
               <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />

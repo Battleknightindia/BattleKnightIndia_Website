@@ -26,8 +26,7 @@ const Interface = () => {
   const [reward, setReward] = useState<number>(0);
   const [showTransition, setShowTransition] = useState(false);
   const [maxFinalist, setMaxFinalist] = useState<number>(1);
-  const [InputValue, setInputVaule] = useState<number>(0);
-  const [spinable, setSpinable] = useState<boolean>(false); // Changed initial value to false
+  const [InputValue, setInputVaule] = useState<number>(0); // Changed initial value to false
   const [openModel, setOpenModel] = useState<boolean>(false);
 
   // Handler for bulk name entry
@@ -85,8 +84,7 @@ const Interface = () => {
     setFinalist("");
     setReward(0);
     setShowTransition(false);
-    setMaxFinalist(0); // Reset maxFinalist
-    setSpinable(false); // Reset spinable to false
+    setMaxFinalist(1); // Reset maxFinalist
     setInputVaule(0); // Reset input value
   };
 
@@ -141,7 +139,7 @@ const Interface = () => {
             )}
           >
             {/* Left Panel - Name Entry */}
-            <div className="lg:col-span-1 mr-15">
+            <div className="lg:col-span-1 mr-15 mb-10">
               <NameEntry
                 names={names}
                 onAddName={handleAddName}
@@ -149,33 +147,21 @@ const Interface = () => {
                 onClearAll={handleClearNames}
                 onAddBulkNames={handleAddBulkNames}
               />
-              {/* Manual transition button to next phase */}
-              {winners.length === maxFinalist && maxFinalist != 0 && (
-                <button
-                  onClick={handleManualTransition}
-                  className={cn(
-                    "mt-8 px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold shadow-soft transition-all duration-200",
-                    "hover:bg-primary/90 hover:shadow-medium active:scale-95"
-                  )}
-                >
-                  Proceed to Finalist Selection
-                </button>
-              )}
             </div>
 
             {/* Center Panel - Spin Wheel */}
-            <div className="lg:col-span-1 flex flex-col items-center mr-5 space-y-6">
+            <div className="lg:col-span-1 flex flex-col items-center mr-5 mt-5 space-y-6">
               <SpinWheel
                 items={names || []}
                 onSpin={handleWinnerSelected}
-                disabled={names.length === 0 || winners.length >= maxFinalist || !spinable || maxFinalist === 0}
+                disabled={names.length === 0 || winners.length >= maxFinalist || maxFinalist === 0}
                 wheelType="entry"
                 logoSrc="/ncc_logo.png"
               />
             </div>
 
             {/* Right Panel - Winners */}
-            <div className="lg:col-span-1 ml-15">
+            <div className="lg:col-span-1 relative ml-15">
               {!openModel ? (
                 <WinnerDisplay
                   winners={winners}
@@ -199,17 +185,29 @@ const Interface = () => {
                             if (e.key === 'Enter') {
                               setMaxFinalist(InputValue)
                               setOpenModel(false)
-                              setSpinable(true); // Changed to true to enable spinning
                             }
                           }
                         }
                         className="ring-0 focus-visible:ring-blue-500"
                       />
-                      <Button onClick={()=>{setMaxFinalist(InputValue); setSpinable(true); setOpenModel(false)}} className="px-3"><Plus className="w-4 h-4" /></Button>
+                      <Button onClick={()=>{setMaxFinalist(InputValue); setOpenModel(false)}} className="px-3"><Plus className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Manual transition button to next phase */}
+              {winners.length === maxFinalist && maxFinalist != 0 && (
+                <button
+                  onClick={handleManualTransition}
+                  className={cn(
+                    "absolute bottom-25 mt-3 px-8 ml-3 py-3 bg-primary text-primary-foreground rounded-lg font-bold shadow-soft transition-all duration-200",
+                    "hover:bg-primary/90 hover:shadow-medium active:scale-95"
+                  )}
+                >
+                  Proceed to Finalist Selection
+                </button>
               )}
             </div>
           </div>

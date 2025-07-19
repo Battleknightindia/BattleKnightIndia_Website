@@ -26,22 +26,22 @@ export const CongratsDisplay = ({
 
         <div className="space-y-1">
           <p className="text-2xl font-bold text-foreground">
-            {winner}, you’re the champion!
+            {winner}
           </p>
           <p className="text-lg text-muted-foreground">
             You won
           </p>
         </div>
 
-        <div className="inline-flex items-center justify-center rounded-full bg-yellow-100 p-4 mt-4 shadow-inner">
+        <div className="inline-flex items-center justify-center rounded-full mt-4 px-4">
           <Image
-            src={`/diamonds/${reward}.png`}
+            src={`/diamonds/${reward}.webp`}
             alt={`Reward of ${reward}`}
             width={90}
             height={90}
             className="object-contain"
           />
-          <span className="text-3xl mt-5 font-bold text-black">
+          <span className="text-3xl mt-5 mr-10 font-bold text-black">
             {reward}
           </span>
         </div>
