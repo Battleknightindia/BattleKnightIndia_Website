@@ -30,7 +30,7 @@ const SpinWheel = forwardRef<
   const sizeClasses = {
     sm: 'w-48 h-48',
     md: 'w-[24rem] h-[24rem]',
-    lg: 'w-[25rem] h-[25rem]'
+    lg: 'w-[30rem] h-[30rem]'
   };
 
   const colors = [

@@ -147,7 +147,7 @@ const Interface = () => {
             </div>
 
             {/* Center Panel - Spin Wheel */}
-            <div className="lg:col-span-1 flex flex-col items-center ml-13 space-y-6">
+            <div className="lg:col-span-1 flex flex-col items-center mr-5 space-y-6">
               <SpinWheel
                 items={names || []}
                 onSpin={handleWinnerSelected}
