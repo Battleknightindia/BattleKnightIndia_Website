@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, Plus, Users, FileText } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { X, Plus, Users, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NameEntryProps {
   names: string[];
@@ -25,61 +25,88 @@ export const NameEntry = ({
   onClearAll,
   onAddBulkNames,
   maxNames = 100,
-  className
+  className,
 }: NameEntryProps) => {
-  const [inputValue, setInputValue] = useState('');
-  const [bulkInput, setBulkInput] = useState('');
+  const [inputValue, setInputValue] = useState("");
+  const [bulkInput, setBulkInput] = useState("");
   const [showBulkInput, setShowBulkInput] = useState(false);
+
+  // Load persisted values on mount
+  useEffect(() => {
+    const savedInput = localStorage.getItem("nameEntry_inputValue");
+    const savedBulk = localStorage.getItem("nameEntry_bulkInput");
+    if (savedInput !== null) setInputValue(savedInput);
+    if (savedBulk !== null) setBulkInput(savedBulk);
+  }, []);
+
+  // Persist inputValue
+  useEffect(() => {
+    localStorage.setItem("nameEntry_inputValue", inputValue);
+  }, [inputValue]);
+
+  // Persist bulkInput
+  useEffect(() => {
+    localStorage.setItem("nameEntry_bulkInput", bulkInput);
+  }, [bulkInput]);
 
   const handleAddName = () => {
     const trimmedName = inputValue.trim();
-    if (trimmedName && !names.includes(trimmedName) && names.length < maxNames) {
+    if (
+      trimmedName &&
+      !names.includes(trimmedName) &&
+      names.length < maxNames
+    ) {
       onAddName(trimmedName);
-      setInputValue('');
+      setInputValue("");
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleAddName();
     }
   };
 
   const handleBulkAdd = () => {
     if (!bulkInput.trim()) return;
-    
+
     // Parse numbered list format (1. Name1, 2. Name2, etc.)
-    const lines = bulkInput.split('\n');
+    const lines = bulkInput.split("\n");
     const parsedNames: string[] = [];
-    
-    lines.forEach(line => {
+
+    lines.forEach((line) => {
       const trimmedLine = line.trim();
       if (trimmedLine) {
         // Remove numbering (1., 2., etc.) and extract name
-        const nameMatch = trimmedLine.match(/^\d+\.\s*(.+)$/) || [null, trimmedLine];
+        const nameMatch = trimmedLine.match(/^\d+\.\s*(.+)$/) || [
+          null,
+          trimmedLine,
+        ];
         const name = nameMatch[1]?.trim();
         if (name && !names.includes(name) && !parsedNames.includes(name)) {
           parsedNames.push(name);
         }
       }
     });
-    
+
     if (parsedNames.length > 0) {
       onAddBulkNames(parsedNames);
-      setBulkInput('');
+      setBulkInput("");
       setShowBulkInput(false);
     }
   };
 
   return (
-    <Card className={cn('lg:w-70 lg:max-w-sm', className)}>
+    <Card className={cn("lg:w-70 lg:max-w-sm", className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Users className="w-5 h-5" />
           Participants
         </CardTitle>
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{names.length} / {maxNames}</span>
+          <span>
+            {names.length} / {maxNames}
+          </span>
           {names.length > 0 && (
             <Button
               variant="ghost"
@@ -92,7 +119,7 @@ export const NameEntry = ({
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4 ">
         {/* Toggle Buttons */}
         <div className="flex gap-2 mr-10">
@@ -121,15 +148,23 @@ export const NameEntry = ({
           <div className="flex gap-2">
             <Input
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onChange={(e) => {
+                const val = e.target.value;
+                setInputValue(val);
+                localStorage.setItem("nameEntry_inputValue", val);
+              }}
+              onKeyDown={handleKeyPress}
               placeholder="Enter participant name..."
               className="flex-1"
               disabled={names.length >= maxNames}
             />
             <Button
               onClick={handleAddName}
-              disabled={!inputValue.trim() || names.includes(inputValue.trim()) || names.length >= maxNames}
+              disabled={
+                !inputValue.trim() ||
+                names.includes(inputValue.trim()) ||
+                names.length >= maxNames
+              }
               size="sm"
               className="px-3"
             >
@@ -140,7 +175,11 @@ export const NameEntry = ({
           <div className="space-y-2">
             <Textarea
               value={bulkInput}
-              onChange={(e) => setBulkInput(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setBulkInput(val);
+                localStorage.setItem("nameEntry_bulkInput", val);
+              }}
               placeholder="Enter names in this format:&#10;1. Name1&#10;2. Name2&#10;3. Name3&#10;&#10;Or just paste a list of names (one per line)"
               className="min-h-24"
               disabled={names.length >= maxNames}

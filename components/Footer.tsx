@@ -68,20 +68,6 @@ const Footer = () => {
              </a>
            </div>
         </div>
-
-          {/* Developer Info Section */}
-        <div className="flex flex-col gap-2 items-center md:items-center text-center md:text-right">
-          <a href="#">
-          <Image
-            src="/logo/nexelio_logo.jpg"
-            alt="Nexelio logo" // More descriptive alt text
-            width={50} // Slightly increased size
-            height={50} // Slightly increased size
-            className="rounded-full border border-zinc-700" // Added a subtle border
-          />
-          </a>
-          <p className="text-sm mb-2">Developed by Nexelios</p> {/* Added margin bottom */}
-        </div>
         </div>
     </footer>
   );

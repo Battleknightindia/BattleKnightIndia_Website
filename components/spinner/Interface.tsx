@@ -12,93 +12,249 @@ import { Input } from "../ui/input";
 import { Card, CardContent } from "../ui/card";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
-import { Plus } from "lucide-react";
+import { Plus, RotateCcw } from "lucide-react";
 
 type Phase = "entry" | "finalist" | "reward" | "congrats";
 
+interface AppState {
+  phase: Phase;
+  names: string[];
+  winners: string[];
+  finalist: string;
+  reward: number;
+  maxFinalist: number;
+  // Track completion of each phase to prevent re-spinning
+  phaseCompleted: {
+    entry: boolean;
+    finalist: boolean;
+    reward: boolean;
+  };
+}
+
 const REWARDS = [99, 199, 299, 399, 499, 599, 699, 799, 899];
 
+const LOCAL_STORAGE_NAMES_KEY = "savedNames";
+const LOCAL_STORAGE_STATE_KEY = "appGameState";
+
+const defaultState: AppState = {
+  phase: "entry",
+  names: [],
+  winners: [],
+  finalist: "",
+  reward: 0,
+  maxFinalist: 0,
+  phaseCompleted: {
+    entry: false,
+    finalist: false,
+    reward: false,
+  },
+};
+
 const Interface = () => {
-  const [phase, setPhase] = useState<Phase>("entry");
-  const [names, setNames] = useState<string[]>([]);
-  const [winners, setWinners] = useState<string[]>([]);
-  const [finalist, setFinalist] = useState<string>("");
-  const [reward, setReward] = useState<number>(0);
+  const [gameState, setGameState] = useState<AppState>(defaultState);
   const [showTransition, setShowTransition] = useState(false);
-  const [maxFinalist, setMaxFinalist] = useState<number>(1);
-  const [InputValue, setInputVaule] = useState<number>(0); // Changed initial value to false
+  const [InputValue, setInputValue] = useState<number>(0);
   const [openModel, setOpenModel] = useState<boolean>(false);
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem(LOCAL_STORAGE_STATE_KEY);
+    const savedNames = localStorage.getItem(LOCAL_STORAGE_NAMES_KEY);
+
+    if (savedState) {
+      try {
+        const parsedState: AppState = JSON.parse(savedState);
+        setGameState(parsedState);
+      } catch (e) {
+        console.error("Failed to parse game state from localStorage", e);
+        // Fallback to loading just names
+        if (savedNames) {
+          try {
+            const parsed = JSON.parse(savedNames);
+            if (Array.isArray(parsed)) {
+              setGameState((prev) => ({
+                ...prev,
+                names: parsed.slice(0, 100),
+              }));
+            }
+          } catch (e) {
+            console.error("Failed to parse names from localStorage", e);
+          }
+        }
+      }
+    } else if (savedNames) {
+      // Legacy support for old names-only storage
+      try {
+        const parsed = JSON.parse(savedNames);
+        if (Array.isArray(parsed)) {
+          setGameState((prev) => ({
+            ...prev,
+            names: parsed.slice(0, 100),
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to parse names from localStorage", e);
+      }
+    }
+  }, []);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_STATE_KEY, JSON.stringify(gameState));
+    // Also keep names in the old key for backward compatibility
+    localStorage.setItem(
+      LOCAL_STORAGE_NAMES_KEY,
+      JSON.stringify(gameState.names)
+    );
+  }, [gameState]);
 
   // Handler for bulk name entry
   const handleAddBulkNames = (bulkNames: string[]) => {
-    setNames((prev) => {
-      const uniqueNames = bulkNames.filter((name) => !prev.includes(name));
-      return [...prev, ...uniqueNames].slice(0, 100);
+    setGameState((prev) => {
+      const uniqueNames = bulkNames.filter(
+        (name) => !prev.names.includes(name)
+      );
+      return {
+        ...prev,
+        names: [...prev.names, ...uniqueNames].slice(0, 100),
+      };
     });
   };
 
   const handleAddName = (name: string) => {
-    if (names.length < 100) {
-      setNames((prev) => [...prev, name]);
+    if (gameState.names.length < 100) {
+      setGameState((prev) => ({
+        ...prev,
+        names: [...prev.names, name],
+      }));
     }
   };
 
   const handleRemoveName = (index: number) => {
-    setNames((prev) => prev.filter((_, i) => i !== index));
+    setGameState((prev) => ({
+      ...prev,
+      names: prev.names.filter((_, i) => i !== index),
+    }));
   };
 
   const handleClearNames = () => {
-    setNames([]);
+    setGameState((prev) => ({
+      ...prev,
+      names: [],
+    }));
   };
 
   const handleWinnerSelected = (winner: string) => {
-    setWinners((prev) => {
-      const newWinners = [...prev, winner];
-      // Show winner for 2s before removing from names
+    setGameState((prev) => {
+      const newWinners = [...prev.winners, winner];
+      const isEntryComplete = newWinners.length === prev.maxFinalist;
+
+      // Remove winner from names after delay
       setTimeout(() => {
-        setNames((prevNames) => prevNames.filter((name) => name !== winner));
+        setGameState((current) => ({
+          ...current,
+          names: current.names.filter((name) => name !== winner),
+          phaseCompleted: {
+            ...current.phaseCompleted,
+            entry: isEntryComplete,
+          },
+        }));
       }, 1000);
-      return newWinners;
+
+      return {
+        ...prev,
+        winners: newWinners,
+      };
     });
   };
 
   const handleFinalistSelected = (selected: string) => {
     setTimeout(() => {
-      setFinalist(selected);
-      setPhase("reward");
+      setGameState((prev) => ({
+        ...prev,
+        finalist: selected,
+        phase: "reward",
+        phaseCompleted: {
+          ...prev.phaseCompleted,
+          finalist: true,
+        },
+      }));
     }, 1000);
   };
 
   const handleRewardSelected = (selectedReward: string) => {
     setTimeout(() => {
-      setReward(parseInt(selectedReward));
-      setPhase("congrats");
+      setGameState((prev) => ({
+        ...prev,
+        reward: parseInt(selectedReward),
+        phase: "congrats",
+        phaseCompleted: {
+          ...prev.phaseCompleted,
+          reward: true,
+        },
+      }));
     }, 1000);
   };
 
   const handleNextRound = () => {
-    // Reset all state for new round
-    setPhase("entry");
-    setNames([]);
-    setWinners([]);
-    setFinalist("");
-    setReward(0);
+    // Reset all state for new round but preserve original names
+    const freshState = {
+      ...defaultState,
+      names: gameState.names.length > 0 ? gameState.names : [], // Keep current names if available
+    };
+    setGameState(freshState);
     setShowTransition(false);
-    setMaxFinalist(1); // Reset maxFinalist
-    setInputVaule(0); // Reset input value
+    setInputValue(0);
+    setOpenModel(false);
+  };
+
+  // Completely reset everything including names
+  const handleCompleteReset = () => {
+    const completelyFreshState = { ...defaultState };
+    setGameState(completelyFreshState);
+    setShowTransition(false);
+    setInputValue(0);
+    setOpenModel(false);
+    localStorage.removeItem(LOCAL_STORAGE_STATE_KEY);
+  };
+
+  const handleResetWinners = () => {
+    setGameState((prev) => {
+      const updatedState = {
+        ...prev,
+        winners: [], // Reset winners to an empty array
+      };
+
+      localStorage.setItem(
+        LOCAL_STORAGE_STATE_KEY,
+        JSON.stringify(updatedState)
+      );
+      return updatedState;
+    });
   };
 
   // Manual transition to finalist phase
   const handleManualTransition = () => {
     setShowTransition(true);
     setTimeout(() => {
-      setPhase("finalist");
+      setGameState((prev) => ({
+        ...prev,
+        phase: "finalist",
+      }));
       setShowTransition(false);
-    }, 500); // Match animation duration
+    }, 500);
   };
 
   const handleModel = () => {
     setOpenModel(true);
+  };
+
+  const handleMaxFinalistChange = () => {
+    setGameState((prev) => ({
+      ...prev,
+      maxFinalist: InputValue,
+    }));
+    setOpenModel(false);
   };
 
   return (
@@ -110,28 +266,36 @@ const Interface = () => {
             NCC Spin Wheel Giveaway
           </h1>
           <p className="text-muted-foreground">
-            {phase === "entry" && "Add participants and spin to select winners"}
-            {phase === "finalist" && "Selecting the finalist from 5 winners"}
-            {phase === "reward" && "Spinning for the reward"}
-            {phase === "congrats" && "Congratulations to the winner!"}
+            {gameState.phase === "entry" &&
+              "Add participants and spin to select winners"}
+            {gameState.phase === "finalist" &&
+              "Selecting the finalist from winners"}
+            {gameState.phase === "reward" && "Spinning for the reward"}
+            {gameState.phase === "congrats" && "Congratulations to the winner!"}
           </p>
 
           {/* Phase Indicator */}
           <div className="flex justify-center gap-2 mt-4">
-            <Badge variant={phase === "entry" ? "default" : "secondary"}>
+            <Badge
+              variant={gameState.phase === "entry" ? "default" : "secondary"}
+            >
               Phase 1: Selection
             </Badge>
-            <Badge variant={phase === "finalist" ? "default" : "secondary"}>
+            <Badge
+              variant={gameState.phase === "finalist" ? "default" : "secondary"}
+            >
               Phase 2: Finalist
             </Badge>
-            <Badge variant={phase === "reward" ? "default" : "secondary"}>
+            <Badge
+              variant={gameState.phase === "reward" ? "default" : "secondary"}
+            >
               Phase 3: Reward
             </Badge>
           </div>
         </div>
 
         {/* Phase 1: Entry and Selection */}
-        {phase === "entry" && (
+        {gameState.phase === "entry" && (
           <div
             className={cn(
               "grid grid-cols-1 lg:grid-cols-3 relative gap-6 transition-all duration-500",
@@ -141,7 +305,7 @@ const Interface = () => {
             {/* Left Panel - Name Entry */}
             <div className="lg:col-span-1 mr-15 mb-10">
               <NameEntry
-                names={names}
+                names={gameState.names}
                 onAddName={handleAddName}
                 onRemoveName={handleRemoveName}
                 onClearAll={handleClearNames}
@@ -152,9 +316,14 @@ const Interface = () => {
             {/* Center Panel - Spin Wheel */}
             <div className="lg:col-span-1 flex flex-col items-center mr-5 mt-5 space-y-6">
               <SpinWheel
-                items={names || []}
+                items={gameState.names || []}
                 onSpin={handleWinnerSelected}
-                disabled={names.length === 0 || winners.length >= maxFinalist || maxFinalist === 0}
+                disabled={
+                  gameState.names.length === 0 ||
+                  gameState.winners.length >= gameState.maxFinalist ||
+                  gameState.maxFinalist === 0 ||
+                  gameState.phaseCompleted.entry
+                }
                 wheelType="entry"
                 logoSrc="/ncc_logo.png"
               />
@@ -163,12 +332,15 @@ const Interface = () => {
             {/* Right Panel - Winners */}
             <div className="lg:col-span-1 relative ml-15">
               {!openModel ? (
-                <WinnerDisplay
-                  winners={winners}
-                  title="Selected Members"
-                  maxDisplay={maxFinalist}
-                  handleModel={handleModel}
-                />
+                <div className="">
+                  <WinnerDisplay
+                    winners={gameState.winners}
+                    title="Selected Members"
+                    maxDisplay={gameState.maxFinalist}
+                    handleModel={handleModel}
+                    handleReset={handleResetWinners}
+                  />
+                </div>
               ) : (
                 <Card className="w-full max-w-sm">
                   <CardContent className="p-4">
@@ -178,19 +350,23 @@ const Interface = () => {
                       </Label>
                       <div className="flex gap-2">
                         <Input
-                        placeholder=""
-                        onChange={(e)=>{setInputVaule(Number(e.target.value))}}
-                        onKeyDown={
-                          (e) => {
-                            if (e.key === 'Enter') {
-                              setMaxFinalist(InputValue)
-                              setOpenModel(false)
+                          placeholder=""
+                          onChange={(e) => {
+                            setInputValue(Number(e.target.value));
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleMaxFinalistChange();
                             }
-                          }
-                        }
-                        className="ring-0 focus-visible:ring-blue-500"
-                      />
-                      <Button onClick={()=>{setMaxFinalist(InputValue); setOpenModel(false)}} className="px-3"><Plus className="w-4 h-4" /></Button>
+                          }}
+                          className="ring-0 focus-visible:ring-blue-500"
+                        />
+                        <Button
+                          onClick={handleMaxFinalistChange}
+                          className="px-3"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -198,23 +374,24 @@ const Interface = () => {
               )}
 
               {/* Manual transition button to next phase */}
-              {winners.length === maxFinalist && maxFinalist != 0 && (
-                <button
-                  onClick={handleManualTransition}
-                  className={cn(
-                    "absolute bottom-25 mt-3 px-8 ml-3 py-3 bg-primary text-primary-foreground rounded-lg font-bold shadow-soft transition-all duration-200",
-                    "hover:bg-primary/90 hover:shadow-medium active:scale-95"
-                  )}
-                >
-                  Proceed to Finalist Selection
-                </button>
-              )}
+              {gameState.winners.length === gameState.maxFinalist &&
+                gameState.maxFinalist !== 0 && (
+                  <button
+                    onClick={handleManualTransition}
+                    className={cn(
+                      "absolute bottom-25 mt-3 px-8 ml-3 py-3 bg-primary text-primary-foreground rounded-lg font-bold shadow-soft transition-all duration-200",
+                      "hover:bg-primary/90 hover:shadow-medium active:scale-95"
+                    )}
+                  >
+                    Proceed to Finalist Selection
+                  </button>
+                )}
             </div>
           </div>
         )}
 
         {/* Phase 2 & 3: Finalist and Reward */}
-        {(phase === "finalist" || phase === "reward") && (
+        {(gameState.phase === "finalist" || gameState.phase === "reward") && (
           <div
             className={cn(
               "flex flex-col items-center space-y-8 transition-all duration-500",
@@ -228,12 +405,16 @@ const Interface = () => {
                   Finalist Selection
                 </h3>
                 <SpinWheel
-                  items={winners || []}
+                  items={gameState.winners || []}
                   onSpin={handleFinalistSelected}
                   size="md"
                   wheelType="finalist"
                   logoSrc="/ncc_logo.png"
-                  disabled={winners.length !== maxFinalist || phase !== "finalist"}
+                  disabled={
+                    gameState.winners.length !== gameState.maxFinalist ||
+                    gameState.phase !== "finalist" ||
+                    gameState.phaseCompleted.finalist
+                  }
                 />
               </div>
 
@@ -242,7 +423,7 @@ const Interface = () => {
                 <h3 className="text-xl pb-10 font-semibold text-foreground">
                   Reward Wheel
                 </h3>
-                {phase === "reward" && finalist ? (
+                {gameState.phase === "reward" && gameState.finalist ? (
                   <div className="text-center space-y-4">
                     <SpinWheel
                       items={REWARDS.map((r) => r.toString()) || []}
@@ -250,13 +431,27 @@ const Interface = () => {
                       size="md"
                       wheelType="reward"
                       logoSrc="/ncc_logo.png"
-                      disabled={!finalist || phase !== "reward"}
+                      disabled={
+                        !gameState.finalist ||
+                        gameState.phase !== "reward" ||
+                        gameState.phaseCompleted.reward
+                      }
                     />
+                    {gameState.reward > 0 && (
+                      <div className="text-center p-4 bg-blue-100 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          Reward Selected:
+                        </p>
+                        <p className="font-bold text-blue-900">
+                          ₹{gameState.reward}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="w-[24rem] h-[24rem] bg-muted rounded-full flex items-center justify-center border-4 border-white shadow-strong">
                     <span className="text-muted-foreground">
-                      {phase === "finalist"
+                      {gameState.phase === "finalist"
                         ? "Waiting for finalist..."
                         : "Waiting for reward phase..."}
                     </span>
@@ -268,11 +463,11 @@ const Interface = () => {
         )}
 
         {/* Phase 4: Congratulations */}
-        {phase === "congrats" && (
-          <div className="flex justify-center">
+        {gameState.phase === "congrats" && (
+          <div className="flex flex-col items-center space-y-6">
             <CongratsDisplay
-              winner={finalist}
-              reward={reward}
+              winner={gameState.finalist}
+              reward={gameState.reward}
               onNextRound={handleNextRound}
               className="animate-bounce-in"
             />
