@@ -28,6 +28,8 @@ const globalSpinState = {
     totalSpins: 0,
     recentWinners: [] as { index: number; wheelType: string; timestamp: number }[],
     lastWinnerByType: {} as Record<string, number>,
+    rewardSpinCount: 0, // Track spins specifically for reward wheels
+    lastGuaranteedSpin: 0, // Track when last guaranteed higher reward was given
 };
 
 const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
@@ -74,53 +76,8 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
             spin,
         }));
 
-        // Improved truly random selection with anti-clustering
-        const selectRandomIndex = useCallback((numItems: number) => {
-            const now = Date.now();
-            const typeKey = `${wheelType}-${numItems}`;
-
-            // Clean old entries (older than 30 seconds for anti-clustering)
-            globalSpinState.recentWinners = globalSpinState.recentWinners.filter(
-                entry => now - entry.timestamp < 30000
-            );
-
-            let selectedIndex: number;
-            let attempts = 0;
-            const maxAttempts = 50; // Prevent infinite loops
-
-            do {
-                // Generate truly random index using multiple sources of entropy
-                const crypto = window.crypto || (window as unknown).msCrypto;
-                let randomValue: number;
-
-                if (crypto && crypto.getRandomValues) {
-                    // Use cryptographically secure random
-                    const array = new Uint32Array(1);
-                    crypto.getRandomValues(array);
-                    randomValue = array[0] / (0xFFFFFFFF + 1);
-                } else {
-                    // Fallback to enhanced Math.random with additional entropy
-                    randomValue = Math.random();
-                }
-
-                // Add additional entropy from timestamp and spin count
-                const timeEntropy = (now % 1000) / 1000;
-                const spinEntropy = (globalSpinState.totalSpins % 100) / 100;
-
-                // Combine entropy sources
-                const combinedRandom = (randomValue + timeEntropy + spinEntropy) % 1;
-                selectedIndex = Math.floor(combinedRandom * numItems);
-
-                attempts++;
-            } while (
-                attempts < maxAttempts &&
-                shouldAvoidIndex(selectedIndex, typeKey, now)
-            );
-
-            return selectedIndex;
-        }, [wheelType, shouldAvoidIndex]);
-
-        const shouldAvoidIndex = (index: number, typeKey: string, timestamp: number): boolean => {
+        // Check if we should avoid selecting this index (anti-clustering logic)
+        const shouldAvoidIndex = useCallback((index: number, typeKey: string, timestamp: number): boolean => {
             const recentSameTypeWinners = globalSpinState.recentWinners.filter(
                 entry => entry.wheelType === wheelType && timestamp - entry.timestamp < 10000 // Last 10 seconds
             );
@@ -152,7 +109,73 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
             // Allow some repetition, but not too much
             const maxRecentSame = Math.max(1, Math.floor(items.length / 4));
             return sameIndexCount >= maxRecentSame;
-        };
+        }, [wheelType, items.length]);
+
+        // Improved truly random selection with anti-clustering and guaranteed rewards
+        const selectRandomIndex = useCallback((numItems: number) => {
+            const now = Date.now();
+            const typeKey = `${wheelType}-${numItems}`;
+
+            // Clean old entries (older than 30 seconds for anti-clustering)
+            globalSpinState.recentWinners = globalSpinState.recentWinners.filter(
+                entry => now - entry.timestamp < 30000
+            );
+
+            let selectedIndex: number;
+            let attempts = 0;
+            const maxAttempts = 50; // Prevent infinite loops
+
+            // Special logic for reward wheels - guaranteed higher reward every 4 spins
+            if (wheelType === "reward") {
+                globalSpinState.rewardSpinCount++;
+                const spinsSinceLastGuaranteed = globalSpinState.rewardSpinCount - globalSpinState.lastGuaranteedSpin;
+
+                if (spinsSinceLastGuaranteed >= 4) {
+                    // Force a higher reward (anything except the first/lowest reward)
+                    if (numItems > 1) {
+                        // Select from higher rewards only (exclude index 0 which is usually the lowest)
+                        const higherRewardIndices = Array.from({ length: numItems - 1 }, (_, i) => i + 1);
+                        const randomHigherIndex = Math.floor(Math.random() * higherRewardIndices.length);
+                        selectedIndex = higherRewardIndices[randomHigherIndex];
+
+                        globalSpinState.lastGuaranteedSpin = globalSpinState.rewardSpinCount;
+                        console.log(`Guaranteed higher reward triggered! Selected index: ${selectedIndex}, Reward: ${items[selectedIndex]}`);
+                        return selectedIndex;
+                    }
+                }
+            }
+
+            do {
+                // Generate truly random index using multiple sources of entropy
+                const crypto = window.crypto || (window as unknown as { msCrypto?: Crypto }).msCrypto;
+                let randomValue: number;
+
+                if (crypto && crypto.getRandomValues) {
+                    // Use cryptographically secure random
+                    const array = new Uint32Array(1);
+                    crypto.getRandomValues(array);
+                    randomValue = array[0] / (0xFFFFFFFF + 1);
+                } else {
+                    // Fallback to enhanced Math.random with additional entropy
+                    randomValue = Math.random();
+                }
+
+                // Add additional entropy from timestamp and spin count
+                const timeEntropy = (now % 1000) / 1000;
+                const spinEntropy = (globalSpinState.totalSpins % 100) / 100;
+
+                // Combine entropy sources
+                const combinedRandom = (randomValue + timeEntropy + spinEntropy) % 1;
+                selectedIndex = Math.floor(combinedRandom * numItems);
+
+                attempts++;
+            } while (
+                attempts < maxAttempts &&
+                shouldAvoidIndex(selectedIndex, typeKey, now)
+            );
+
+            return selectedIndex;
+        }, [wheelType, shouldAvoidIndex, items]);
 
         const spin = useCallback(() => {
             if (!isReady || isSpinning || disabled || items.length === 0) return;
@@ -336,8 +359,14 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
             <div className={cn("relative flex flex-col items-center", className)}>
                 {/* Debug info - remove in production */}
                 {process.env.NODE_ENV === 'development' && (
-                    <div className="absolute top-0 right-0 text-xs text-gray-500 bg-white p-1 rounded">
-                        Total Spins: {globalSpinState.totalSpins}
+                    <div className="absolute top-0 right-0 text-xs text-gray-500 bg-white p-2 rounded shadow">
+                        <div>Total Spins: {globalSpinState.totalSpins}</div>
+                        {wheelType === 'reward' && (
+                            <>
+                                <div>Reward Spins: {globalSpinState.rewardSpinCount}</div>
+                                <div>Next Guaranteed: {4 - (globalSpinState.rewardSpinCount - globalSpinState.lastGuaranteedSpin)} spins</div>
+                            </>
+                        )}
                     </div>
                 )}
 
