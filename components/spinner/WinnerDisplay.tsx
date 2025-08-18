@@ -38,7 +38,7 @@ export const WinnerDisplay = ({
     } else {
       setShowOverlay(false);
     }
-  }, [winners.length]);
+  }, [maxDisplay]);
 
   // Hide overlay when user clicks anywhere
   const handleOverlayClick = () => {

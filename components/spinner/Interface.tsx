@@ -210,13 +210,18 @@ const Interface = () => {
 
   // Completely reset everything including names
   const handleCompleteReset = () => {
-    const completelyFreshState = { ...defaultState };
-    setGameState(completelyFreshState);
-    setShowTransition(false);
-    setInputValue(0);
-    setOpenModel(false);
-    localStorage.removeItem(LOCAL_STORAGE_STATE_KEY);
-  };
+  const completelyFreshState = { ...defaultState };
+  setGameState(completelyFreshState);
+  setShowTransition(false);
+  setInputValue(0);
+  setOpenModel(false);
+  localStorage.removeItem(LOCAL_STORAGE_STATE_KEY);
+  
+  // NEW: Also clear reward tracking data
+  localStorage.removeItem("wheelRewardTracking");
+  localStorage.removeItem("wheelRewardHistory");
+};
+
 
   const handleResetWinners = () => {
     setGameState((prev) => {
