@@ -90,7 +90,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
 
             do {
                 // Generate truly random index using multiple sources of entropy
-                const crypto = window.crypto || (window as any).msCrypto;
+                const crypto = window.crypto || (window as unknown).msCrypto;
                 let randomValue: number;
 
                 if (crypto && crypto.getRandomValues) {
@@ -118,7 +118,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
             );
 
             return selectedIndex;
-        }, [wheelType]);
+        }, [wheelType, shouldAvoidIndex]);
 
         const shouldAvoidIndex = (index: number, typeKey: string, timestamp: number): boolean => {
             const recentSameTypeWinners = globalSpinState.recentWinners.filter(
