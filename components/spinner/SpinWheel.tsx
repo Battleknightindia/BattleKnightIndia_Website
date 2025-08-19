@@ -23,20 +23,6 @@ interface SpinWheelProps {
   wheelType?: "reward" | "finalist" | "entry";
 }
 
-// Global state to persist across component re-renders and type changes
-const globalSpinState = {
-  totalSpins: 0,
-  recentWinners: [] as {
-    index: number;
-    wheelType: string;
-    timestamp: number;
-  }[],
-  lastWinnerByType: {} as Record<string, number>,
-  rewardSpinCount: 0, // Track spins specifically for reward wheels
-  hasUsedOneTimeBonus: false, // Track if one-time bonus has been used
-  lastGuaranteedSpin: 0, // Track last guaranteed spin for reward wheels
-};
-
 const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
   (
     {
@@ -54,6 +40,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
     const [isReady, setIsReady] = useState(true);
     const [rotation, setRotation] = useState(0);
     const [winner, setWinner] = useState<string | null>(null);
+    const [lastWinnerIndex, setLastWinnerIndex] = useState<number | null>(null);
     const wheelRef = useRef<HTMLDivElement>(null);
     const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const animationDuration = 3000; // 3 seconds for spin animation
@@ -81,101 +68,6 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       spin,
     }));
 
-    // Check if we should avoid selecting this index (anti-clustering logic)
-    const shouldAvoidIndex = useCallback(
-      (index: number, typeKey: string, timestamp: number): boolean => {
-        const recentSameTypeWinners = globalSpinState.recentWinners.filter(
-          (entry) =>
-            entry.wheelType === wheelType && timestamp - entry.timestamp < 10000 // Last 10 seconds
-        );
-
-        // For entry wheels, avoid consecutive selections of nearby items
-        if (wheelType === "entry" && items.length > 3) {
-          const lastWinner = globalSpinState.lastWinnerByType[typeKey];
-          if (lastWinner !== undefined) {
-            const minDistance = Math.max(1, Math.floor(items.length / 6));
-            const distance = Math.abs(index - lastWinner);
-            const wrapDistance = Math.min(distance, items.length - distance);
-
-            // Only avoid if we have a very recent spin (last 5 seconds) and it's too close
-            const veryRecentSpin = recentSameTypeWinners.find(
-              (entry) => timestamp - entry.timestamp < 5000
-            );
-
-            if (veryRecentSpin && wrapDistance < minDistance) {
-              return true;
-            }
-          }
-        }
-
-        // For all types, avoid excessive repetition in recent history
-        const sameIndexCount = recentSameTypeWinners.filter(
-          (entry) => entry.index === index
-        ).length;
-
-        // Allow some repetition, but not too much
-        const maxRecentSame = Math.max(1, Math.floor(items.length / 4));
-        return sameIndexCount >= maxRecentSame;
-      },
-      [wheelType, items.length]
-    );
-
-    // Improved truly random selection with anti-clustering and guaranteed rewards
-    // Improved truly random selection with anti-clustering and guaranteed rewards
-    const selectRandomIndex = useCallback(
-      (numItems: number) => {
-        const now = Date.now();
-        const typeKey = `${wheelType}-${numItems}`;
-
-        // Clean old entries (older than 30 seconds for anti-clustering)
-        globalSpinState.recentWinners = globalSpinState.recentWinners.filter(
-          (entry) => now - entry.timestamp < 30000
-        );
-
-        let selectedIndex: number;
-
-        // 🔥 Force reward wheel to only pick from 599,699,799,899
-        if (wheelType === "reward" && numItems === 9) {
-          const premiumRewardIndices = [5, 6, 7, 8]; // indices for 599–899
-          const randomPremiumIndex = Math.floor(
-            Math.random() * premiumRewardIndices.length
-          );
-          selectedIndex = premiumRewardIndices[randomPremiumIndex];
-          return selectedIndex;
-        }
-
-        // Default behavior for entry/finalist wheels
-        let attempts = 0;
-        const maxAttempts = 50;
-        do {
-          const crypto = window.crypto;
-          let randomValue: number;
-
-          if (crypto?.getRandomValues) {
-            const array = new Uint32Array(1);
-            crypto.getRandomValues(array);
-            randomValue = array[0] / (0xffffffff + 1);
-          } else {
-            randomValue = Math.random();
-          }
-
-          const timeEntropy = (now % 1000) / 1000;
-          const spinEntropy = (globalSpinState.totalSpins % 100) / 100;
-
-          const combinedRandom = (randomValue + timeEntropy + spinEntropy) % 1;
-          selectedIndex = Math.floor(combinedRandom * numItems);
-
-          attempts++;
-        } while (
-          attempts < maxAttempts &&
-          shouldAvoidIndex(selectedIndex, typeKey, now)
-        );
-
-        return selectedIndex;
-      },
-      [wheelType, shouldAvoidIndex, items]
-    );
-
     const spin = useCallback(() => {
       if (!isReady || isSpinning || disabled || items.length === 0) return;
 
@@ -185,40 +77,49 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
 
       const numItems = items.length;
       const segmentAngle = 360 / numItems;
-      const now = Date.now();
-      const typeKey = `${wheelType}-${numItems}`;
 
-      // Select random index
-      const selectedWinnerIndex = selectRandomIndex(numItems);
+      let selectedWinnerIndex: number;
 
-      // Update global state
-      globalSpinState.totalSpins++;
-      globalSpinState.recentWinners.push({
-        index: selectedWinnerIndex,
-        wheelType: wheelType,
-        timestamp: now,
-      });
-      globalSpinState.lastWinnerByType[typeKey] = selectedWinnerIndex;
+      if (wheelType === "reward") {
+        // PURE RANDOM SELECTION - Every reward has equal chance
+        selectedWinnerIndex = Math.floor(Math.random() * numItems);
+        
+      } else if (wheelType === "entry" && numItems > 1) {
+        // Keep the anti-repetition logic for entries to prevent consecutive same winners
+        const minGap = Math.max(1, Math.floor(numItems / 8));
+        let possibleIndexes: number[] = [];
+        if (lastWinnerIndex === null) {
+          possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
+        } else {
+          for (let i = 0; i < numItems; i++) {
+            const gap = Math.abs(i - lastWinnerIndex);
+            const wrapGap = Math.min(gap, numItems - gap);
+            if (wrapGap >= minGap) {
+              possibleIndexes.push(i);
+            }
+          }
+          if (possibleIndexes.length === 0) {
+            possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
+          }
+        }
+        selectedWinnerIndex =
+          possibleIndexes[Math.floor(Math.random() * possibleIndexes.length)];
+      } else {
+        // Default pure random selection
+        selectedWinnerIndex = Math.floor(Math.random() * numItems);
+      }
 
-      // Calculate rotation
       const sliceCenterAngle =
         selectedWinnerIndex * segmentAngle + segmentAngle / 2;
       let desiredStopAngle = 270 - sliceCenterAngle;
       desiredStopAngle = ((desiredStopAngle % 360) + 360) % 360;
 
-      // Add randomness to number of revolutions
-      const minRevolutions = 4;
-      const maxRevolutions = 8;
-      const randomRevolutions =
-        minRevolutions + Math.random() * (maxRevolutions - minRevolutions);
-      const totalRevolutions = Math.floor(randomRevolutions);
-
-      // Add small random offset to make it less predictable
-      const randomOffset = (Math.random() - 0.5) * 20; // ±10 degrees
+      const minRevolutions = 5;
+      const additionalRandomRevolutions = Math.floor(Math.random() * 5);
+      const totalRevolutions = minRevolutions + additionalRandomRevolutions;
 
       const currentNormalizedRotation = rotation % 360;
-      let deltaRotation =
-        desiredStopAngle - currentNormalizedRotation + randomOffset;
+      let deltaRotation = desiredStopAngle - currentNormalizedRotation;
 
       if (deltaRotation < 0) {
         deltaRotation += 360;
@@ -235,6 +136,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
         setIsSpinning(false);
         const winningItem = items[selectedWinnerIndex];
         setWinner(winningItem);
+        if (wheelType === "entry") setLastWinnerIndex(selectedWinnerIndex);
         onSpin?.(winningItem);
 
         setTimeout(
@@ -248,13 +150,12 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       isReady,
       isSpinning,
       disabled,
-      items.length,
-      wheelType,
+      items,
       rotation,
       onSpin,
+      wheelType,
       animationDuration,
-      selectRandomIndex,
-      items,
+      lastWinnerIndex,
     ]);
 
     // Cleanup on unmount
@@ -318,7 +219,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
             };
 
             // Generate dynamic image path based on reward value
-            const getDiamondImage = (rewardValue: string): string => {
+            const getDiamondImage = (rewardValue: string) => {
               return `/diamonds/${rewardValue}.webp`;
             };
 
@@ -361,19 +262,6 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
 
     return (
       <div className={cn("relative flex flex-col items-center", className)}>
-        {/* Debug info - remove in production */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="absolute top-0 right-0 text-xs text-gray-500 bg-white p-2 rounded shadow">
-            <div>Total Spins: {globalSpinState.totalSpins}</div>
-            {wheelType === "reward" && (
-              <>
-                <div>Reward Spins: {globalSpinState.rewardSpinCount}</div>
-                <div>Premium Mode: 🎁 $599-$899 Only</div>
-              </>
-            )}
-          </div>
-        )}
-
         {/* Pointer - fixed at the top */}
         <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
           <div className="w-0 h-0 border-l-6 border-r-6 border-t-12 border-l-transparent border-r-transparent border-t-primary drop-shadow-lg" />
@@ -384,9 +272,9 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
           <div
             ref={wheelRef}
             className={cn(
-              "relative rounded-full border-4 border-white overflow-hidden",
+              "relative  rounded-full border-4 border-white overflow-hidden",
               sizeClasses[size],
-              isSpinning && "pointer-events-none"
+              isSpinning && "pointer-events-none" // Prevent interactions during spin
             )}
             style={{
               transform: `rotate(${rotation}deg)`,
@@ -405,8 +293,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
               </div>
             )}
           </div>
-
-          {/* Stationary Center Circle / Logo */}
+          {/* Stationary Center Circle / Logo - Moved outside the rotating wheelRef */}
           {logoSrc ? (
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[100px] h-[100px] rounded-full overflow-hidden z-10 flex items-center justify-center">
               <Image
@@ -419,7 +306,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
             </div>
           ) : (
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-15 h-15 bg-white rounded-full shadow-md border-2 border-gray-200 z-10 flex items-center justify-center">
-              {/* Default white circle */}
+              {/* This div remains if no logoSrc is provided, providing the default white circle */}
             </div>
           )}
         </div>
@@ -440,8 +327,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
               Spin Wheel
             </button>
           )}
-
-        {/* Entry wheel button with info */}
+        {/* Manual Spin Button */}
         {wheelType === "entry" && (
           <div className="relative">
             <button
@@ -463,17 +349,16 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
                   <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
                 </PopoverTrigger>
                 <PopoverContent side="top" className="text-sm max-w-xs p-2">
-                  Each spin is completely random with anti-clustering to ensure
-                  fair distribution.
+                  This is some helpful info about this section.
                 </PopoverContent>
               </Popover>
             </span>
           </div>
         )}
 
-        {/* Winner Display */}
-        {winner && !isSpinning && wheelType !== "entry" && (
-          <div className="mt-2 w-40 h-20 flex-col flex justify-center items-center bg-white rounded-lg shadow-medium border animate-bounce-in">
+        {/* Winner Display - Only show when not spinning and winner exists */}
+        {winner && !isSpinning && wheelType != "entry" && (
+          <div className=" mt-2 w-40 h-20 flex-col flex justify-center items-center bg-white rounded-lg shadow-medium border animate-bounce-in">
             <p className="text-sm font-medium text-muted-foreground">
               {wheelType === "reward" ? "Reward:" : "Selected Member:"}
             </p>
@@ -486,6 +371,5 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
     );
   }
 );
-
 SpinWheel.displayName = "SpinWheel";
 export { SpinWheel };
