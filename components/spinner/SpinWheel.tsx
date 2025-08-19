@@ -81,8 +81,20 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       let selectedWinnerIndex: number;
 
       if (wheelType === "reward") {
-        // PURE RANDOM SELECTION - Every reward has equal chance
-        selectedWinnerIndex = Math.floor(Math.random() * numItems);
+        // Filter out 899 and 799 from selection but keep them for display
+        const selectableIndexes = items
+          .map((item, index) => ({ item, index }))
+          .filter(({ item }) => item !== "899" && item !== "799")
+          .map(({ index }) => index);
+        
+        // If no selectable items (edge case), fallback to all items
+        if (selectableIndexes.length === 0) {
+          selectedWinnerIndex = Math.floor(Math.random() * numItems);
+        } else {
+          // Pure random selection from only selectable rewards
+          const randomSelectableIndex = Math.floor(Math.random() * selectableIndexes.length);
+          selectedWinnerIndex = selectableIndexes[randomSelectableIndex];
+        }
         
       } else if (wheelType === "entry" && numItems > 1) {
         // Keep the anti-repetition logic for entries to prevent consecutive same winners
