@@ -23,6 +23,10 @@ interface SpinWheelProps {
   wheelType?: "reward" | "finalist" | "entry";
 }
 
+// Default constants - modify these as needed
+const DEFAULT_NAME: string = "6"; // Change this to your desired default name
+const DEFAULT_REWARD: number = 899; // Change this to your desired default reward (0 means no default)
+
 const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
   (
     {
@@ -41,6 +45,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
     const [rotation, setRotation] = useState(0);
     const [winner, setWinner] = useState<string | null>(null);
     const [lastWinnerIndex, setLastWinnerIndex] = useState<number | null>(null);
+    const [hasSelectedDefault, setHasSelectedDefault] = useState(false);
     const wheelRef = useRef<HTMLDivElement>(null);
     const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const animationDuration = 3000; // 3 seconds for spin animation
@@ -63,6 +68,11 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       "wheel-slice-8",
     ];
 
+    // Reset hasSelectedDefault when items change or wheel type changes
+    useEffect(() => {
+      setHasSelectedDefault(false);
+    }, [items, wheelType]);
+
     // Expose spin method via ref
     useImperativeHandle(ref, () => ({
       spin,
@@ -80,45 +90,59 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
 
       let selectedWinnerIndex: number;
 
-      if (wheelType === "reward") {
-        // Filter out 899 and 799 from selection but keep them for display
-        const selectableIndexes = items
-          .map((item, index) => ({ item, index }))
-          .filter(({ item }) => item !== "899" && item !== "799")
-          .map(({ index }) => index);
-        
-        // If no selectable items (edge case), fallback to all items
-        if (selectableIndexes.length === 0) {
-          selectedWinnerIndex = Math.floor(Math.random() * numItems);
-        } else {
-          // Pure random selection from only selectable rewards
-          const randomSelectableIndex = Math.floor(Math.random() * selectableIndexes.length);
-          selectedWinnerIndex = selectableIndexes[randomSelectableIndex];
-        }
-        
-      } else if (wheelType === "entry" && numItems > 1) {
-        // Keep the anti-repetition logic for entries to prevent consecutive same winners
-        const minGap = Math.max(1, Math.floor(numItems / 8));
-        let possibleIndexes: number[] = [];
-        if (lastWinnerIndex === null) {
-          possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
-        } else {
-          for (let i = 0; i < numItems; i++) {
-            const gap = Math.abs(i - lastWinnerIndex);
-            const wrapGap = Math.min(gap, numItems - gap);
-            if (wrapGap >= minGap) {
-              possibleIndexes.push(i);
+      // Check for default selection logic
+      if (wheelType === "entry" && !hasSelectedDefault && items.includes(DEFAULT_NAME)) {
+        // Select the default name if it's present and hasn't been selected yet
+        selectedWinnerIndex = items.indexOf(DEFAULT_NAME);
+        setHasSelectedDefault(true);
+      } else if (wheelType === "finalist" && items.includes(DEFAULT_NAME)) {
+        // Always select the default name for finalist if present
+        selectedWinnerIndex = items.indexOf(DEFAULT_NAME);
+      } else if (wheelType === "reward" && DEFAULT_REWARD !== 0 && items.includes(DEFAULT_NAME) && items.includes(DEFAULT_REWARD.toString())) {
+        // Select the default reward if it's not 0 and present in the list
+        selectedWinnerIndex = items.indexOf(DEFAULT_REWARD.toString());
+      } else {
+        // Fallback to original logic
+        if (wheelType === "reward") {
+          // Filter out 899 and 799 from selection but keep them for display
+          const selectableIndexes = items
+            .map((item, index) => ({ item, index }))
+            .filter(({ item }) => item !== "899" && item !== "799")
+            .map(({ index }) => index);
+          
+          // If no selectable items (edge case), fallback to all items
+          if (selectableIndexes.length === 0) {
+            selectedWinnerIndex = Math.floor(Math.random() * numItems);
+          } else {
+            // Pure random selection from only selectable rewards
+            const randomSelectableIndex = Math.floor(Math.random() * selectableIndexes.length);
+            selectedWinnerIndex = selectableIndexes[randomSelectableIndex];
+          }
+          
+        } else if (wheelType === "entry" && numItems > 1) {
+          // Keep the anti-repetition logic for entries to prevent consecutive same winners
+          const minGap = Math.max(1, Math.floor(numItems / 8));
+          let possibleIndexes: number[] = [];
+          if (lastWinnerIndex === null) {
+            possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
+          } else {
+            for (let i = 0; i < numItems; i++) {
+              const gap = Math.abs(i - lastWinnerIndex);
+              const wrapGap = Math.min(gap, numItems - gap);
+              if (wrapGap >= minGap) {
+                possibleIndexes.push(i);
+              }
+            }
+            if (possibleIndexes.length === 0) {
+              possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
             }
           }
-          if (possibleIndexes.length === 0) {
-            possibleIndexes = Array.from({ length: numItems }, (_, i) => i);
-          }
+          selectedWinnerIndex =
+            possibleIndexes[Math.floor(Math.random() * possibleIndexes.length)];
+        } else {
+          // Default pure random selection
+          selectedWinnerIndex = Math.floor(Math.random() * numItems);
         }
-        selectedWinnerIndex =
-          possibleIndexes[Math.floor(Math.random() * possibleIndexes.length)];
-      } else {
-        // Default pure random selection
-        selectedWinnerIndex = Math.floor(Math.random() * numItems);
       }
 
       const sliceCenterAngle =
@@ -168,6 +192,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       wheelType,
       animationDuration,
       lastWinnerIndex,
+      hasSelectedDefault,
     ]);
 
     // Cleanup on unmount
@@ -240,15 +265,15 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
                 <path
                   d={pathData}
                   fill={colorValues[colorClass as keyof typeof colorValues]}
-                  stroke="white"
-                  strokeWidth="2"
+                  stroke={"white"}
+                  strokeWidth={"2"}
                 />
                 <text
                   x={textX}
                   y={textY}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  className="fill-white font-semibold text-xs"
+                  className={`fill-white font-semibold text-xs`}
                   transform={`rotate(${
                     (textAngleRad * 180) / Math.PI + 180
                   }, ${textX}, ${textY})`}
