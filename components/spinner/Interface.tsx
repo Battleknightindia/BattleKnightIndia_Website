@@ -436,6 +436,7 @@ const Interface = () => {
                       size="md"
                       wheelType="reward"
                       logoSrc="/ncc_logo.png"
+                      previousWinner={gameState.finalist} // FIXED: Pass the finalist as previousWinner
                       disabled={
                         !gameState.finalist ||
                         gameState.phase !== "reward" ||

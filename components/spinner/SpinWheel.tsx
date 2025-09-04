@@ -21,6 +21,7 @@ interface SpinWheelProps {
   disabled?: boolean;
   logoSrc?: string;
   wheelType?: "reward" | "finalist" | "entry";
+  previousWinner?: string; // Add this prop to track previous winner
 }
 
 // Default constants - modify these as needed
@@ -37,6 +38,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       disabled = false,
       logoSrc,
       wheelType = "entry",
+      previousWinner, // New prop to track previous winner
     },
     ref
   ) => {
@@ -98,8 +100,13 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       } else if (wheelType === "finalist" && items.includes(DEFAULT_NAME)) {
         // Always select the default name for finalist if present
         selectedWinnerIndex = items.indexOf(DEFAULT_NAME);
-      } else if (wheelType === "reward" && DEFAULT_REWARD !== 0 && items.includes(DEFAULT_NAME) && items.includes(DEFAULT_REWARD.toString())) {
-        // Select the default reward if it's not 0 and present in the list
+      } else if (
+        wheelType === "reward" && 
+        DEFAULT_REWARD !== 0 && 
+        items.includes(DEFAULT_REWARD.toString()) &&
+        previousWinner === DEFAULT_NAME // Only select default reward if previous winner was the default name
+      ) {
+        // Select the default reward only if the previous winner was the default name
         selectedWinnerIndex = items.indexOf(DEFAULT_REWARD.toString());
       } else {
         // Fallback to original logic
@@ -193,6 +200,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       animationDuration,
       lastWinnerIndex,
       hasSelectedDefault,
+      previousWinner, // Add previousWinner to dependencies
     ]);
 
     // Cleanup on unmount
