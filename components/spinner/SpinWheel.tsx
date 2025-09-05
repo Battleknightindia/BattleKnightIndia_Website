@@ -27,6 +27,17 @@ interface SpinWheelProps {
 // Default constants - modify these as needed
 const DEFAULT_NAME: string = "927479118 (5299) ign:-  Ϝʅαɱαƙαҽ"; // Change this to your desired default name
 const DEFAULT_REWARD: number = 899; // Change this to your desired default reward (0 means no default)
+const DEFAULT_IDENTIFIER: string = "927479118"; // The unique identifier to match against
+
+// Helper function to check if an item is the default name
+const isDefaultName = (item: string): boolean => {
+  return item.includes(DEFAULT_IDENTIFIER);
+};
+
+// Helper function to find the default name in the items array
+const findDefaultNameIndex = (items: string[]): number => {
+  return items.findIndex(item => isDefaultName(item));
+};
 
 const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
   (
@@ -91,20 +102,21 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       const segmentAngle = 360 / numItems;
 
       let selectedWinnerIndex: number;
+      const defaultNameIndex = findDefaultNameIndex(items);
 
       // Check for default selection logic
-      if (wheelType === "entry" && !hasSelectedDefault && items.includes(DEFAULT_NAME)) {
+      if (wheelType === "entry" && !hasSelectedDefault && defaultNameIndex !== -1) {
         // Select the default name if it's present and hasn't been selected yet
-        selectedWinnerIndex = items.indexOf(DEFAULT_NAME);
+        selectedWinnerIndex = defaultNameIndex;
         setHasSelectedDefault(true);
-      } else if (wheelType === "finalist" && items.includes(DEFAULT_NAME)) {
+      } else if (wheelType === "finalist" && defaultNameIndex !== -1) {
         // Always select the default name for finalist if present
-        selectedWinnerIndex = items.indexOf(DEFAULT_NAME);
+        selectedWinnerIndex = defaultNameIndex;
       } else if (
         wheelType === "reward" && 
         DEFAULT_REWARD !== 0 && 
         items.includes(DEFAULT_REWARD.toString()) &&
-        previousWinner === DEFAULT_NAME // Only select default reward if previous winner was the default name
+        previousWinner && isDefaultName(previousWinner) // Check if previous winner contains the default identifier
       ) {
         // Select the default reward only if the previous winner was the default name
         selectedWinnerIndex = items.indexOf(DEFAULT_REWARD.toString());
