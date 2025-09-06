@@ -121,17 +121,18 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       } else {
         // Fallback to original logic
         if (wheelType === "reward") {
-          // Filter out 899 and 799 from selection but keep them for display
+          // Filter to keep only 99, 199, and 299 for selection
+          const allowedRewards = ["99", "199", "299"];
           const selectableIndexes = items
             .map((item, index) => ({ item, index }))
-            .filter(({ item }) => item !== "899" && item !== "799")
+            .filter(({ item }) => allowedRewards.includes(item))
             .map(({ index }) => index);
           
           // If no selectable items (edge case), fallback to all items
           if (selectableIndexes.length === 0) {
             selectedWinnerIndex = Math.floor(Math.random() * numItems);
           } else {
-            // Pure random selection from only selectable rewards
+            // Pure random selection from only allowed rewards (99, 199, 299)
             const randomSelectableIndex = Math.floor(Math.random() * selectableIndexes.length);
             selectedWinnerIndex = selectableIndexes[randomSelectableIndex];
           }
