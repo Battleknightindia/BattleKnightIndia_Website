@@ -94,7 +94,7 @@ export const WinnerDisplay = ({
                           e.stopPropagation();
                           handleRemoveWinner(index);
                         }}
-                        className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 ml-2"
+                        className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all duration-200 ml-2"
                         title={`Remove ${winner}`}
                       >
                         <X className="w-3 h-3 text-white" />
