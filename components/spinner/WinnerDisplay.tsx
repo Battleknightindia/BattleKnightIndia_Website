@@ -13,15 +13,17 @@ interface WinnerDisplayProps {
   maxDisplay?: number;
   handleModel?: () => void;
   handleReset?: () => void;
+  handleRemoveWinner?: (index: number) => void; // New prop for removing individual winners
 }
 
 export const WinnerDisplay = ({
   winners,
   className,
   title = "Selected Winners",
-  maxDisplay = 5,
+  maxDisplay = 0,
   handleModel,
-  handleReset
+  handleReset,
+  handleRemoveWinner
 }: WinnerDisplayProps) => {
   const [showOverlay, setShowOverlay] = useState(false);
   const displayedWinners = winners.slice(0, maxDisplay);
@@ -71,7 +73,7 @@ export const WinnerDisplay = ({
                 {displayedWinners.map((winner, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20 animate-bounce-in"
+                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20 animate-bounce-in group"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <div className="flex-shrink-0">
@@ -85,6 +87,19 @@ export const WinnerDisplay = ({
                         Selected Members #{index + 1}
                       </p>
                     </div>
+                    {/* Delete button for individual winners */}
+                    {handleRemoveWinner && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveWinner(index);
+                        }}
+                        className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 ml-2"
+                        title={`Remove ${winner}`}
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    )}
                   </div>
                 ))}
                

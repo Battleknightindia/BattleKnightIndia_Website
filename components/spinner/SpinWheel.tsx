@@ -24,8 +24,6 @@ interface SpinWheelProps {
   previousWinner?: string; // Add this prop to track previous winner
 }
 
-// Default constants - modify these as needed
-const DEFAULT_NAME: string = "927479118 (5299) ign:-  Ϝʅαɱαƙαҽ"; // Change this to your desired default name
 const DEFAULT_REWARD: number = 899; // Change this to your desired default reward (0 means no default)
 const DEFAULT_IDENTIFIER: string = "927479118"; // The unique identifier to match against
 

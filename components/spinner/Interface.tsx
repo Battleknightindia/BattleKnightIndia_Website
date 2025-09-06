@@ -210,24 +210,57 @@ const Interface = () => {
 
   // Completely reset everything including names
   const handleCompleteReset = () => {
-  const completelyFreshState = { ...defaultState };
-  setGameState(completelyFreshState);
-  setShowTransition(false);
-  setInputValue(0);
-  setOpenModel(false);
-  localStorage.removeItem(LOCAL_STORAGE_STATE_KEY);
-  
-  // NEW: Also clear reward tracking data
-  localStorage.removeItem("wheelRewardTracking");
-  localStorage.removeItem("wheelRewardHistory");
-};
-
+    const completelyFreshState = { ...defaultState };
+    setGameState(completelyFreshState);
+    setShowTransition(false);
+    setInputValue(0);
+    setOpenModel(false);
+    localStorage.removeItem(LOCAL_STORAGE_STATE_KEY);
+    
+    // NEW: Also clear reward tracking data
+    localStorage.removeItem("wheelRewardTracking");
+    localStorage.removeItem("wheelRewardHistory");
+  };
 
   const handleResetWinners = () => {
     setGameState((prev) => {
       const updatedState = {
         ...prev,
         winners: [], // Reset winners to an empty array
+        phaseCompleted: {
+          ...prev.phaseCompleted,
+          entry: false, // Reset entry phase completion status
+        },
+      };
+
+      localStorage.setItem(
+        LOCAL_STORAGE_STATE_KEY,
+        JSON.stringify(updatedState)
+      );
+      return updatedState;
+    });
+  };
+
+  // NEW: Handler to remove individual winner
+  const handleRemoveWinner = (index: number) => {
+    setGameState((prev) => {
+      const removedWinner = prev.winners[index];
+      const newWinners = prev.winners.filter((_, i) => i !== index);
+      
+      // Add the removed winner back to the names list if not already present
+      const shouldAddBackToNames = !prev.names.includes(removedWinner);
+      
+      const updatedState = {
+        ...prev,
+        winners: newWinners,
+        names: shouldAddBackToNames 
+          ? [...prev.names, removedWinner] 
+          : prev.names,
+        phaseCompleted: {
+          ...prev.phaseCompleted,
+          // Reset entry phase completion if we now have fewer winners than max
+          entry: newWinners.length === prev.maxFinalist && prev.maxFinalist > 0,
+        },
       };
 
       localStorage.setItem(
@@ -258,6 +291,11 @@ const Interface = () => {
     setGameState((prev) => ({
       ...prev,
       maxFinalist: InputValue,
+      phaseCompleted: {
+        ...prev.phaseCompleted,
+        // Update entry phase completion based on new max finalist count
+        entry: prev.winners.length === InputValue && InputValue > 0,
+      },
     }));
     setOpenModel(false);
   };
@@ -344,6 +382,7 @@ const Interface = () => {
                     maxDisplay={gameState.maxFinalist}
                     handleModel={handleModel}
                     handleReset={handleResetWinners}
+                    handleRemoveWinner={handleRemoveWinner} // NEW: Pass the remove winner handler
                   />
                 </div>
               ) : (
