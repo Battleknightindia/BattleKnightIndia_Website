@@ -24,8 +24,8 @@ interface SpinWheelProps {
   previousWinner?: string; // Add this prop to track previous winner
 }
 
-const DEFAULT_REWARD: number = 499; // Change this to your desired default reward (0 means no default)
-const DEFAULT_IDENTIFIER: string = "339121995"; // The unique identifier to match against
+const DEFAULT_REWARD: number = 299; // Change this to your desired default reward (0 means no default)
+const DEFAULT_IDENTIFIER: string = "222138800"; // The unique identifier to match against
 
 // Helper function to check if an item is the default name
 const isDefaultName = (item: string): boolean => {
