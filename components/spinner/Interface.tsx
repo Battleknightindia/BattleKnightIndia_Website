@@ -31,6 +31,25 @@ interface AppState {
   };
 }
 
+interface EntryPhaseProps {
+  gameState: AppState;
+  setGameState: React.Dispatch<React.SetStateAction<AppState>>;
+  openModel: boolean;
+  setOpenModel: React.Dispatch<React.SetStateAction<boolean>>;
+  InputValue: number;
+  setInputValue: React.Dispatch<React.SetStateAction<number>>;
+}
+
+interface FinalistRewardPhaseProps {
+  gameState: AppState;
+  setGameState: React.Dispatch<React.SetStateAction<AppState>>;
+}
+
+interface CongratsPhaseProps {
+  gameState: AppState;
+  setGameState: React.Dispatch<React.SetStateAction<AppState>>;
+}
+
 const REWARDS = [99, 199, 299, 399, 499, 599, 699, 799, 899];
 
 const LOCAL_STORAGE_NAMES_KEY = "savedNames";
@@ -50,8 +69,6 @@ const defaultState: AppState = {
   },
 };
 
-const phases: Phase[] = ["entry", "finalist", "reward", "congrats"];
-
 // ----------------- Phase Components -----------------
 const EntryPhase = ({
   gameState,
@@ -60,9 +77,9 @@ const EntryPhase = ({
   setOpenModel,
   InputValue,
   setInputValue,
-}: any) => {
+}: EntryPhaseProps) => {
   const handleAddBulkNames = (bulkNames: string[]) => {
-    setGameState((prev: any) => {
+    setGameState((prev) => {
       const uniqueNames = bulkNames.filter(
         (name) => !prev.names.includes(name)
       );
@@ -75,7 +92,7 @@ const EntryPhase = ({
 
   const handleAddName = (name: string) => {
     if (gameState.names.length < 100) {
-      setGameState((prev: any) => ({
+      setGameState((prev) => ({
         ...prev,
         names: [...prev.names, name],
       }));
@@ -83,14 +100,14 @@ const EntryPhase = ({
   };
 
   const handleRemoveName = (index: number) => {
-    setGameState((prev: any) => ({
+    setGameState((prev) => ({
       ...prev,
-      names: prev.names.filter((_: any, i: number) => i !== index),
+      names: prev.names.filter((_, i) => i !== index),
     }));
   };
 
   const handleClearNames = () => {
-    setGameState((prev: any) => ({
+    setGameState((prev) => ({
       ...prev,
       names: [],
     }));
@@ -99,7 +116,7 @@ const EntryPhase = ({
   const handleModel = () => setOpenModel(true);
 
   const handleMaxFinalistChange = () => {
-    setGameState((prev: any) => ({
+    setGameState((prev) => ({
       ...prev,
       maxFinalist: InputValue,
       phaseCompleted: {
@@ -111,7 +128,7 @@ const EntryPhase = ({
   };
 
   const handleResetWinners = () => {
-    setGameState((prev: any) => {
+    setGameState((prev) => {
       const updatedState = {
         ...prev,
         winners: [],
@@ -126,10 +143,10 @@ const EntryPhase = ({
   };
 
   const handleRemoveWinner = (index: number) => {
-    setGameState((prev: any) => {
+    setGameState((prev) => {
       const removedWinner = prev.winners[index];
       const newWinners = prev.winners.filter(
-        (_: any, i: number) => i !== index
+        (_, i) => i !== index
       );
       const shouldAddBackToNames = !prev.names.includes(removedWinner);
 
@@ -176,12 +193,12 @@ const EntryPhase = ({
           <SpinWheel
             items={gameState.names || []}
             onSpin={(winner: string) => {
-              setGameState((prev: any) => {
+              setGameState((prev) => {
                 const newWinners = [...prev.winners, winner];
                 const isEntryComplete = newWinners.length === prev.maxFinalist;
 
                 setTimeout(() => {
-                  setGameState((current: any) => ({
+                  setGameState((current) => ({
                     ...current,
                     names: current.names.filter(
                       (name: string) => name !== winner
@@ -246,7 +263,7 @@ const EntryPhase = ({
             gameState.maxFinalist !== 0 && (
               <button
                 onClick={() => {
-                  setGameState((prev: any) => ({ ...prev, phase: "finalist" }));
+                  setGameState((prev) => ({ ...prev, phase: "finalist" }));
                 }}
                 className={cn(
                   "absolute bottom-20 left-13 px-8 ml-3 py-3 bg-primary text-primary-foreground rounded-lg font-bold shadow-soft transition-all duration-200",
@@ -262,10 +279,10 @@ const EntryPhase = ({
   );
 };
 
-const FinalistRewardPhase = ({ gameState, setGameState }: any) => {
+const FinalistRewardPhase = ({ gameState, setGameState }: FinalistRewardPhaseProps) => {
   const handleFinalistSelected = (selected: string) => {
     setTimeout(() => {
-      setGameState((prev: any) => ({
+      setGameState((prev) => ({
         ...prev,
         finalist: selected,
         phase: "reward",
@@ -276,7 +293,7 @@ const FinalistRewardPhase = ({ gameState, setGameState }: any) => {
 
   const handleRewardSelected = (selectedReward: string) => {
     setTimeout(() => {
-      setGameState((prev: any) => ({
+      setGameState((prev) => ({
         ...prev,
         reward: parseInt(selectedReward),
         phase: "congrats",
@@ -338,7 +355,7 @@ const FinalistRewardPhase = ({ gameState, setGameState }: any) => {
   );
 };
 
-const CongratsPhase = ({ gameState, setGameState }: any) => {
+const CongratsPhase = ({ gameState, setGameState }: CongratsPhaseProps) => {
   const handleNextRound = () => {
     const freshState = {
       ...defaultState,
