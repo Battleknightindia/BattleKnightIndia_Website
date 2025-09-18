@@ -13,46 +13,55 @@ export const CongratsDisplay = ({
   winner,
   reward,
   onNextRound,
-  className
+  className,
 }: CongratsDisplayProps) => {
   return (
-    <div className={cn("relative flex flex-col items-center text-center space-y-6", className)}>
-      <div className="z-10 animate-bounce-in">
-        <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4 drop-shadow-lg" />
-
-        <h2 className="text-4xl font-extrabold text-primary mb-2">
-          🎉 Congratulations! 🎉
-        </h2>
-
-        <div className="space-y-1">
-          <p className="text-2xl font-bold text-foreground">
-            {winner}
-          </p>
-          <p className="text-lg text-muted-foreground">
-            You won
-          </p>
-        </div>
-
-        <div className="inline-flex items-center justify-center rounded-full mt-4 px-4">
-          <Image
-            src={`/diamonds/${reward}.webp`}
-            alt={`Reward of ${reward}`}
-            width={90}
-            height={90}
-            className="object-contain"
-          />
-          <span className="text-3xl mt-5 mr-10 font-bold text-black">
-            {reward}
-          </span>
-        </div>
+    <div
+      className={cn(
+        "relative flex flex-col items-center justify-center text-center",
+        className
+      )}
+    >
+      {/* Congratulations Title */}
+      <div className="z-10 ml-20 pb-70">
+        <Image
+          src="/congratulations.png"
+          alt="Sanrio Congratulations"
+          width={700}
+          height={100}
+          className="object-contain"
+        />
       </div>
 
+      <div className="absolute bottom-10 space-y-6 z-10">
+        {/* Winner Name */}
+      <p className="text-3xl font-bold text-yellow-300 mt-2">
+        {winner}
+      </p>
+
+      {/* You Won Text */}
+      <p className="text-xl text-purple-200 mt-1">You won</p>
+
+      {/* Reward Display */}
+      <div className="flex items-center ml-7 mt-2">
+        <Image
+          src={`/diamonds/${reward}.webp`}
+          alt={`Reward of ${reward}`}
+          width={60}
+          height={60}
+          className="object-contain"
+        />
+        <span className="text-4xl font-bold text-white">{reward}</span>
+      </div>
+
+      {/* Next Round Button */}
       <button
         onClick={onNextRound}
-        className="z-10 px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold shadow-soft hover:bg-primary/90 hover:shadow-md transition-all duration-200 active:scale-95"
+        className="mt-6 px-12 py-4 bg-pink-500 text-white rounded-full font-semibold shadow-lg hover:bg-pink-700 transition-all duration-200 active:scale-95"
       >
         Next Round
       </button>
+      </div>
     </div>
   );
 };

@@ -34,7 +34,7 @@ const isDefaultName = (item: string): boolean => {
 
 // Helper function to find the default name in the items array
 const findDefaultNameIndex = (items: string[]): number => {
-  return items.findIndex(item => isDefaultName(item));
+  return items.findIndex((item) => isDefaultName(item));
 };
 
 const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
@@ -64,7 +64,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
     const sizeClasses = {
       sm: "w-48 h-48",
       md: "w-[24rem] h-[24rem]",
-      lg: "w-[30rem] h-[30rem]",
+      lg: "w-[28rem] h-[28rem]",
     };
 
     const colors = [
@@ -103,7 +103,11 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
       const defaultNameIndex = findDefaultNameIndex(items);
 
       // Check for default selection logic
-      if (wheelType === "entry" && !hasSelectedDefault && defaultNameIndex !== -1) {
+      if (
+        wheelType === "entry" &&
+        !hasSelectedDefault &&
+        defaultNameIndex !== -1
+      ) {
         // Select the default name if it's present and hasn't been selected yet
         selectedWinnerIndex = defaultNameIndex;
         setHasSelectedDefault(true);
@@ -111,10 +115,11 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
         // Always select the default name for finalist if present
         selectedWinnerIndex = defaultNameIndex;
       } else if (
-        wheelType === "reward" && 
-        DEFAULT_REWARD !== 0 && 
+        wheelType === "reward" &&
+        DEFAULT_REWARD !== 0 &&
         items.includes(DEFAULT_REWARD.toString()) &&
-        previousWinner && isDefaultName(previousWinner) // Check if previous winner contains the default identifier
+        previousWinner &&
+        isDefaultName(previousWinner) // Check if previous winner contains the default identifier
       ) {
         // Select the default reward only if the previous winner was the default name
         selectedWinnerIndex = items.indexOf(DEFAULT_REWARD.toString());
@@ -127,16 +132,17 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
             .map((item, index) => ({ item, index }))
             .filter(({ item }) => allowedRewards.includes(item))
             .map(({ index }) => index);
-          
+
           // If no selectable items (edge case), fallback to all items
           if (selectableIndexes.length === 0) {
             selectedWinnerIndex = Math.floor(Math.random() * numItems);
           } else {
             // Pure random selection from only allowed rewards (99, 199, 299)
-            const randomSelectableIndex = Math.floor(Math.random() * selectableIndexes.length);
+            const randomSelectableIndex = Math.floor(
+              Math.random() * selectableIndexes.length
+            );
             selectedWinnerIndex = selectableIndexes[randomSelectableIndex];
           }
-          
         } else if (wheelType === "entry" && numItems > 1) {
           // Keep the anti-repetition logic for entries to prevent consecutive same winners
           const minGap = Math.max(1, Math.floor(numItems / 8));
@@ -319,8 +325,13 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
     return (
       <div className={cn("relative flex flex-col items-center", className)}>
         {/* Pointer - fixed at the top */}
-        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="w-0 h-0 border-l-6 border-r-6 border-t-12 border-l-transparent border-r-transparent border-t-primary drop-shadow-lg" />
+        <div className="absolute mt-1 left-1/2 transform -translate-x-1/2 z-20">
+          <div
+            className="w-0 h-0 
+    border-l-20 border-r-20 border-t-20 
+    border-l-transparent border-r-transparent border-t-white 
+    drop-shadow-lg filter drop-shadow-white"
+          ></div>
         </div>
 
         {/* Wheel Container */}
@@ -367,13 +378,14 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
           )}
         </div>
 
-        {/* Manual Spin Button */}
+        {/* Manual Spin Button - For finalist and reward wheels */}
         {(wheelType === "finalist" || wheelType === "reward") &&
           isReady &&
           !isSpinning &&
           !winner && (
             <button
               onClick={spin}
+              disabled={!isReady || isSpinning || !!winner || disabled} // 👈 Add disabled check here
               className={cn(
                 "mt-6 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold shadow-soft transition-all duration-200",
                 "hover:bg-primary/90 hover:shadow-medium active:scale-95",
@@ -383,6 +395,17 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
               Spin Wheel
             </button>
           )}
+
+        {wheelType === "entry" && (
+          <span className="absolute bottom-4 left-38">
+            <Image
+              src={"/spin_overlay.png"}
+              alt="spin_overlay.png"
+              width={200}
+              height={200}
+            />
+          </span>
+        )}
         {/* Manual Spin Button */}
         {wheelType === "entry" && (
           <div className="relative">
@@ -399,16 +422,6 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
             >
               Spin Wheel
             </button>
-            <span className="absolute bottom-3 -right-7">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                </PopoverTrigger>
-                <PopoverContent side="top" className="text-sm max-w-xs p-2">
-                  This is some helpful info about this section.
-                </PopoverContent>
-              </Popover>
-            </span>
           </div>
         )}
 
@@ -419,7 +432,7 @@ const SpinWheel = forwardRef<{ spin: () => void }, SpinWheelProps>(
               {wheelType === "reward" ? "Reward:" : "Selected Member:"}
             </p>
             <p className="text-lg text-center font-semibold text-primary">
-              {wheelType === "reward" ? `$${winner}` : winner}
+              {wheelType === "reward" ? `₹${winner}` : winner}
             </p>
           </div>
         )}

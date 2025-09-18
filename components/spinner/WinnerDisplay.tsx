@@ -48,23 +48,23 @@ export const WinnerDisplay = ({
   };
 
   return (
-    <div className="relative">
-      <Card className={cn('w-full max-w-sm', className)}>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-[15px]">{title}</span>
-            <Badge variant="secondary" className="ml-auto">
+    <div className="relative ml-10">
+      <Card className={cn('w-full max-w-sm bg-white/60 border border-gray-200/50 shadow-lg', className)}>
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2 mb-3 bg-white/80 h-10 w-76 px-3 rounded-md border border-gray-200/30">
+            <Trophy className="w-5 h-5 text-gray-700" />
+            <span className="font-semibold text-[15px] text-gray-800">{title}</span>
+            <Badge variant="secondary" className="ml-auto bg-gray-100 text-gray-700 border-gray-200">
               Total: {maxDisplay}
             </Badge>
-            <Badge variant="secondary" className="ml-auto">
+            <Badge variant="secondary" className="ml-auto bg-gray-100 text-gray-700 border-gray-200">
               {winners.length}
             </Badge>
           </div>
           <div className="space-y-2 overflow-auto max-h-68">
             {winners.length === 0 ? (
-              <div className="text-center text-muted-foreground py-6">
-                <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <div className="text-center text-gray-500 py-6">
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
                 <p className="text-sm">No selected names yet</p>
                 <p className="text-xs">Selected names will appear here</p>
               </div>
@@ -73,17 +73,17 @@ export const WinnerDisplay = ({
                 {displayedWinners.map((winner, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20 animate-bounce-in group"
+                    className="flex bg-white/90 items-center gap-3 p-3 rounded-lg border border-gray-300/50 animate-bounce-in group shadow-sm"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                        <Star className="w-4 h-4 text-primary-foreground" />
+                      <div className="w-8 h-8 bg-pink-400 rounded-full flex items-center justify-center">
+                        <Star className="w-4 h-4 text-white" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{winner}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-medium text-sm truncate text-gray-800">{winner}</p>
+                      <p className="text-xs text-gray-600">
                         Selected Members #{index + 1}
                       </p>
                     </div>
@@ -94,7 +94,7 @@ export const WinnerDisplay = ({
                           e.stopPropagation();
                           handleRemoveWinner(index);
                         }}
-                        className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all duration-200 ml-2"
+                        className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all duration-200 ml-2 shadow-sm"
                         title={`Remove ${winner}`}
                       >
                         <X className="w-3 h-3 text-white" />
@@ -105,7 +105,7 @@ export const WinnerDisplay = ({
                
                 {remainingCount > 0 && (
                   <div className="text-center pt-2">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs border-gray-300 text-gray-600">
                       +{remainingCount} more
                     </Badge>
                   </div>
@@ -117,7 +117,7 @@ export const WinnerDisplay = ({
             <Button 
               onClick={handleModel} 
               size={"sm"} 
-              className="mt-5 relative z-10"
+              className="mt-5 relative z-10 bg-gray-800 hover:bg-gray-700 text-white"
               id="finalist-count-button"
             >
               Add <Plus className="w-4 h-4" />
@@ -125,7 +125,7 @@ export const WinnerDisplay = ({
             <Button 
               onClick={handleReset} 
               size={"sm"} 
-              className="mt-5 bg-blue-500 relative z-10"
+              className="mt-5 bg-blue-500 hover:bg-blue-600 relative z-10 text-white"
               id="finalist-count-button"
             >
               Reset <RefreshCw/>
@@ -145,7 +145,7 @@ export const WinnerDisplay = ({
           
           {/* Guide Content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <div className="bg-white text-gray-800 px-4 py-3 rounded-lg text-sm font-medium shadow-lg max-w-xs text-center">
+            <div className="bg-white text-gray-800 px-4 py-3 rounded-lg text-sm font-medium shadow-lg max-w-xs text-center border border-gray-200">
               Click the + button below to set how many finalists to select
             </div>
           </div>

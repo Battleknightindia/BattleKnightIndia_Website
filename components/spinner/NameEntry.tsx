@@ -97,13 +97,13 @@ export const NameEntry = ({
   };
 
   return (
-    <Card className={cn("lg:w-70 lg:max-w-sm", className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Users className="w-5 h-5" />
+    <Card className={cn("lg:w-70 lg:max-w-sm ml-10 bg-white/60 border border-gray-200/50 shadow-lg", className)}>
+      <CardHeader className="pb-3 m-3 mb-3 bg-white rounded-lg border border-gray-200/30">
+        <CardTitle className="text-lg flex items-center gap-2 text-gray-800">
+          <Users className="w-5 h-5 text-gray-700" />
           Participants
         </CardTitle>
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center justify-between text-sm text-gray-600">
           <span>
             {names.length} / {maxNames}
           </span>
@@ -112,7 +112,7 @@ export const NameEntry = ({
               variant="ghost"
               size="sm"
               onClick={onClearAll}
-              className="text-destructive hover:text-destructive"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               Clear All
             </Button>
@@ -127,7 +127,11 @@ export const NameEntry = ({
             variant={!showBulkInput ? "default" : "outline"}
             size="sm"
             onClick={() => setShowBulkInput(false)}
-            className="w-30"
+            className={cn("w-30", 
+              !showBulkInput 
+                ? "bg-gray-800 hover:bg-gray-700 text-white" 
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+            )}
           >
             <Plus className="w-4 h-4" />
             Single Entry
@@ -136,7 +140,11 @@ export const NameEntry = ({
             variant={showBulkInput ? "default" : "outline"}
             size="sm"
             onClick={() => setShowBulkInput(true)}
-            className="w-30"
+            className={cn("w-30",
+              showBulkInput 
+                ? "bg-gray-800 hover:bg-gray-700 text-white" 
+                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+            )}
           >
             <FileText className="w-4 h-4" />
             Bulk Entry
@@ -155,7 +163,7 @@ export const NameEntry = ({
               }}
               onKeyDown={handleKeyPress}
               placeholder="Enter participant name..."
-              className="flex-1"
+              className="flex-1 bg-white/70 border-gray-300 text-gray-800 placeholder:text-gray-500 focus:border-gray-500 focus:ring-gray-500"
               disabled={names.length >= maxNames}
             />
             <Button
@@ -166,7 +174,7 @@ export const NameEntry = ({
                 names.length >= maxNames
               }
               size="sm"
-              className="px-3"
+              className="px-3 bg-gray-800 hover:bg-gray-700 text-white disabled:bg-gray-400"
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -181,14 +189,14 @@ export const NameEntry = ({
                 localStorage.setItem("nameEntry_bulkInput", val);
               }}
               placeholder="Enter names in this format:&#10;1. Name1&#10;2. Name2&#10;3. Name3&#10;&#10;Or just paste a list of names (one per line)"
-              className="min-h-24"
+              className="min-h-24 bg-white/70 border-gray-300 text-gray-800 placeholder:text-gray-500 focus:border-gray-500 focus:ring-gray-500"
               disabled={names.length >= maxNames}
             />
             <Button
               onClick={handleBulkAdd}
               disabled={!bulkInput.trim() || names.length >= maxNames}
               size="sm"
-              className="w-full"
+              className="w-full bg-gray-800 hover:bg-gray-700 text-white disabled:bg-gray-400"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Names
@@ -197,10 +205,10 @@ export const NameEntry = ({
         )}
 
         {/* Names List */}
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+        <div className="space-y-2 max-h-35 overflow-y-auto">
           {names.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <div className="text-center text-gray-500 py-8">
+              <Users className="w-8 h-8 mx-auto mb-2 opacity-50 text-gray-400" />
               <p className="text-sm">No participants yet</p>
               <p className="text-xs">Start adding names to begin</p>
             </div>
@@ -208,14 +216,14 @@ export const NameEntry = ({
             names.map((name, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-2 bg-secondary rounded-md group hover:bg-secondary/80 transition-colors"
+                className="flex items-center justify-between p-2 bg-gray-100 rounded-md group hover:bg-gray-200/80 transition-colors border border-gray-200/30"
               >
-                <span className="text-sm font-medium truncate">{name}</span>
+                <span className="text-sm font-medium truncate text-gray-800">{name}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onRemoveName(index)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-destructive hover:text-destructive"
+                  className="p-1 h-auto text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   <X className="w-3 h-3" />
                 </Button>
@@ -225,11 +233,13 @@ export const NameEntry = ({
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full bg-secondary rounded-full h-2">
-          <div
-            className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(names.length / maxNames) * 100}%` }}
-          />
+        <div className="bg-white p-3 rounded-lg border border-gray-200/30">
+          <div className="w-full bg-gray-200/80 rounded-full h-2">
+            <div
+              className="bg-gray-800 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(names.length / maxNames) * 100}%` }}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
